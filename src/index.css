@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #f1f5fb;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  /* ─── Glass Card ─── */
+  .glass {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .glass-light {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+  }
+
+  /* ─── Page wrapper with gradient bg ─── */
+  .page-bg {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #f0f6ff 0%, #e8f0fe 40%, #f1f5fb 100%);
+  }
+
+  /* ─── IC3 Button Variants ─── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+           bg-primary-600 text-white font-semibold text-sm
+           hover:bg-primary-700 active:scale-[0.98]
+           shadow-md hover:shadow-lg
+           transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
+           bg-white/0 text-gray-600 font-medium text-sm border border-gray-200
+           hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98]
+           transition-all duration-150 focus:outline-none;
+  }
+
+  /* ─── Card ─── */
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-gray-100/80 overflow-hidden;
+  }
+
+  /* ─── Section heading ─── */
+  .section-title {
+    @apply text-2xl font-bold text-gray-900 tracking-tight;
+  }
+
+  /* ─── Badge ─── */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Animated underline for nav links */
+  .nav-link-active {
+    @apply text-primary-600 border-b-2 border-primary-600;
+  }
+
+  /* Subtle shimmer loading animation */
+  .shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Glow ring */
+  .ring-glow {
+    box-shadow: 0 0 0 3px rgba(51, 112, 246, 0.25);
+  }
+}
