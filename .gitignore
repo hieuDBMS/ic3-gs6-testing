@@ -11,9 +11,6 @@ node_modules
 dist
 dist-ssr
 *.local
-.env
-.agents
-tempdata
 
 # Editor directories and files
 .vscode/*
@@ -25,3 +22,16 @@ tempdata
 *.njsproj
 *.sln
 *.sw?
+
+# Project specifics
+.env
+.env.*
+!.env.example
+.agents/
+tempdata/
+artifacts/
+scratch/
+walkthrough.md
+implementation_plan.md
+task.md
+

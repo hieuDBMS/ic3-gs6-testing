@@ -13,6 +13,7 @@ export const AuthProvider = ({ children }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
+        setLoading(true);
         fetchProfile(session.user.id);
       } else {
         setLoading(false);
@@ -20,11 +21,15 @@ export const AuthProvider = ({ children }) => {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
+        // Only fetch profile on initial load or sign in, not on token refresh
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+          setLoading(true);
+          fetchProfile(session.user.id);
+        }
+      } else if (event === 'SIGNED_OUT') {
         setProfile(null);
         setLoading(false);
       }
@@ -40,7 +45,7 @@ export const AuthProvider = ({ children }) => {
         .select('*')
         .eq('id', userId)
         .single();
-        
+
       if (error) {
         console.error('Error fetching profile:', error);
       } else {
