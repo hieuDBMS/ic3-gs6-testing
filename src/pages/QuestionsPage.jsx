@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import {
   Plus, Edit2, Trash2, Search, Filter, ChevronLeft,
-  ChevronRight, Image as ImageIcon, BookOpen, X, Loader2, Layers
+  ChevronRight, Image as ImageIcon, BookOpen, X, Loader2, Layers,
+  ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { QuestionModal } from '../components/questions/QuestionModal';
 
@@ -22,6 +23,9 @@ export const QuestionsPage = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 
+  // Sort
+  const [sortOption, setSortOption] = useState('created_at:desc');
+
   // Filters
   const [filters, setFilters] = useState({
     version: '',
@@ -31,6 +35,15 @@ export const QuestionsPage = () => {
     question_type: '',
     search: '',
   });
+
+  const SORT_OPTIONS = [
+    { value: 'created_at:desc', label: 'Mới nhất trước', icon: 'desc' },
+    { value: 'created_at:asc',  label: 'Cũ nhất trước',  icon: 'asc'  },
+    { value: 'order_index:asc', label: 'Thứ tự tăng dần', icon: 'asc'  },
+    { value: 'order_index:desc',label: 'Thứ tự giảm dần', icon: 'desc' },
+    { value: 'content:asc',     label: 'Nội dung A → Z',  icon: 'asc'  },
+    { value: 'content:desc',    label: 'Nội dung Z → A',  icon: 'desc' },
+  ];
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -84,6 +97,10 @@ export const QuestionsPage = () => {
         }
       }
 
+      // Parse sort option
+      const [sortCol, sortDir] = sortOption.split(':');
+      const ascending = sortDir === 'asc';
+
       let query = supabase
         .from('questions')
         .select(`
@@ -95,7 +112,7 @@ export const QuestionsPage = () => {
           answers (id, content, image_url, is_correct, order_index),
           dragdrop_pairs (id, drag_content, drag_image_url, drop_content, drop_image_url, order_index)
         `, { count: 'exact' })
-        .order('created_at', { ascending: false })
+        .order(sortCol, { ascending })
         .range(from, to);
 
       if (targetExamIds !== null) {
@@ -120,16 +137,16 @@ export const QuestionsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, exams, levels, page]);
+  }, [filters, exams, levels, page, sortOption]);
 
   useEffect(() => {
     if (exams.length > 0 || levels.length > 0) {
       fetchQuestions();
     }
-  }, [filters, exams, levels, page]);
+  }, [filters, exams, levels, page, sortOption]);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [filters]);
+  useEffect(() => { setPage(1); }, [filters, sortOption]);
 
   const handleDelete = async (q) => {
     if (!window.confirm(`Xoá câu hỏi:\n"${q.content.slice(0, 80)}..."?\n\nThao tác này không thể hoàn tác.`)) return;
@@ -213,7 +230,7 @@ export const QuestionsPage = () => {
 
       {/* Filter Bar */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 p-4 space-y-3">
-        {/* Row 1: Search + clear */}
+        {/* Row 1: Search + Sort + clear */}
         <div className="flex items-center gap-3">
           <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
             <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -230,6 +247,23 @@ export const QuestionsPage = () => {
               </button>
             )}
           </div>
+
+          {/* Sort control */}
+          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 min-w-[190px]">
+            {sortOption.endsWith(':asc')
+              ? <ArrowUp className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+              : <ArrowDown className="w-4 h-4 text-indigo-500 flex-shrink-0" />}
+            <select
+              value={sortOption}
+              onChange={e => setSortOption(e.target.value)}
+              className="flex-1 bg-transparent text-sm outline-none text-gray-700 cursor-pointer"
+            >
+              {SORT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
           {activeFilterCount > 0 && (
             <button onClick={clearFilters}
               className="flex items-center gap-1.5 px-3 py-2.5 text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 rounded-xl transition-colors whitespace-nowrap">
@@ -319,10 +353,27 @@ export const QuestionsPage = () => {
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nội dung câu hỏi</th>
+                <th
+                  onClick={() => setSortOption(s => s === 'content:asc' ? 'content:desc' : 'content:asc')}
+                  className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-indigo-600 transition-colors group"
+                >
+                  <span className="flex items-center gap-1">
+                    Nội dung câu hỏi
+                    <ArrowUpDown className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  </span>
+                </th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Loại</th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Bài thi</th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Đáp án</th>
+                <th
+                  onClick={() => setSortOption(s => s === 'order_index:asc' ? 'order_index:desc' : 'order_index:asc')}
+                  className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider cursor-pointer select-none hover:text-indigo-600 transition-colors group"
+                >
+                  <span className="flex items-center gap-1">
+                    #
+                    <ArrowUpDown className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  </span>
+                </th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Thao tác</th>
               </tr>
             </thead>
@@ -345,7 +396,8 @@ export const QuestionsPage = () => {
                   </td>
                 </tr>
               ) : (
-                questions.map((q) => {
+                questions.map((q, rowIdx) => {
+                  const rowNumber = (page - 1) * PAGE_SIZE + rowIdx + 1;
                   const typeInfo = QUESTION_TYPE_LABELS[q.question_type] || {};
                   const correctCount = q.answers?.filter(a => a.is_correct).length || 0;
                   const totalAnswers = q.answers?.length || 0;
@@ -365,9 +417,8 @@ export const QuestionsPage = () => {
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900 line-clamp-2">{q.content}</p>
                             <p className="text-xs text-gray-400 mt-0.5">
-                              #{q.order_index}
                               {q.image_url && (
-                                <span className="ml-2 text-indigo-400">
+                                <span className="text-indigo-400">
                                   <ImageIcon className="w-3 h-3 inline" /> Có ảnh
                                 </span>
                               )}
@@ -402,6 +453,11 @@ export const QuestionsPage = () => {
                             <span className="text-emerald-600 font-medium">{correctCount} đúng</span>
                           </div>
                         )}
+                      </td>
+
+                      {/* Row number */}
+                      <td className="px-4 py-4 whitespace-nowrap text-xs text-gray-400 font-mono">
+                        {rowNumber}
                       </td>
 
                       {/* Actions */}

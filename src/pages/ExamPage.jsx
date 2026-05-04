@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Timer } from '../components/exam/Timer';
 import { QuestionNavigator } from '../components/exam/QuestionNavigator';
 import { QuestionRenderer } from '../components/exam/QuestionRenderer';
-import { Flag, ArrowLeft, ArrowRight, CheckCircle2, AlertTriangle, X, BookOpen } from 'lucide-react';
+import { Flag, ArrowLeft, ArrowRight, CheckCircle2, AlertTriangle, X, BookOpen, RefreshCw, ShieldAlert } from 'lucide-react';
 
 /* ─── Skeleton Loader ─── */
 const ExamSkeleton = () => (
@@ -86,6 +86,88 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => (
   </div>
 );
 
+/* ─── Refresh Warning Modal ─── */
+const RefreshWarningModal = ({ onStay, onLeave }) => (
+  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    {/* Backdrop */}
+    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+    {/* Modal card */}
+    <div
+      className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+      style={{ animation: 'refreshModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
+    >
+      {/* Top accent gradient */}
+      <div className="h-1.5 w-full bg-gradient-to-r from-orange-400 via-red-500 to-rose-500" />
+
+      {/* Body */}
+      <div className="p-7 space-y-5">
+        {/* Icon + heading */}
+        <div className="flex flex-col items-center text-center space-y-3">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg,#fff7ed,#fee2e2)' }}
+          >
+            <ShieldAlert className="w-8 h-8 text-rose-500" />
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">
+              Tải lại trang?
+            </h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-rose-400">
+              Cảnh báo quan trọng
+            </p>
+          </div>
+        </div>
+
+        {/* Warning message */}
+        <div
+          className="rounded-2xl p-4 space-y-2 text-sm"
+          style={{ background: 'linear-gradient(135deg,#fff7ed,#fef2f2)' }}
+        >
+          <p className="font-semibold text-orange-700 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            Bài làm sẽ bị mất toàn bộ!
+          </p>
+          <ul className="text-gray-600 space-y-1 pl-6 list-disc leading-relaxed">
+            <li>Tất cả câu trả lời đã chọn sẽ biến mất</li>
+            <li>Thời gian đang chạy không được lưu lại</li>
+            <li>Bạn phải bắt đầu lại từ đầu</li>
+          </ul>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={onLeave}
+            className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all"
+          >
+            Vẫn tải lại
+          </button>
+          <button
+            onClick={onStay}
+            className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all shadow-lg"
+            style={{
+              background: 'linear-gradient(135deg,#f97316,#ef4444)',
+              boxShadow: '0 4px 14px rgba(239,68,68,0.35)'
+            }}
+          >
+            Tiếp tục làm bài
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <style>{`
+      @keyframes refreshModalIn {
+        from { opacity: 0; transform: scale(0.85) translateY(12px); }
+        to   { opacity: 1; transform: scale(1)   translateY(0);     }
+      }
+    `}</style>
+  </div>
+);
+
 /* ─── Main ExamPage ─── */
 export const ExamPage = () => {
   const { examId } = useParams();
@@ -101,12 +183,42 @@ export const ExamPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [attemptId, setAttemptId] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showRefreshWarning, setShowRefreshWarning] = useState(false);
+  const pendingReloadRef = useRef(false);
 
   // Ref to read remaining time from Timer on submit
   const timerRef = useRef(null);
   const startTimeRef = useRef(Date.now());
 
   useEffect(() => { initExam(); }, [examId]);
+
+  // ── Intercept F5 / Ctrl+R to show custom popup ──
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isF5 = e.key === 'F5';
+      const isCtrlR = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r';
+      if (isF5 || isCtrlR) {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowRefreshWarning(true);
+      }
+    };
+
+    // Fallback: browser native dialog (tab close, address-bar navigation, etc.)
+    const handleBeforeUnload = (e) => {
+      if (!pendingReloadRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   const initExam = async () => {
     try {
@@ -277,7 +389,19 @@ export const ExamPage = () => {
      *             → header never scrolls off screen → timer always visible
      */
     <div className="min-h-screen md:h-screen bg-slate-50 flex flex-col md:overflow-hidden">
-      {/* Confirm Modal */}
+      {/* Refresh Warning Modal */}
+      {showRefreshWarning && (
+        <RefreshWarningModal
+          onStay={() => setShowRefreshWarning(false)}
+          onLeave={() => {
+            pendingReloadRef.current = true;
+            setShowRefreshWarning(false);
+            window.location.reload();
+          }}
+        />
+      )}
+
+      {/* Confirm Submit Modal */}
       {showConfirm && (
         <ConfirmModal
           unansweredCount={unanswered}
@@ -345,8 +469,8 @@ export const ExamPage = () => {
             <button
               onClick={toggleFlag}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${isFlagged
-                  ? 'bg-amber-50 border-amber-200 text-amber-600'
-                  : 'bg-white border-gray-200 text-gray-400 hover:border-amber-200 hover:text-amber-500'
+                ? 'bg-amber-50 border-amber-200 text-amber-600'
+                : 'bg-white border-gray-200 text-gray-400 hover:border-amber-200 hover:text-amber-500'
                 }`}
             >
               <Flag className={`w-3.5 h-3.5 ${isFlagged ? 'fill-amber-400' : ''}`} />
