@@ -148,12 +148,24 @@ export const QuestionsPage = () => {
   // Reset page when filters change
   useEffect(() => { setPage(1); }, [filters, sortOption]);
 
+  const reorderQuestions = async (examId) => {
+    const { data: remaining, error } = await supabase
+      .from('questions')
+      .select('id, order_index')
+      .eq('exam_id', examId)
+      .order('order_index', { ascending: true });
+    if (error || !remaining || remaining.length === 0) return;
+    const updates = remaining.map((q, idx) => ({ id: q.id, order_index: idx + 1 }));
+    await supabase.from('questions').upsert(updates, { onConflict: 'id' });
+  };
+
   const handleDelete = async (q) => {
-    if (!window.confirm(`Xoá câu hỏi:\n"${q.content.slice(0, 80)}..."?\n\nThao tác này không thể hoàn tác.`)) return;
+    if (!window.confirm(`Xoá câu hỏi:\n"${q.content.slice(0, 80)}..."\n\nThao tác này sẽ xoá cả đáp án và lịch sử trả lời của câu hỏi này. Không thể hoàn tác.`)) return;
     try {
       const { error } = await supabase.from('questions').delete().eq('id', q.id);
       if (error) throw error;
-      showToast('Đã xoá câu hỏi thành công');
+      await reorderQuestions(q.exam_id);
+      showToast('Đã xoá câu hỏi và cập nhật thứ tự');
       fetchQuestions();
     } catch (err) {
       showToast('Lỗi khi xoá: ' + err.message, 'error');

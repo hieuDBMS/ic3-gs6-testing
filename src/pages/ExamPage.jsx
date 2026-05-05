@@ -285,13 +285,17 @@ export const ExamPage = () => {
       const timeSpent = Math.max(0, (exam?.duration_seconds ?? 0) - timeLeft) ||
         Math.floor((Date.now() - startTimeRef.current) / 1000);
 
+      const questionIds = questions.map(q => q.id);
+
       const { data: correctAnswers } = await supabase
         .from('answers')
-        .select('id, question_id, is_correct');
+        .select('id, question_id, is_correct')
+        .in('question_id', questionIds);
 
       const { data: dragDropPairs } = await supabase
         .from('dragdrop_pairs')
-        .select('*');
+        .select('*')
+        .in('question_id', questionIds);
 
       let correctCount = 0;
       const payload = [];
