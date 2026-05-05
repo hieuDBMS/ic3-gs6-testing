@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
+import { ZoomableImage } from '../shared/ImageLightbox';
 
 /* ─────────────────── Choice / Multi ─────────────────── */
 const AnswerOption = ({ ans, selected, onSelect, type }) => {
   const isSelected = selected?.includes(ans.id);
   return (
     <label
-      className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all select-none ${
-        isSelected
+      className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all select-none ${isSelected
           ? 'border-indigo-500 bg-indigo-50 shadow-sm'
           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-      }`}
+        }`}
     >
       <input
         type={type === 'multi' ? 'checkbox' : 'radio'}
@@ -21,7 +21,7 @@ const AnswerOption = ({ ans, selected, onSelect, type }) => {
       />
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {ans.image_url && (
-          <img
+          <ZoomableImage
             src={ans.image_url}
             alt=""
             className="h-14 w-20 object-contain rounded-lg border border-gray-100 flex-shrink-0 bg-white"
@@ -43,13 +43,12 @@ const DragItemCard = ({ pair, dragging, onDragStart, onDragEnd, inZone = false }
       draggable
       onDragStart={() => onDragStart(pair)}
       onDragEnd={onDragEnd}
-      className={`flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl border-2 cursor-grab active:cursor-grabbing select-none transition-all ${
-        isBeingDragged
+      className={`flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl border-2 cursor-grab active:cursor-grabbing select-none transition-all ${isBeingDragged
           ? 'opacity-40 scale-95'
           : inZone
-          ? 'border-indigo-300 bg-white shadow-sm hover:shadow-md hover:border-indigo-400'
-          : 'border-blue-200 bg-white shadow-sm hover:shadow-md hover:border-blue-400 hover:-translate-y-0.5'
-      }`}
+            ? 'border-indigo-300 bg-white shadow-sm hover:shadow-md hover:border-indigo-400'
+            : 'border-blue-200 bg-white shadow-sm hover:shadow-md hover:border-blue-400 hover:-translate-y-0.5'
+        }`}
     >
       {pair.drag_image_url && (
         <img
@@ -154,11 +153,10 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
         onDragLeave={() => setDragOverZone(null)}
         onDrop={handleDropOnPool}
         onClick={handlePoolClick}
-        className={`min-h-[90px] border-2 border-dashed rounded-xl p-3 transition-colors ${
-          dragOverZone === 'pool'
+        className={`min-h-[90px] border-2 border-dashed rounded-xl p-3 transition-colors ${dragOverZone === 'pool'
             ? 'border-blue-400 bg-blue-50'
             : 'border-blue-200 bg-blue-50/40'
-        }`}
+          }`}
       >
         <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2 px-1">
           🔵 Kéo các mục vào ô bên dưới
@@ -203,18 +201,16 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
               onDragLeave={() => setDragOverZone(null)}
               onDrop={(e) => handleDropOnZone(e, zone.label)}
               onClick={() => handleZoneClick(zone.label)}
-              className={`min-h-[130px] rounded-xl border-2 transition-all cursor-pointer ${
-                isOver
+              className={`min-h-[130px] rounded-xl border-2 transition-all cursor-pointer ${isOver
                   ? 'border-indigo-500 bg-indigo-50 shadow-md scale-[1.01]'
                   : isTarget
-                  ? 'border-indigo-300 bg-indigo-50/40 shadow-sm'
-                  : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-              }`}
+                    ? 'border-indigo-300 bg-indigo-50/40 shadow-sm'
+                    : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                }`}
             >
               {/* Zone header */}
-              <div className={`px-4 py-2.5 border-b text-sm font-bold text-center transition-colors ${
-                isOver ? 'border-indigo-300 bg-indigo-100 text-indigo-800' : 'border-gray-200 bg-white text-gray-700'
-              }`}>
+              <div className={`px-4 py-2.5 border-b text-sm font-bold text-center transition-colors ${isOver ? 'border-indigo-300 bg-indigo-100 text-indigo-800' : 'border-gray-200 bg-white text-gray-700'
+                }`}>
                 {zone.image_url && (
                   <img src={zone.image_url} alt="" className="h-8 w-auto mx-auto mb-1 object-contain" />
                 )}
@@ -295,7 +291,7 @@ export const QuestionRenderer = ({ question, currentAnswer, onChange }) => {
           {question.content}
         </p>
         {question.image_url && (
-          <img
+          <ZoomableImage
             src={question.image_url}
             alt="Question"
             className="max-h-64 rounded-xl shadow-sm border border-gray-200 object-contain bg-gray-50"

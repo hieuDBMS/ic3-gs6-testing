@@ -6,6 +6,7 @@ import {
   RotateCcw, LayoutDashboard, Minus, ChevronDown, ChevronUp,
   Trophy, Target, Timer
 } from 'lucide-react';
+import { ZoomableImage } from '../components/shared/ImageLightbox';
 
 /* ─── Helpers ─── */
 const formatTime = (secs) => {
@@ -20,7 +21,7 @@ const ResultSkeleton = () => (
   <div className="min-h-screen bg-slate-50 animate-pulse">
     <div className="h-64 bg-gray-200" />
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
-      {[1,2,3].map(i => <div key={i} className="h-32 bg-gray-100 rounded-2xl" />)}
+      {[1, 2, 3].map(i => <div key={i} className="h-32 bg-gray-100 rounded-2xl" />)}
     </div>
   </div>
 );
@@ -64,8 +65,8 @@ const QuestionCard = ({ detail, index }) => {
   const statusBadge = isSkipped
     ? { label: 'Bỏ qua', icon: <Minus className="w-3.5 h-3.5" />, cls: 'bg-gray-100 text-gray-500' }
     : isCorrect
-    ? { label: 'Đúng', icon: <CheckCircle className="w-3.5 h-3.5" />, cls: 'bg-emerald-100 text-emerald-700' }
-    : { label: 'Sai', icon: <XCircle className="w-3.5 h-3.5" />, cls: 'bg-red-100 text-red-700' };
+      ? { label: 'Đúng', icon: <CheckCircle className="w-3.5 h-3.5" />, cls: 'bg-emerald-100 text-emerald-700' }
+      : { label: 'Sai', icon: <XCircle className="w-3.5 h-3.5" />, cls: 'bg-red-100 text-red-700' };
 
   const borderCls = isCorrect ? 'border-emerald-200' : isSkipped ? 'border-gray-200' : 'border-red-200';
 
@@ -95,7 +96,7 @@ const QuestionCard = ({ detail, index }) => {
         <div className="px-5 pb-5 space-y-3 border-t border-gray-100">
           {/* Question image */}
           {q.image_url && (
-            <img src={q.image_url} alt="" className="max-h-48 rounded-xl border border-gray-100 object-contain bg-gray-50 mt-3" />
+            <ZoomableImage src={q.image_url} alt="" className="max-h-48 rounded-xl border border-gray-100 object-contain bg-gray-50 mt-3" />
           )}
 
           {/* Choice / Multi answers */}
@@ -106,20 +107,20 @@ const QuestionCard = ({ detail, index }) => {
                 const isAnsCorrect = ans.is_correct;
 
                 let style = 'border-gray-100 bg-gray-50 text-gray-500';
-                if (wasSelected && isAnsCorrect)   style = 'border-emerald-400 bg-emerald-50 text-emerald-800';
+                if (wasSelected && isAnsCorrect) style = 'border-emerald-400 bg-emerald-50 text-emerald-800';
                 else if (wasSelected && !isAnsCorrect) style = 'border-red-400 bg-red-50 text-red-800';
                 else if (!wasSelected && isAnsCorrect) style = 'border-emerald-200 bg-emerald-50/60 text-emerald-700';
 
                 return (
                   <div key={ans.id} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 text-sm ${style}`}>
                     <span className="flex-shrink-0 w-5 flex justify-center">
-                      {wasSelected && isAnsCorrect  && <CheckCircle className="w-4 h-4 text-emerald-600" />}
+                      {wasSelected && isAnsCorrect && <CheckCircle className="w-4 h-4 text-emerald-600" />}
                       {wasSelected && !isAnsCorrect && <XCircle className="w-4 h-4 text-red-500" />}
                       {!wasSelected && isAnsCorrect && <CheckCircle className="w-4 h-4 text-emerald-400" />}
                       {!wasSelected && !isAnsCorrect && <div className="w-4 h-4 rounded-full border-2 border-gray-200" />}
                     </span>
                     {ans.image_url && (
-                      <img src={ans.image_url} alt="" className="h-10 w-14 object-contain rounded-lg bg-white border border-gray-100 flex-shrink-0" />
+                      <ZoomableImage src={ans.image_url} alt="" className="h-10 w-14 object-contain rounded-lg bg-white border border-gray-100 flex-shrink-0" />
                     )}
                     <span className="flex-1">{ans.content}</span>
                     <div className="flex gap-1.5 flex-shrink-0">
@@ -238,9 +239,9 @@ export const ResultPage = () => {
   const score = Number(attempt.score) || 0;
   const isPassed = score >= 70;
 
-  const correctCount  = details.filter(d => d.is_correct).length;
-  const wrongCount    = details.filter(d => !d.is_correct && (d.selected_answer_ids?.length > 0 || d.dragdrop_response)).length;
-  const skippedCount  = details.filter(d => !d.selected_answer_ids?.length && !d.dragdrop_response).length;
+  const correctCount = details.filter(d => d.is_correct).length;
+  const wrongCount = details.filter(d => !d.is_correct && (d.selected_answer_ids?.length > 0 || d.dragdrop_response)).length;
+  const skippedCount = details.filter(d => !d.selected_answer_ids?.length && !d.dragdrop_response).length;
 
   const examTitle = attempt.exams
     ? `${attempt.exams.exam_levels?.label} · ${attempt.exams.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} ${attempt.exams.exam_number}`
@@ -248,15 +249,15 @@ export const ResultPage = () => {
 
   const filteredDetails = details.filter(d => {
     if (filter === 'correct') return d.is_correct;
-    if (filter === 'wrong')   return !d.is_correct && (d.selected_answer_ids?.length > 0 || d.dragdrop_response);
+    if (filter === 'wrong') return !d.is_correct && (d.selected_answer_ids?.length > 0 || d.dragdrop_response);
     if (filter === 'skipped') return !d.selected_answer_ids?.length && !d.dragdrop_response;
     return true;
   });
 
   const FILTERS = [
-    { key: 'all',     label: `Tất cả (${details.length})` },
+    { key: 'all', label: `Tất cả (${details.length})` },
     { key: 'correct', label: `✓ Đúng (${correctCount})` },
-    { key: 'wrong',   label: `✗ Sai (${wrongCount})` },
+    { key: 'wrong', label: `✗ Sai (${wrongCount})` },
     { key: 'skipped', label: `— Bỏ qua (${skippedCount})` },
   ];
 
@@ -267,7 +268,7 @@ export const ResultPage = () => {
       <div className={`relative overflow-hidden ${isPassed
         ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600'
         : 'bg-gradient-to-br from-red-500 via-rose-500 to-pink-600'
-      }`}>
+        }`}>
         {/* Decorative blobs */}
         <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-8 -left-8 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
@@ -335,7 +336,7 @@ export const ResultPage = () => {
           <div className="max-w-3xl mx-auto px-4 grid grid-cols-3 divide-x divide-white/10">
             {[
               { label: 'Đúng', value: correctCount, color: 'text-emerald-200' },
-              { label: 'Sai',  value: wrongCount,   color: 'text-red-200' },
+              { label: 'Sai', value: wrongCount, color: 'text-red-200' },
               { label: 'Bỏ qua', value: skippedCount, color: 'text-white/60' },
             ].map(s => (
               <div key={s.label} className="py-4 text-center">
@@ -356,11 +357,10 @@ export const ResultPage = () => {
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
-                filter === f.key
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${filter === f.key
                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
-              }`}
+                }`}
             >
               {f.label}
             </button>
