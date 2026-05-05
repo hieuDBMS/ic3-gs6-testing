@@ -289,8 +289,9 @@ export const ExamPage = () => {
 
       const { data: correctAnswers } = await supabase
         .from('answers')
-        .select('id, question_id, is_correct')
-        .in('question_id', questionIds);
+        .select('id, question_id')
+        .in('question_id', questionIds)
+        .eq('is_correct', true);
 
       const { data: dragDropPairs } = await supabase
         .from('dragdrop_pairs')
@@ -306,7 +307,7 @@ export const ExamPage = () => {
 
         if (q.question_type === 'choice' || q.question_type === 'multi') {
           const correctIds = (correctAnswers || [])
-            .filter(a => a.question_id === q.id && a.is_correct)
+            .filter(a => a.question_id === q.id)
             .map(a => a.id);
 
           if (userAnswer && Array.isArray(userAnswer)) {

@@ -149,14 +149,7 @@ export const QuestionsPage = () => {
   useEffect(() => { setPage(1); }, [filters, sortOption]);
 
   const reorderQuestions = async (examId) => {
-    const { data: remaining, error } = await supabase
-      .from('questions')
-      .select('id, order_index')
-      .eq('exam_id', examId)
-      .order('order_index', { ascending: true });
-    if (error || !remaining || remaining.length === 0) return;
-    const updates = remaining.map((q, idx) => ({ id: q.id, order_index: idx + 1 }));
-    await supabase.from('questions').upsert(updates, { onConflict: 'id' });
+    await supabase.rpc('reorder_questions_in_exam', { p_exam_id: examId });
   };
 
   const handleDelete = async (q) => {

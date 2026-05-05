@@ -136,7 +136,6 @@ const QuestionCard = ({ detail, index }) => {
             </div>
           )}
 
-          {/* Drag-drop */}
           {q.question_type === 'dragdrop' && (
             <div className="space-y-2 mt-3">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Kết quả xếp nhóm</p>
@@ -145,32 +144,34 @@ const QuestionCard = ({ detail, index }) => {
                 const correctZone = pair.drop_content;
                 const ok = userZone === correctZone;
                 return (
-                  <div key={pair.id} className={`flex items-center gap-3 p-3 rounded-xl border-2 ${ok ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'}`}>
-                    {/* Drag item */}
-                    <div className="flex flex-col items-center gap-1 p-2 bg-white rounded-xl border border-gray-200 text-center min-w-[72px] flex-shrink-0">
+                  <div key={pair.id} className={`rounded-xl border-2 overflow-hidden ${ok ? 'border-emerald-200' : 'border-red-200'}`}>
+                    {/* Drag item - full width header */}
+                    <div className={`px-3 py-2 flex items-center gap-2 ${ok ? 'bg-emerald-50' : 'bg-red-50'}`}>
                       {pair.drag_image_url && (
-                        <img src={pair.drag_image_url} alt="" className="w-12 h-12 object-contain rounded" />
+                        <img src={pair.drag_image_url} alt="" className="w-8 h-8 object-contain rounded flex-shrink-0" />
                       )}
-                      {pair.drag_content && (
-                        <span className="text-xs font-medium text-gray-700 leading-tight">{pair.drag_content}</span>
-                      )}
+                      <span className="text-sm font-medium text-gray-800 leading-snug flex-1 min-w-0">
+                        {pair.drag_content}
+                      </span>
+                      <span className="flex-shrink-0">
+                        {ok ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-400" />}
+                      </span>
                     </div>
-                    <span className="text-gray-300 text-lg flex-shrink-0">→</span>
-                    <div className="flex-1 space-y-1.5">
-                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium ${ok ? 'border-emerald-300 bg-emerald-100 text-emerald-800' : 'border-red-300 bg-red-100 text-red-700'}`}>
-                        <span className="opacity-60">Bạn chọn:</span>
-                        <span>{userZone || <em className="opacity-50">Bỏ trống</em>}</span>
-                      </div>
+                    {/* Answer zones */}
+                    <div className="px-3 py-2 bg-white flex flex-wrap gap-2 items-center">
+                      <span className="text-[11px] text-gray-400 whitespace-nowrap">Bạn chọn:</span>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ok ? 'bg-emerald-100 border-emerald-200 text-emerald-800' : 'bg-red-100 border-red-200 text-red-700'}`}>
+                        {userZone || <em className="opacity-50 font-normal">Bỏ trống</em>}
+                      </span>
                       {!ok && (
-                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-300 bg-white text-xs font-medium text-emerald-700">
-                          <span className="opacity-60">Đáp án đúng:</span>
-                          {pair.drop_image_url && <img src={pair.drop_image_url} alt="" className="h-5 w-auto object-contain rounded" />}
-                          <span>{correctZone}</span>
-                        </div>
+                        <>
+                          <span className="text-[11px] text-gray-400 whitespace-nowrap">→ Đáp án đúng:</span>
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full border bg-emerald-100 border-emerald-200 text-emerald-800">
+                            {pair.drop_image_url && <img src={pair.drop_image_url} alt="" className="h-4 w-auto inline mr-1 object-contain" />}
+                            {correctZone}
+                          </span>
+                        </>
                       )}
-                    </div>
-                    <div className="flex-shrink-0">
-                      {ok ? <CheckCircle className="w-5 h-5 text-emerald-500" /> : <XCircle className="w-5 h-5 text-red-400" />}
                     </div>
                   </div>
                 );
