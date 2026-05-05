@@ -209,59 +209,59 @@ export const QuestionsPage = () => {
 
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium transition-all
+        <div className={`fixed bottom-4 left-4 right-4 sm:bottom-auto sm:top-4 sm:right-4 sm:left-auto z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium transition-all
           ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'}`}>
           {toast.type === 'error' ? '❌' : '✅'} {toast.msg}
         </div>
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <BookOpen className="w-8 h-8 text-indigo-600" />
+          <h1 className="text-xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
             Ngân hàng Câu hỏi
           </h1>
-          <p className="mt-1.5 text-sm text-gray-500">
+          <p className="mt-1 text-xs sm:text-sm text-gray-500">
             {loading ? 'Đang tải...' : `${totalCount} câu hỏi`}
             {activeFilterCount > 0 && ` · ${activeFilterCount} bộ lọc đang áp dụng`}
           </p>
         </div>
         <button onClick={handleAdd}
-          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors">
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors">
           <Plus className="w-4 h-4" /> Thêm câu hỏi
         </button>
       </div>
 
       {/* Filter Bar */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 p-4 space-y-3">
-        {/* Row 1: Search + Sort + clear */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
-            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm nội dung câu hỏi..."
-              value={filters.search}
-              onChange={e => setFilter('search', e.target.value)}
-              className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400"
-            />
-            {filters.search && (
-              <button onClick={() => setFilter('search', '')} className="text-gray-300 hover:text-gray-500">
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+        {/* Row 1: Search */}
+        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm nội dung câu hỏi..."
+            value={filters.search}
+            onChange={e => setFilter('search', e.target.value)}
+            className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400 min-w-0"
+          />
+          {filters.search && (
+            <button onClick={() => setFilter('search', '')} className="text-gray-300 hover:text-gray-500 flex-shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
 
-          {/* Sort control */}
-          <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 min-w-[190px]">
+        {/* Row 2: Sort + Clear */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
             {sortOption.endsWith(':asc')
               ? <ArrowUp className="w-4 h-4 text-indigo-500 flex-shrink-0" />
               : <ArrowDown className="w-4 h-4 text-indigo-500 flex-shrink-0" />}
             <select
               value={sortOption}
               onChange={e => setSortOption(e.target.value)}
-              className="flex-1 bg-transparent text-sm outline-none text-gray-700 cursor-pointer"
+              className="flex-1 bg-transparent text-sm outline-none text-gray-700 cursor-pointer min-w-0"
             >
               {SORT_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -272,7 +272,7 @@ export const QuestionsPage = () => {
           {activeFilterCount > 0 && (
             <button onClick={clearFilters}
               className="flex items-center gap-1.5 px-3 py-2.5 text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 rounded-xl transition-colors whitespace-nowrap">
-              <X className="w-3.5 h-3.5" /> Xoá lọc ({activeFilterCount})
+              <X className="w-3.5 h-3.5" /> Xoá ({activeFilterCount})
             </button>
           )}
         </div>
@@ -352,9 +352,79 @@ export const QuestionsPage = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Question List */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+
+        {/* ── Mobile Card View (hidden on sm+) ── */}
+        <div className="sm:hidden divide-y divide-gray-100">
+          {loading ? (
+            <div className="px-4 py-14 text-center">
+              <Loader2 className="w-6 h-6 text-indigo-400 animate-spin mx-auto mb-2" />
+              <p className="text-sm text-gray-400">Đang tải dữ liệu...</p>
+            </div>
+          ) : questions.length === 0 ? (
+            <div className="px-4 py-14 text-center">
+              <BookOpen className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+              <p className="text-sm font-medium text-gray-400">Không có câu hỏi nào</p>
+              <p className="text-xs text-gray-300 mt-1">
+                {activeFilterCount > 0 ? 'Thử thay đổi bộ lọc' : 'Bấm "Thêm câu hỏi" để bắt đầu'}
+              </p>
+            </div>
+          ) : questions.map((q, rowIdx) => {
+            const rowNumber = (page - 1) * PAGE_SIZE + rowIdx + 1;
+            const typeInfo = QUESTION_TYPE_LABELS[q.question_type] || {};
+            const correctCount = q.answers?.filter(a => a.is_correct).length || 0;
+            const totalAnswers = q.answers?.length || 0;
+            const pairsCount = q.dragdrop_pairs?.length || 0;
+            const levelLabel = q.exams?.exam_levels
+              ? `${q.exams.exam_levels.version} ${q.exams.exam_levels.label}` : '';
+            return (
+              <div key={q.id} className="p-4 active:bg-gray-50 transition-colors">
+                <div className="flex items-start gap-3">
+                  {q.image_url && (
+                    <img src={q.image_url} alt="" className="w-11 h-11 rounded-lg object-cover flex-shrink-0 border border-gray-100 mt-0.5" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <p className="text-sm font-medium text-gray-900 line-clamp-3 flex-1 leading-snug">{q.content}</p>
+                      <span className="text-xs text-gray-300 font-mono flex-shrink-0">#{rowNumber}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${typeInfo.color}`}>
+                        {typeInfo.label}
+                      </span>
+                      {levelLabel && <span className="text-xs text-gray-500">{levelLabel}</span>}
+                      <span className="text-xs text-gray-400">
+                        {q.exams?.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {q.exams?.exam_number}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">
+                        {q.question_type === 'dragdrop'
+                          ? `🔀 ${pairsCount} cặp`
+                          : <>{totalAnswers} đáp án · <span className="text-emerald-600 font-medium">{correctCount} đúng</span></>
+                        }
+                      </span>
+                      <div className="flex items-center gap-0.5">
+                        <button onClick={() => handleEdit(q)}
+                          className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDelete(q)}
+                          className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Desktop Table (hidden on mobile) ── */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
@@ -488,45 +558,62 @@ export const QuestionsPage = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
-            <p className="text-sm text-gray-500">
-              Hiển thị {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, totalCount)} trong {totalCount} câu hỏi
-            </p>
-            <div className="flex items-center gap-1">
+          <div className="border-t border-gray-100 bg-gray-50">
+            {/* Mobile: simple prev / page X of Y / next */}
+            <div className="flex items-center justify-between px-4 py-3 sm:hidden">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white hover:border-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                <ChevronLeft className="w-4 h-4" />
+                className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                <ChevronLeft className="w-4 h-4" /> Trước
               </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .reduce((acc, p, idx, arr) => {
-                  if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
-                  acc.push(p);
-                  return acc;
-                }, [])
-                .map((item, i) =>
-                  item === '...' ? (
-                    <span key={`ellipsis-${i}`} className="px-2 text-gray-400 text-sm">…</span>
-                  ) : (
-                    <button key={item} onClick={() => setPage(item)}
-                      className={`min-w-[36px] h-9 text-sm rounded-lg border transition-colors font-medium
-                        ${page === item
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                          : 'border-gray-200 text-gray-600 hover:bg-white hover:border-indigo-300'}`}>
-                      {item}
-                    </button>
-                  )
-                )}
-
+              <span className="text-sm text-gray-500">Trang <strong>{page}</strong> / {totalPages}</span>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white hover:border-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                <ChevronRight className="w-4 h-4" />
+                className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                Sau <ChevronRight className="w-4 h-4" />
               </button>
+            </div>
+            {/* Desktop: full page numbers */}
+            <div className="hidden sm:flex items-center justify-between px-6 py-4">
+              <p className="text-sm text-gray-500">
+                Hiển thị {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, totalCount)} trong {totalCount} câu hỏi
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white hover:border-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                  .reduce((acc, p, idx, arr) => {
+                    if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((item, i) =>
+                    item === '...' ? (
+                      <span key={`ellipsis-${i}`} className="px-2 text-gray-400 text-sm">…</span>
+                    ) : (
+                      <button key={item} onClick={() => setPage(item)}
+                        className={`min-w-[36px] h-9 text-sm rounded-lg border transition-colors font-medium
+                          ${page === item
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                            : 'border-gray-200 text-gray-600 hover:bg-white hover:border-indigo-300'}`}>
+                        {item}
+                      </button>
+                    )
+                  )}
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white hover:border-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         )}

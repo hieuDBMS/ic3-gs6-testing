@@ -41,18 +41,18 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-700">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm font-medium text-gray-700 flex items-center flex-wrap gap-1.5">
           Đáp án
           {multiSelect
-            ? <span className="ml-2 text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">Chọn nhiều đáp án đúng</span>
-            : <span className="ml-2 text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Chọn một đáp án đúng</span>
+            ? <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">Chọn nhiều đáp án đúng</span>
+            : <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Chọn một đáp án đúng</span>
           }
         </p>
         <button
           type="button"
           onClick={addAnswer}
-          className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium gap-1"
+          className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium gap-1 whitespace-nowrap flex-shrink-0"
         >
           <Plus className="w-4 h-4" /> Thêm đáp án
         </button>
@@ -104,7 +104,7 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
                 onChange={(e) => update(index, 'content', e.target.value)}
                 placeholder={`Nội dung đáp án ${String.fromCharCode(65 + index)}...`}
                 rows={2}
-                className="flex-1 text-sm border-0 bg-transparent resize-none outline-none focus:ring-0 placeholder-gray-300"
+                className="flex-1 min-w-0 text-sm border-0 bg-transparent resize-none outline-none focus:ring-0 placeholder-gray-300"
               />
 
               {/* Remove */}
@@ -118,7 +118,7 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
             </div>
 
             {/* Image uploader */}
-            <div className="ml-[64px] mt-2">
+            <div className="ml-[52px] sm:ml-[64px] mt-2">
               <ImageUploader
                 bucket="answer-images"
                 value={answer.image_url}

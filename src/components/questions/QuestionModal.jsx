@@ -225,26 +225,26 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
       />
 
       {/* Modal */}
-      <div className="relative min-h-full flex items-start justify-center p-4 pt-8 pb-16">
-        <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col">
+      <div className="relative min-h-full sm:flex sm:items-start sm:justify-center sm:p-4 sm:pt-8 sm:pb-16">
+        <div className="relative w-full sm:max-w-3xl bg-white sm:rounded-2xl shadow-2xl flex flex-col min-h-screen sm:min-h-0">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                 {editQuestion ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới'}
               </h2>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <p className="text-xs sm:text-sm text-gray-500 mt-0.5 hidden sm:block">
                 Điền đầy đủ thông tin để lưu câu hỏi vào ngân hàng đề
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 type="button"
                 onClick={() => setShowPreview((v) => !v)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"
+                className="flex items-center gap-1.5 px-2.5 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600"
               >
                 {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {showPreview ? 'Ẩn xem trước' : 'Xem trước'}
+                <span className="hidden sm:inline">{showPreview ? 'Ẩn xem trước' : 'Xem trước'}</span>
               </button>
               <button
                 onClick={handleClose}
@@ -256,7 +256,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
           </div>
 
           {/* Body */}
-          <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(100vh-200px)]">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6 overflow-y-auto flex-1">
 
             {/* === Section 1: Chọn bài thi === */}
             <div className="bg-gray-50 rounded-xl p-4 space-y-4">
@@ -456,11 +456,11 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                         </button>
                       </div>
 
-                      {/* Two-column layout */}
-                      <div className="grid grid-cols-[1fr_32px_1fr] gap-0">
+                      {/* Two-column on desktop, stacked on mobile */}
+                      <div className="flex flex-col sm:grid sm:grid-cols-[1fr_32px_1fr] gap-0">
 
                         {/* ── Drag side ── */}
-                        <div className="p-4 space-y-3 border-r border-gray-200">
+                        <div className="p-4 space-y-3 border-b sm:border-b-0 sm:border-r border-gray-200">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700">
                               🔵 Kéo (Drag)
@@ -480,8 +480,8 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                           />
                         </div>
 
-                        {/* Arrow divider */}
-                        <div className="flex items-center justify-center bg-gray-50">
+                        {/* Arrow divider (desktop only) */}
+                        <div className="hidden sm:flex items-center justify-center bg-gray-50">
                           <ArrowLeftRight className="w-4 h-4 text-gray-300" />
                         </div>
 
@@ -592,11 +592,11 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 px-4 sm:px-6 py-4 border-t border-gray-100 bg-gray-50 sm:rounded-b-2xl">
             <button
               type="button"
               onClick={handleClose}
-              className="px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="w-full sm:w-auto px-5 py-3 sm:py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl sm:rounded-lg transition-colors text-center"
             >
               Huỷ
             </button>
@@ -604,7 +604,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl sm:rounded-lg transition-colors disabled:opacity-60"
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

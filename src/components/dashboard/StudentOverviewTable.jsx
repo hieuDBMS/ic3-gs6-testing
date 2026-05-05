@@ -79,7 +79,7 @@ export const StudentOverviewTable = () => {
   const [allStudents, setAllStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activityFilter, setActivityFilter] = useState('all'); // all | active | inactive
+  const [activityFilter, setActivityFilter] = useState('active'); // all | active | inactive
   const [page, setPage] = useState(0);
 
   useEffect(() => { fetchStudents(); }, []);
