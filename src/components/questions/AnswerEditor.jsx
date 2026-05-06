@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { ImageUploader } from './ImageUploader';
 
@@ -17,10 +17,14 @@ const DEFAULT_ANSWER = () => ({
  * @param {boolean} props.multiSelect - true for 'multi', false for 'choice'
  */
 export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
+  // Unique group name per AnswerEditor instance to avoid radio name conflicts
+  // when multiple modals or forms exist in the same page
+  const groupName = useId();
+
   const update = (index, field, val) => {
     const next = answers.map((a, i) => {
       if (i !== index) {
-        // For single-choice: deselect others when one is selected
+        // For single-choice: deselect all others when one is selected
         if (!multiSelect && field === 'is_correct' && val) {
           return { ...a, is_correct: false };
         }
@@ -28,6 +32,16 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
       }
       return { ...a, [field]: val };
     });
+    onChange(next);
+  };
+
+  // For single-choice (radio), clicking a radio only fires onChange for the
+  // selected element — browser deselects others visually but React state is
+  // NOT updated for them. We must explicitly set is_correct=false for all
+  // other answers through the update() helper above.
+  // For safety, also provide a dedicated radio handler:
+  const handleRadioChange = (index) => {
+    const next = answers.map((a, i) => ({ ...a, is_correct: i === index }));
     onChange(next);
   };
 
@@ -87,9 +101,13 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
               <label className="flex items-center gap-1.5 cursor-pointer flex-shrink-0 pt-1">
                 <input
                   type={multiSelect ? 'checkbox' : 'radio'}
-                  name="correct-answer"
+                  name={groupName}
                   checked={answer.is_correct}
-                  onChange={(e) => update(index, 'is_correct', e.target.checked)}
+                  onChange={
+                    multiSelect
+                      ? (e) => update(index, 'is_correct', e.target.checked)
+                      : () => handleRadioChange(index)
+                  }
                   className={multiSelect
                     ? 'w-4 h-4 rounded accent-emerald-500'
                     : 'w-4 h-4 accent-emerald-500'
