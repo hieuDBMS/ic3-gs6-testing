@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
@@ -7,12 +7,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Track current user to prevent unmounting app on tab switch
+  const userIdRef = useRef(null);
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
+        userIdRef.current = session.user.id;
         setLoading(true);
         fetchProfile(session.user.id);
       } else {
@@ -23,13 +27,22 @@ export const AuthProvider = ({ children }) => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        // Only fetch profile on initial load or sign in, not on token refresh
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        if (userIdRef.current !== session.user.id) {
+          // New user or fresh login
+          userIdRef.current = session.user.id;
           setLoading(true);
           fetchProfile(session.user.id);
+        } else {
+          // Same user, e.g. returning to tab (event === 'SIGNED_IN' or 'TOKEN_REFRESHED')
+          // We can refresh the profile in the background without unmounting the app
+          if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+            fetchProfile(session.user.id);
+          }
         }
       } else if (event === 'SIGNED_OUT') {
+        userIdRef.current = null;
         setProfile(null);
         setLoading(false);
       }

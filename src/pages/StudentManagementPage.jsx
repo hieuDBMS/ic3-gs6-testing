@@ -3,8 +3,9 @@ import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import {
   Plus, Trash2, Key, Search, X, Eye, EyeOff,
-  Users, UserCheck, UserX, ChevronLeft, ChevronRight, AlertTriangle,
-  CheckCircle, RotateCcw, GraduationCap, BookOpen, TrendingUp
+  Users, ChevronLeft, ChevronRight, AlertTriangle,
+  CheckCircle, RotateCcw, GraduationCap, BookOpen, TrendingUp,
+  Building2, Edit2, School
 } from 'lucide-react';
 
 const PAGE_SIZE = 20;
@@ -123,6 +124,12 @@ const StudentCard = ({ student, onResetPassword, onDelete }) => (
         <div className="min-w-0">
           <div className="font-semibold text-gray-900 text-sm truncate">{student.full_name}</div>
           <div className="text-xs text-gray-500 truncate">{student.email}</div>
+          {(student.school || student.class_name) && (
+            <div className="flex items-center gap-2 mt-0.5">
+              {student.school && <span className="text-[10px] text-violet-600 font-semibold">{student.school}</span>}
+              {student.class_name && <span className="text-[10px] text-emerald-600">{student.class_name}</span>}
+            </div>
+          )}
         </div>
       </div>
       <span className={`flex-shrink-0 px-2 py-0.5 text-xs font-semibold rounded-full ${student.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -190,11 +197,24 @@ export const StudentManagementPage = () => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
-  const [attemptFilter, setAttemptFilter] = useState('all'); // all | attempted | not-attempted
+  const [attemptFilter, setAttemptFilter] = useState('all');
   const [page, setPage] = useState(1);
   const { toasts, add: addToast, remove: removeToast } = useToast();
 
-  useEffect(() => { fetchStudents(); }, []);
+  // School / class state
+  const [schools, setSchools] = useState([]);
+  const [schoolFilter, setSchoolFilter] = useState('');
+  const [classFilter, setClassFilter] = useState('');
+  const [studentSchool, setStudentSchool] = useState('');
+  const [studentClass, setStudentClass] = useState('');
+  const [newSchoolName, setNewSchoolName] = useState('');
+  const [schoolSaving, setSchoolSaving] = useState(false);
+  const [schoolError, setSchoolError] = useState('');
+  const [editingSchoolId, setEditingSchoolId] = useState(null);
+  const [editingSchoolName, setEditingSchoolName] = useState('');
+  const [schoolUpdating, setSchoolUpdating] = useState(false);
+
+  useEffect(() => { fetchStudents(); fetchSchools(); }, []);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -202,7 +222,7 @@ export const StudentManagementPage = () => {
       const [{ data: profiles }, { data: attempts }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id, full_name, email, created_at, is_active')
+          .select('id, full_name, email, created_at, is_active, school, class_name')
           .eq('role', 'student')
           .order('created_at', { ascending: false }),
         supabase
@@ -227,6 +247,63 @@ export const StudentManagementPage = () => {
     }
   };
 
+  const fetchSchools = async () => {
+    try {
+      const { data: refreshed } = await supabase.auth.refreshSession();
+      const token = refreshed?.session?.access_token;
+      if (!token) return;
+      const { data } = await supabase.functions.invoke('manage-school', { body: { action: 'list' } });
+      if (data?.schools) setSchools(data.schools);
+    } catch {}
+  };
+
+  const handleCreateSchool = async (e) => {
+    e.preventDefault(); setSchoolSaving(true); setSchoolError('');
+    try {
+      const { data } = await supabase.functions.invoke('manage-school', { body: { action: 'create', name: newSchoolName } });
+      if (data?.error) { setSchoolError(data.error); return; }
+      setNewSchoolName('');
+      await fetchSchools();
+      addToast('Đã thêm trường!', 'success');
+    } catch (err) { setSchoolError(err.message); }
+    finally { setSchoolSaving(false); }
+  };
+
+  const handleUpdateSchool = async (schoolId) => {
+    if (!editingSchoolName.trim()) {
+      setSchoolError('Tên trường không được để trống');
+      return;
+    }
+    setSchoolUpdating(true); setSchoolError('');
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-school', { 
+        body: { action: 'update', schoolId, name: editingSchoolName.trim() } 
+      });
+      if (error || data?.error) {
+        // Fallback to direct supabase update if edge function doesn't support 'update'
+        const { error: sbError } = await supabase.from('schools')
+          .update({ name: editingSchoolName.trim() })
+          .eq('id', schoolId);
+        if (sbError) throw sbError;
+      }
+      setEditingSchoolId(null);
+      setEditingSchoolName('');
+      await fetchSchools();
+      addToast('Đã cập nhật tên trường!', 'success');
+    } catch (err) { setSchoolError(err.message || 'Có lỗi xảy ra'); }
+    finally { setSchoolUpdating(false); }
+  };
+
+  const handleDeleteSchool = async (school) => {
+    if (!window.confirm(`Xoá trường "${school.name}"? Học sinh thuộc trường này sẽ không còn được gán trường.`)) return;
+    try {
+      const { data } = await supabase.functions.invoke('manage-school', { body: { action: 'delete', schoolId: school.id } });
+      if (data?.error) { addToast(data.error, 'error'); return; }
+      await fetchSchools(); await fetchStudents();
+      addToast('Đã xoá trường!', 'success');
+    } catch (err) { addToast(err.message, 'error'); }
+  };
+
   const callEdgeFunction = async (body) => {
     const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
     if (refreshErr || !refreshed?.session) throw new Error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
@@ -236,16 +313,27 @@ export const StudentManagementPage = () => {
     return data;
   };
 
-  const openCreate = () => { setModal('create'); setFullName(''); setEmail(''); setPassword(''); setShowPwd(false); setError(''); };
+  const openCreate = () => { setModal('create'); setFullName(''); setEmail(''); setPassword(''); setShowPwd(false); setError(''); setStudentSchool(''); setStudentClass(''); };
   const openResetPassword = (s) => { setModal('reset-password'); setSelectedStudent(s); setPassword(''); setShowPwd(false); setError(''); };
+  const openEditSchoolClass = (s) => { setModal('edit-school'); setSelectedStudent(s); setStudentSchool(s.school || ''); setStudentClass(s.class_name || ''); setError(''); };
   const closeModal = () => { setModal(null); setError(''); };
 
   const handleCreate = async (e) => {
     e.preventDefault(); setSaving(true); setError('');
     try {
-      await callEdgeFunction({ action: 'create', fullName, email, password });
+      await callEdgeFunction({ action: 'create', fullName, email, password, school: studentSchool || null, className: studentClass || null });
       closeModal(); fetchStudents();
       addToast('Đã tạo tài khoản học sinh thành công!', 'success');
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
+  };
+
+  const handleEditSchoolClass = async (e) => {
+    e.preventDefault(); setSaving(true); setError('');
+    try {
+      await callEdgeFunction({ action: 'update', studentId: selectedStudent.id, school: studentSchool || null, className: studentClass || null });
+      closeModal(); fetchStudents();
+      addToast('Đã cập nhật thông tin học sinh!', 'success');
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }
   };
@@ -284,12 +372,19 @@ export const StudentManagementPage = () => {
       attemptFilter === 'all' ||
       (attemptFilter === 'attempted' && s.totalAttempts > 0) ||
       (attemptFilter === 'not-attempted' && s.totalAttempts === 0);
-    return matchSearch && matchAttempt;
+    const matchSchool = !schoolFilter || s.school === schoolFilter;
+    const matchClass = !classFilter ||
+      s.class_name?.toLowerCase().includes(classFilter.toLowerCase());
+    return matchSearch && matchAttempt && matchSchool && matchClass;
   });
   const activeCount = students.filter(s => s.is_active).length;
   const attemptedCount = students.filter(s => s.totalAttempts > 0).length;
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  // Unique class names for class filter dropdown
+  const allClasses = [...new Set(students.map(s => s.class_name).filter(Boolean))].sort();
+  const resetFilters = () => { setSearchTerm(''); setAttemptFilter('all'); setSchoolFilter(''); setClassFilter(''); setPage(1); };
+  const hasActiveFilters = searchTerm || attemptFilter !== 'all' || schoolFilter || classFilter;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -303,12 +398,20 @@ export const StudentManagementPage = () => {
           </div>
           <p className="text-sm text-gray-500">Thêm, đặt lại mật khẩu, xoá và theo dõi tiến độ học sinh.</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold shadow-sm text-sm w-full sm:w-auto"
-        >
-          <Plus className="w-4 h-4" /> Thêm học sinh
-        </button>
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <button
+            onClick={() => { setModal('manage-schools'); setSchoolError(''); }}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition font-semibold shadow-sm text-sm"
+          >
+            <Building2 className="w-4 h-4" /> Quản lý Trường
+          </button>
+          <button
+            onClick={openCreate}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold shadow-sm text-sm"
+          >
+            <Plus className="w-4 h-4" /> Thêm học sinh
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -336,7 +439,7 @@ export const StudentManagementPage = () => {
       </div>
 
       {/* Filter chips */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
         {[
           { key: 'all', label: 'Tất cả', count: students.length },
           { key: 'attempted', label: '✓ Đã làm bài', count: attemptedCount },
@@ -357,9 +460,41 @@ export const StudentManagementPage = () => {
             }`}>{count}</span>
           </button>
         ))}
-        <span className="ml-auto text-xs text-gray-400">
-          {filtered.length} kết quả
-        </span>
+        {hasActiveFilters && (
+          <button onClick={resetFilters} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 text-xs text-gray-500 hover:border-red-300 hover:text-red-500 transition ml-auto">
+            <X className="w-3 h-3" /> Xoá bộ lọc
+          </button>
+        )}
+        {!hasActiveFilters && (
+          <span className="ml-auto text-xs text-gray-400">{filtered.length} kết quả</span>
+        )}
+      </div>
+
+      {/* School / Class filter row */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex items-center gap-1.5 bg-white rounded-xl border border-gray-200 px-3 py-2 min-w-[160px] flex-1 sm:flex-none">
+          <Building2 className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+          <select
+            value={schoolFilter}
+            onChange={e => { setSchoolFilter(e.target.value); setPage(1); }}
+            className="flex-1 outline-none text-xs text-gray-700 bg-transparent cursor-pointer"
+          >
+            <option value="">Tất cả trường</option>
+            {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        </div>
+        <div className="flex items-center gap-1.5 bg-white rounded-xl border border-gray-200 px-3 py-2 min-w-[140px] flex-1 sm:flex-none">
+          <School className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+          <select
+            value={classFilter}
+            onChange={e => { setClassFilter(e.target.value); setPage(1); }}
+            className="flex-1 outline-none text-xs text-gray-700 bg-transparent cursor-pointer"
+          >
+            <option value="">Tất cả lớp</option>
+            {allClasses.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <span className="ml-auto self-center text-xs text-gray-400">{filtered.length} kết quả</span>
       </div>
 
       {/* Content */}
@@ -398,9 +533,9 @@ export const StudentManagementPage = () => {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Học sinh</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Trường / Lớp</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Tiến độ làm bài</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Ngày tham gia</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Trạng thái</th>
                   <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Thao tác</th>
                 </tr>
               </thead>
@@ -439,10 +574,26 @@ export const StudentManagementPage = () => {
                     <td className="px-6 py-4 text-sm text-gray-500">
                       {new Date(student.created_at).toLocaleDateString('vi-VN')}
                     </td>
+                    {/* School / Class cell */}
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${student.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {student.is_active ? 'Hoạt động' : 'Đã khoá'}
-                      </span>
+                      <div className="space-y-0.5">
+                        {student.school ? (
+                          <div className="flex items-center gap-1 text-xs text-violet-700 font-semibold">
+                            <Building2 className="w-3 h-3" />
+                            <span>{schools.find(s => s.id === student.school)?.name || student.school}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-gray-300">Chưa gán trường</span>
+                        )}
+                        {student.class_name ? (
+                          <div className="flex items-center gap-1 text-xs text-emerald-700">
+                            <School className="w-3 h-3" />
+                            <span>{student.class_name}</span>
+                          </div>
+                        ) : (
+                          !student.school && null
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-1">
@@ -453,11 +604,18 @@ export const StudentManagementPage = () => {
                           <ChevronRight className="w-3 h-3" /> Tiến độ
                         </Link>
                         <button
+                          onClick={() => openEditSchoolClass(student)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-50 text-violet-600 text-xs font-semibold hover:bg-violet-100 transition"
+                          title="Sửa trường/lớp"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </button>
+                        <button
                           onClick={() => openResetPassword(student)}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 text-xs font-semibold hover:bg-amber-100 transition"
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 text-amber-600 text-xs font-semibold hover:bg-amber-100 transition"
                           title="Đặt lại mật khẩu"
                         >
-                          <Key className="w-3 h-3" /> Mật khẩu
+                          <Key className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => openDeleteConfirm(student)}
@@ -535,7 +693,7 @@ export const StudentManagementPage = () => {
       )}
 
       {/* ── Create / Reset Password Modal ── */}
-      {modal && (
+      {modal && modal !== 'edit-school' && modal !== 'manage-schools' && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 px-4 pb-4 sm:pb-0 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
             <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition">
@@ -584,6 +742,27 @@ export const StudentManagementPage = () => {
                       className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
                   </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Trường</label>
+                      <select
+                        value={studentSchool} onChange={e => setStudentSchool(e.target.value)}
+                        className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white"
+                      >
+                        <option value="">-- Chọn trường --</option>
+                        {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lớp</label>
+                      <input
+                        type="text"
+                        value={studentClass} onChange={e => setStudentClass(e.target.value)}
+                        placeholder="VD: 10A1"
+                        className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      />
+                    </div>
+                  </div>
                 </>
               )}
 
@@ -626,6 +805,122 @@ export const StudentManagementPage = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Edit School/Class Modal ── */}
+      {modal === 'edit-school' && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 px-4 pb-4 sm:pb-0 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative">
+            <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"><X className="w-5 h-5" /></button>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                <Edit2 className="w-5 h-5 text-violet-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-gray-900">Sửa Trường / Lớp</h2>
+                <p className="text-xs text-gray-500">{selectedStudent?.full_name}</p>
+              </div>
+            </div>
+            {error && <div className="mb-4 flex items-start gap-2 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100"><AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" /><span>{error}</span></div>}
+            <form onSubmit={handleEditSchoolClass} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Trường</label>
+                <select
+                  value={studentSchool} onChange={e => setStudentSchool(e.target.value)}
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition bg-white"
+                >
+                  <option value="">-- Không gán trường --</option>
+                  {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Lớp</label>
+                <input
+                  type="text"
+                  value={studentClass} onChange={e => setStudentClass(e.target.value)}
+                  placeholder="VD: 10A1"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                />
+              </div>
+              <div className="flex gap-3 pt-1">
+                <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2">
+                  {saving ? <><RotateCcw className="w-4 h-4 animate-spin" /> Đang lưu...</> : 'Lưu thay đổi'}
+                </button>
+                <button type="button" onClick={closeModal} className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition">Huỷ</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Manage Schools Modal ── */}
+      {modal === 'manage-schools' && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 px-4 pb-4 sm:pb-0 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative">
+            <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"><X className="w-5 h-5" /></button>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-violet-600" />
+              </div>
+              <h2 className="text-base font-bold text-gray-900">Quản lý Trường</h2>
+            </div>
+            {/* Add school form */}
+            <form onSubmit={handleCreateSchool} className="flex gap-2 mb-4">
+              <input
+                type="text" required autoFocus
+                value={newSchoolName} onChange={e => setNewSchoolName(e.target.value)}
+                placeholder="Tên trường mới..."
+                className="flex-1 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+              />
+              <button type="submit" disabled={schoolSaving} className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-semibold text-sm transition disabled:opacity-50 flex items-center gap-1.5">
+                {schoolSaving ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Thêm
+              </button>
+            </form>
+            {schoolError && <p className="text-xs text-red-500 mb-3">{schoolError}</p>}
+            {/* Schools list */}
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {schools.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-6">Chưa có trường nào. Thêm trường đầu tiên!</p>
+              ) : schools.map(s => (
+                <div key={s.id} className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
+                  {editingSchoolId === s.id ? (
+                    <div className="flex items-center gap-2 w-full">
+                      <input
+                        type="text" autoFocus
+                        value={editingSchoolName}
+                        onChange={e => setEditingSchoolName(e.target.value)}
+                        className="flex-1 px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+                      />
+                      <button onClick={() => handleUpdateSchool(s.id)} disabled={schoolUpdating} className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition">
+                        {schoolUpdating ? <RotateCcw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                      </button>
+                      <button onClick={() => setEditingSchoolId(null)} className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-200 transition">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-violet-400" />
+                        <span className="text-sm font-medium text-gray-800">{s.name}</span>
+                        <span className="text-[10px] text-gray-400">({students.filter(st => st.school === s.id).length} HS)</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => { setEditingSchoolId(s.id); setEditingSchoolName(s.name); }} className="p-1.5 rounded-lg text-gray-400 hover:bg-violet-50 hover:text-violet-600 transition">
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => handleDeleteSchool(s)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button onClick={closeModal} className="mt-4 w-full py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition text-sm">Xong</button>
           </div>
         </div>
       )}

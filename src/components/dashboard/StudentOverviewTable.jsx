@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
-import { Search, Users, ArrowRight, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Users, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Building2, School } from 'lucide-react';
 
 const PAGE_SIZE = 10;
 
@@ -77,9 +77,13 @@ const Chip = ({ label, active, onClick }) => (
 
 export const StudentOverviewTable = () => {
   const [allStudents, setAllStudents] = useState([]);
+  const [schools, setSchools] = useState([]);
+  const [allClasses, setAllClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activityFilter, setActivityFilter] = useState('active'); // all | active | inactive
+  const [schoolFilter, setSchoolFilter] = useState('');
+  const [classFilter, setClassFilter] = useState('');
   const [page, setPage] = useState(0);
 
   useEffect(() => { fetchStudents(); }, []);
@@ -87,12 +91,20 @@ export const StudentOverviewTable = () => {
   const fetchStudents = async () => {
     setLoading(true);
     try {
+      const { data: schoolData } = await supabase.from('schools').select('*').order('name');
+      if (schoolData) setSchools(schoolData);
+
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'student')
         .order('full_name');
       if (profileError) throw profileError;
+
+      if (profiles) {
+        const classes = [...new Set(profiles.map(p => p.class_name).filter(Boolean))].sort();
+        setAllClasses(classes);
+      }
 
       const { data: attempts, error: attemptsError } = await supabase
         .from('exam_attempts')
@@ -128,7 +140,9 @@ export const StudentOverviewTable = () => {
       activityFilter === 'all' ||
       (activityFilter === 'active' && s.totalExams > 0) ||
       (activityFilter === 'inactive' && s.totalExams === 0);
-    return matchSearch && matchActivity;
+    const matchSchool = !schoolFilter || s.school === schoolFilter;
+    const matchClass = !classFilter || s.class_name === classFilter;
+    return matchSearch && matchActivity && matchSchool && matchClass;
   });
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -142,7 +156,7 @@ export const StudentOverviewTable = () => {
   return (
     <div>
       {/* ── Search + activity filter ── */}
-      <div className="px-5 py-3 border-b border-gray-100 space-y-2.5">
+      <div className="px-5 py-3 border-b border-gray-100 space-y-3">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -155,12 +169,39 @@ export const StudentOverviewTable = () => {
           />
         </div>
 
-        {/* Activity filter */}
-        <div className="flex items-center gap-1.5">
+        {/* Filters Row */}
+        <div className="flex flex-wrap items-center gap-2">
           <Chip label="Tất cả" active={activityFilter === 'all'} onClick={() => handleFilterChange(setActivityFilter, 'all')} />
           <Chip label="✓ Đã làm bài" active={activityFilter === 'active'} onClick={() => handleFilterChange(setActivityFilter, 'active')} />
           <Chip label="○ Chưa làm bài" active={activityFilter === 'inactive'} onClick={() => handleFilterChange(setActivityFilter, 'inactive')} />
-          <span className="ml-auto text-xs text-gray-400 font-medium">
+        </div>
+
+        {/* School & Class Row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-gray-50 rounded-xl border border-gray-200 px-3 py-1.5 flex-1 sm:flex-none">
+            <Building2 className="w-3.5 h-3.5 text-violet-500" />
+            <select
+              value={schoolFilter}
+              onChange={e => handleFilterChange(setSchoolFilter, e.target.value)}
+              className="flex-1 outline-none text-xs text-gray-700 bg-transparent cursor-pointer"
+            >
+              <option value="">Tất cả trường</option>
+              {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <div className="flex items-center gap-1.5 bg-gray-50 rounded-xl border border-gray-200 px-3 py-1.5 flex-1 sm:flex-none">
+            <School className="w-3.5 h-3.5 text-emerald-500" />
+            <select
+              value={classFilter}
+              onChange={e => handleFilterChange(setClassFilter, e.target.value)}
+              className="flex-1 outline-none text-xs text-gray-700 bg-transparent cursor-pointer"
+            >
+              <option value="">Tất cả lớp</option>
+              {allClasses.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          <span className="ml-auto text-xs text-gray-400 font-medium self-center">
             {filtered.length} học sinh
           </span>
         </div>
@@ -188,7 +229,23 @@ export const StudentOverviewTable = () => {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-800 truncate">{student.full_name || '(Chưa đặt tên)'}</p>
-                <p className="text-xs text-gray-400 truncate">{student.email}</p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                  <p className="text-xs text-gray-400 truncate">{student.email}</p>
+                  {(student.school || student.class_name) && (
+                    <div className="flex items-center gap-1.5 mt-0.5 sm:mt-0 sm:border-l border-gray-200 sm:pl-2">
+                      {student.school && (
+                        <span className="text-[10px] text-violet-600 font-medium">
+                          {schools.find(s => s.id === student.school)?.name || student.school}
+                        </span>
+                      )}
+                      {student.class_name && (
+                        <span className="text-[10px] text-emerald-600 font-medium">
+                          {student.school && '· '}Lớp {student.class_name}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {student.totalExams > 0 ? (
                   <div className="mt-1.5 max-w-[160px]">
                     <ScoreBar score={student.avgScore} />
