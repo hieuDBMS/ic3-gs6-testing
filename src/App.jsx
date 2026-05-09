@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/shared/ProtectedRoute';
 import { Navbar } from './components/shared/Navbar';
@@ -52,6 +53,7 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          <SpeedInsights />
         </div>
       </Router>
     </AuthProvider>
