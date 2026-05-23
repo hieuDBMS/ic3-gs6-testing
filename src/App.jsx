@@ -12,6 +12,8 @@ import { QuestionsPage } from './pages/QuestionsPage';
 import { StudentManagementPage } from './pages/StudentManagementPage';
 import { StudentProgressPage } from './pages/StudentProgressPage';
 import { ExamStructurePage } from './pages/ExamStructurePage';
+import { FlashcardListPage } from './pages/FlashcardListPage';
+import { FlashcardPage } from './pages/FlashcardPage';
 
 const Layout = () => (
   <>
@@ -36,6 +38,8 @@ function App() {
                 <Route path="/exam" element={<ExamListPage />} />
                 <Route path="/exam/:examId" element={<ExamPage />} />
                 <Route path="/exam/:examId/result" element={<ResultPage />} />
+                <Route path="/flashcard" element={<FlashcardListPage />} />
+                <Route path="/flashcard/:examId" element={<FlashcardPage />} />
               </Route>
             </Route>
 

@@ -114,7 +114,11 @@ const ScoreBar = ({ score }) => {
 };
 
 /* ─── Student Card (mobile) ─────────────────────────────────── */
-const StudentCard = ({ student, onResetPassword, onDelete }) => (
+const StudentCard = ({ student, onResetPassword, onDelete, schools = [] }) => {
+  const schoolName = student.school
+    ? (schools.find(s => s.id === student.school)?.name || null)
+    : null;
+  return (
   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
     <div className="flex items-start justify-between gap-2 mb-2">
       <div className="flex items-center gap-3 min-w-0">
@@ -124,9 +128,9 @@ const StudentCard = ({ student, onResetPassword, onDelete }) => (
         <div className="min-w-0">
           <div className="font-semibold text-gray-900 text-sm truncate">{student.full_name}</div>
           <div className="text-xs text-gray-500 truncate">{student.email}</div>
-          {(student.school || student.class_name) && (
+          {(schoolName || student.class_name) && (
             <div className="flex items-center gap-2 mt-0.5">
-              {student.school && <span className="text-[10px] text-violet-600 font-semibold">{student.school}</span>}
+              {schoolName && <span className="text-[10px] text-violet-600 font-semibold">{schoolName}</span>}
               {student.class_name && <span className="text-[10px] text-emerald-600">{student.class_name}</span>}
             </div>
           )}
@@ -179,7 +183,8 @@ const StudentCard = ({ student, onResetPassword, onDelete }) => (
       </button>
     </div>
   </div>
-);
+  );
+};
 
 /* ─── Main Page ──────────────────────────────────────────────── */
 export const StudentManagementPage = () => {
@@ -521,6 +526,7 @@ export const StudentManagementPage = () => {
               <StudentCard
                 key={s.id}
                 student={s}
+                schools={schools}
                 onResetPassword={openResetPassword}
                 onDelete={openDeleteConfirm}
               />
@@ -577,10 +583,10 @@ export const StudentManagementPage = () => {
                     {/* School / Class cell */}
                     <td className="px-6 py-4">
                       <div className="space-y-0.5">
-                        {student.school ? (
+                        {student.school && schools.find(s => s.id === student.school) ? (
                           <div className="flex items-center gap-1 text-xs text-violet-700 font-semibold">
                             <Building2 className="w-3 h-3" />
-                            <span>{schools.find(s => s.id === student.school)?.name || student.school}</span>
+                            <span>{schools.find(s => s.id === student.school)?.name}</span>
                           </div>
                         ) : (
                           <span className="text-[10px] text-gray-300">Chưa gán trường</span>

@@ -82,9 +82,9 @@ const QuestionCard = ({ detail, index }) => {
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
-            Câu {index + 1} · {q.question_type === 'choice' ? 'Chọn một' : q.question_type === 'multi' ? 'Chọn nhiều' : 'Kéo thả'}
+            Câu {index + 1} · {q.question_type === 'choice' ? 'Chọn một' : q.question_type === 'multi' ? 'Chọn nhiều' : q.question_type === 'truefalse' ? 'Đúng / Sai' : 'Kéo thả'}
           </p>
-          <p className="text-sm font-medium text-gray-900 line-clamp-2">{q.content}</p>
+          <p className="text-sm font-medium text-gray-900 line-clamp-2 whitespace-pre-wrap">{q.content}</p>
         </div>
         <span className="flex-shrink-0 mt-1 text-gray-400">
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -122,7 +122,7 @@ const QuestionCard = ({ detail, index }) => {
                     {ans.image_url && (
                       <ZoomableImage src={ans.image_url} alt="" className="h-10 w-14 object-contain rounded-lg bg-white border border-gray-100 flex-shrink-0" />
                     )}
-                    <span className="flex-1">{ans.content}</span>
+                    <span className="flex-1 whitespace-pre-wrap">{ans.content}</span>
                     <div className="flex gap-1.5 flex-shrink-0">
                       {wasSelected && (
                         <span className="text-xs px-1.5 py-0.5 rounded bg-white/70 border font-medium">Bạn chọn</span>
@@ -179,6 +179,107 @@ const QuestionCard = ({ detail, index }) => {
               })}
             </div>
           )}
+
+          {/* True/False result */}
+          {q.question_type === 'truefalse' && (() => {
+            const sortedStmts = [...(q.truefalse_statements || [])].sort((a, b) => a.order_index - b.order_index);
+            const tfResponse = detail.dragdrop_response || {};
+            return (
+              <div className="space-y-2 mt-3">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Kết quả từng nhận định</p>
+                {sortedStmts.map((stmt, si) => {
+                  const userAnswer = tfResponse[stmt.id]; // true | false | undefined
+                  const correctAnswer = stmt.is_true;
+                  const answered = userAnswer !== undefined && userAnswer !== null;
+                  const ok = answered && userAnswer === correctAnswer;
+                  return (
+                    <div key={stmt.id} className={`rounded-xl border-2 px-4 py-3 ${
+                      !answered ? 'border-gray-200 bg-gray-50'
+                      : ok ? 'border-emerald-300 bg-emerald-50'
+                      : 'border-red-300 bg-red-50'
+                    }`}>
+                      <div className="flex items-start gap-3">
+                        <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          !answered ? 'bg-gray-200 text-gray-500'
+                          : ok ? 'bg-emerald-200 text-emerald-800'
+                          : 'bg-red-200 text-red-800'
+                        }`}>{si + 1}</span>
+                        <p className="text-sm text-gray-800 flex-1 whitespace-pre-wrap leading-relaxed">{stmt.content}</p>
+                        {ok ? <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                          : answered ? <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                          : <Minus className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />}
+                      </div>
+                      <div className="mt-2 ml-9 flex flex-wrap gap-2 items-center">
+                        <span className="text-[11px] text-gray-400">Bạn chọn:</span>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                          !answered ? 'bg-gray-100 border-gray-200 text-gray-400'
+                          : userAnswer ? 'bg-emerald-100 border-emerald-200 text-emerald-700' : 'bg-red-100 border-red-200 text-red-700'
+                        }`}>
+                          {!answered ? 'Chưa trả lời' : userAnswer ? 'Đúng' : 'Sai'}
+                        </span>
+                        <span className="text-[11px] text-gray-400">· Đáp án đúng:</span>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                          correctAnswer ? 'bg-emerald-100 border-emerald-200 text-emerald-700' : 'bg-red-100 border-red-200 text-red-700'
+                        }`}>
+                          {correctAnswer ? 'Đúng' : 'Sai'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* Hotspot result */}
+          {q.question_type === 'hotspot' && (() => {
+            const sortedRegions = [...(q.hotspot_regions || [])].sort((a, b) => a.order_index - b.order_index);
+            const userSelected = detail.selected_answer_ids || []; // array of region IDs
+            const correctIds = sortedRegions.filter(r => r.is_correct).map(r => r.id);
+            return (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Kết quả vùng chọn</p>
+                {/* Image with colored overlays */}
+                {q.image_url && (
+                  <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                    <img src={q.image_url} alt="Hotspot" className="w-full h-auto block" draggable={false} />
+                    {sortedRegions.map((r, ri) => {
+                      const userChose = userSelected.includes(r.id);
+                      const isCorrect = r.is_correct;
+                      let cls = 'border-2 ';
+                      if (isCorrect && userChose) cls += 'border-emerald-500 bg-emerald-400/25'; // đúng & chọn
+                      else if (isCorrect && !userChose) cls += 'border-emerald-500 bg-emerald-400/15 border-dashed'; // đúng nhưng không chọn
+                      else if (!isCorrect && userChose) cls += 'border-red-500 bg-red-400/25'; // sai mà chọn
+                      else cls += 'border-transparent'; // không liên quan
+                      return (
+                        <div
+                          key={r.id}
+                          style={{ left: `${r.x}%`, top: `${r.y}%`, width: `${r.width}%`, height: `${r.height}%` }}
+                          className={`absolute rounded-sm ${cls} transition-all`}
+                        >
+                          {(userChose || isCorrect) && (
+                            <span className={`absolute top-0.5 left-0.5 text-[9px] font-bold px-1 py-0.5 rounded leading-none ${
+                              isCorrect && userChose ? 'bg-emerald-500 text-white'
+                              : isCorrect ? 'bg-emerald-300 text-emerald-900'
+                              : 'bg-red-500 text-white'
+                            }`}>
+                              {isCorrect ? (userChose ? '✔' : '✔?') : '✘'}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Legend */}
+                <div className="flex flex-wrap gap-3 text-xs">
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-500/50 border border-emerald-500 inline-block" />Đúng & đã chọn</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm border-2 border-dashed border-emerald-500 inline-block" />Đúng nhưng chưa chọn</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-400/50 border border-red-500 inline-block" />Sai mà chọn</span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
@@ -213,7 +314,9 @@ export const ResultPage = () => {
           questions (
             id, content, image_url, question_type,
             answers ( id, content, image_url, is_correct, order_index ),
-            dragdrop_pairs ( id, drag_content, drag_image_url, drop_content, drop_image_url, order_index )
+            dragdrop_pairs ( id, drag_content, drag_image_url, drop_content, drop_image_url, order_index ),
+            truefalse_statements ( id, content, is_true, order_index ),
+            hotspot_regions ( id, x, y, width, height, is_correct, label, order_index )
           )
         `)
         .eq('attempt_id', examId)
@@ -319,12 +422,25 @@ export const ResultPage = () => {
                   <span className="text-sm font-bold text-white">{formatTime(attempt.time_spent_seconds)}</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/15 backdrop-blur rounded-xl px-3 py-2">
-                  <Calendar className="w-4 h-4 text-white/70" />
-                  <span className="text-sm font-bold text-white">
-                    {attempt.submitted_at
-                      ? new Date(attempt.submitted_at).toLocaleDateString('vi-VN')
-                      : '--'}
-                  </span>
+                  <Calendar className="w-4 h-4 text-white/70 flex-shrink-0" />
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-sm font-bold text-white">
+                      {attempt.submitted_at
+                        ? new Date(attempt.submitted_at).toLocaleDateString('vi-VN', {
+                            timeZone: 'Asia/Ho_Chi_Minh',
+                            day: '2-digit', month: '2-digit', year: 'numeric',
+                          })
+                        : '--'}
+                    </span>
+                    <span className="text-[11px] text-white/70 font-medium">
+                      {attempt.submitted_at
+                        ? new Date(attempt.submitted_at).toLocaleTimeString('vi-VN', {
+                            timeZone: 'Asia/Ho_Chi_Minh',
+                            hour: '2-digit', minute: '2-digit', hour12: false,
+                          })
+                        : ''}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

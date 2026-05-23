@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   LogOut, BookOpen, Users, LayoutDashboard,
-  Settings, Layers, Menu, X, ChevronDown
+  Settings, Layers, Menu, X, ChevronDown, Brain
 } from 'lucide-react';
 
 const COLORS = [
@@ -88,6 +88,7 @@ export const Navbar = () => {
             <div className="hidden md:flex items-center gap-1 ml-6">
               <NavLink to="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />}>Dashboard</NavLink>
               <NavLink to="/exam" icon={<BookOpen className="w-4 h-4" />}>Bài thi</NavLink>
+              <NavLink to="/flashcard" icon={<Brain className="w-4 h-4" />}>Flashcard</NavLink>
               {isTeacher && (
                 <>
                   <NavLink to="/questions" icon={<Settings className="w-4 h-4" />}>Câu hỏi</NavLink>
@@ -136,7 +137,8 @@ export const Navbar = () => {
           <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1 animate-slide-up">
             {[
               { to: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Dashboard' },
-              { to: '/exam', icon: <BookOpen className="w-4 h-4" />, label: 'Bài thi' },
+              { to: '/exam',      icon: <BookOpen className="w-4 h-4" />,        label: 'Bài thi' },
+              { to: '/flashcard', icon: <Brain className="w-4 h-4" />,           label: 'Flashcard' },
               ...(isTeacher ? [
                 { to: '/questions', icon: <Settings className="w-4 h-4" />, label: 'Câu hỏi' },
                 { to: '/teacher/exam-structure', icon: <Layers className="w-4 h-4" />, label: 'Cấu trúc thi' },

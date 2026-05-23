@@ -231,20 +231,23 @@ export const StudentOverviewTable = () => {
                 <p className="text-sm font-bold text-gray-800 truncate">{student.full_name || '(Chưa đặt tên)'}</p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                   <p className="text-xs text-gray-400 truncate">{student.email}</p>
-                  {(student.school || student.class_name) && (
-                    <div className="flex items-center gap-1.5 mt-0.5 sm:mt-0 sm:border-l border-gray-200 sm:pl-2">
-                      {student.school && (
-                        <span className="text-[10px] text-violet-600 font-medium">
-                          {schools.find(s => s.id === student.school)?.name || student.school}
-                        </span>
-                      )}
-                      {student.class_name && (
-                        <span className="text-[10px] text-emerald-600 font-medium">
-                          {student.school && '· '}Lớp {student.class_name}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  {(() => {
+                    const sName = student.school ? schools.find(s => s.id === student.school)?.name : null;
+                    return (sName || student.class_name) ? (
+                      <div className="flex items-center gap-1.5 mt-0.5 sm:mt-0 sm:border-l border-gray-200 sm:pl-2">
+                        {sName && (
+                          <span className="text-[10px] text-violet-600 font-medium">
+                            {sName}
+                          </span>
+                        )}
+                        {student.class_name && (
+                          <span className="text-[10px] text-emerald-600 font-medium">
+                            {sName && '· '}Lớp {student.class_name}
+                          </span>
+                        )}
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
                 {student.totalExams > 0 ? (
                   <div className="mt-1.5 max-w-[160px]">

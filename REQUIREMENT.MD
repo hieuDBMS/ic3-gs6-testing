@@ -83,6 +83,7 @@ IC3 GS6
 | `choice` | Chọn một đáp án đúng trong nhiều lựa chọn (Single choice) |
 | `multi` | Chọn nhiều đáp án đúng (Multiple choice) |
 | `dragdrop` | Kéo thả thực sự (HTML5 DnD) — pool các item trên cùng, kéo vào drop zone (cột/nhóm) tương ứng bên dưới. Hỗ trợ click-to-place trên mobile. |
+| `truefalse` | Đúng/Sai — một câu dẫn kèm nhiều nhận định, học sinh chọn Đúng hoặc Sai cho từng nhận định bằng button. Tính điểm all-or-nothing: chỉ đúng khi tất cả nhận định được trả lời đúng. |
 
 ---
 
@@ -313,6 +314,18 @@ order_index     int NOT NULL DEFAULT 0
 ```
 
 > **Ghi chú thiết kế DragDrop:** Các `drop_content` trùng nhau = cùng một drop zone. Ví dụ nhiều pairs có `drop_content = 'NHẬP'` → tất cả drag items đó phải kéo vào cột "NHẬP".
+
+### 6.7 Bảng `truefalse_statements`
+```sql
+id           uuid PRIMARY KEY DEFAULT gen_random_uuid()
+question_id  uuid NOT NULL REFERENCES questions(id) ON DELETE CASCADE
+content      text NOT NULL       -- Nội dung nhận định
+is_true      boolean NOT NULL DEFAULT true  -- Đáp án đúng: đúng hay sai
+order_index  int NOT NULL DEFAULT 0
+created_at   timestamptz DEFAULT now()
+```
+
+> **Ghi chú:** `dragdrop_response` trong bảng `attempt_answers` được tái sử dụng để lưu response của truefalse dưới dạng `{ [statement_id]: true | false }`. Câu truefalse tính điểm **all-or-nothing**: chỉ đúng khi tất cả nhận định được trả lời đúng.
 
 ### 6.7 Bảng `exam_attempts`
 ```sql
@@ -611,3 +624,15 @@ Cập nhật `tailwind.config.js` và thêm directives vào `index.css`
 
 #### Storage
 - Xác định rõ bucket usage: `question-images` cho câu hỏi + drag items; `answer-images` cho đáp án + drop zones
+
+---
+
+### 2026-05-22
+
+#### Thêm loại câu hỏi True/False (`truefalse`)
+- **Database**: Thêm bảng `truefalse_statements` và cập nhật CHECK constraint trên `questions.question_type`.
+- **QuestionModal**: Thêm editor truefalse với toggle Đúng/Sai cho từng nhận định, validate ít nhất 2 nhận định, save vào `truefalse_statements`.
+- **QuestionRenderer**: Thêm component `TrueFalseQuestion` hiển thị từng nhận định với 2 nút chọn Đúng/Sai, feedback màu sắc theo lựa chọn.
+- **ExamPage**: Fetch `truefalse_statements` cùng với questions, chấm điểm **all-or-nothing** (tất cả đúng = 1 điểm, sai 1 = 0 điểm).
+- **ResultPage**: Hiển thị kết quả từng nhận định với đáp án học sinh chọn và đáp án đúng.
+- **QuestionsPage**: Thêm badge "Đúng / Sai", filter, hiển thị số nhận định trong danh sách câu hỏi.

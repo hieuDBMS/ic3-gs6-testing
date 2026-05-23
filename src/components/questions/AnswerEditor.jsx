@@ -120,9 +120,14 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
               <textarea
                 value={answer.content}
                 onChange={(e) => update(index, 'content', e.target.value)}
-                placeholder={`Nội dung đáp án ${String.fromCharCode(65 + index)}...`}
-                rows={2}
-                className="flex-1 min-w-0 text-sm border-0 bg-transparent resize-none outline-none focus:ring-0 placeholder-gray-300"
+                onInput={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                }}
+                placeholder={`Nội dung đáp án ${String.fromCharCode(65 + index)}... (Enter để xuống dòng)`}
+                rows={1}
+                className="flex-1 min-w-0 text-sm border-0 bg-transparent resize-none outline-none focus:ring-0 placeholder-gray-300 overflow-hidden"
+                style={{ minHeight: '28px' }}
               />
 
               {/* Remove */}

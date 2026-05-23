@@ -10,9 +10,11 @@ import { QuestionModal } from '../components/questions/QuestionModal';
 const PAGE_SIZE = 20;
 
 const QUESTION_TYPE_LABELS = {
-  choice: { label: 'Chọn một', color: 'bg-blue-100 text-blue-700' },
-  multi: { label: 'Chọn nhiều', color: 'bg-purple-100 text-purple-700' },
-  dragdrop: { label: 'Kéo thả', color: 'bg-orange-100 text-orange-700' },
+  choice:     { label: 'Chọn một',   color: 'bg-blue-100 text-blue-700'    },
+  multi:      { label: 'Chọn nhiều',  color: 'bg-purple-100 text-purple-700' },
+  dragdrop:   { label: 'Kéo thả',    color: 'bg-orange-100 text-orange-700' },
+  truefalse:  { label: 'Đúng / Sai',  color: 'bg-teal-100 text-teal-700'    },
+  hotspot:    { label: 'Chọn vùng ảnh', color: 'bg-amber-100 text-amber-700'   },
 };
 
 export const QuestionsPage = () => {
@@ -110,7 +112,9 @@ export const QuestionsPage = () => {
             exam_levels (id, label, level_number, version)
           ),
           answers (id, content, image_url, is_correct, order_index),
-          dragdrop_pairs (id, drag_content, drag_image_url, drop_content, drop_image_url, order_index)
+          dragdrop_pairs (id, drag_content, drag_image_url, drop_content, drop_image_url, order_index),
+          truefalse_statements (id, content, is_true, order_index),
+          hotspot_regions (id, x, y, width, height, is_correct, label, order_index)
         `, { count: 'exact' })
         .order(sortCol, { ascending })
         .range(from, to);
@@ -168,8 +172,10 @@ export const QuestionsPage = () => {
   const handleEdit = (q) => {
     setEditQuestion({
       ...q,
-      _answers: q.answers?.sort((a, b) => a.order_index - b.order_index) || [],
-      _pairs: q.dragdrop_pairs?.sort((a, b) => a.order_index - b.order_index) || [],
+      _answers:    q.answers?.sort((a, b) => a.order_index - b.order_index) || [],
+      _pairs:      q.dragdrop_pairs?.sort((a, b) => a.order_index - b.order_index) || [],
+      _statements: q.truefalse_statements?.sort((a, b) => a.order_index - b.order_index) || [],
+      _regions:    q.hotspot_regions?.sort((a, b) => a.order_index - b.order_index) || [],
     });
     setModalOpen(true);
   };
@@ -347,6 +353,8 @@ export const QuestionsPage = () => {
               <option value="choice">Chọn một</option>
               <option value="multi">Chọn nhiều</option>
               <option value="dragdrop">Kéo thả</option>
+              <option value="truefalse">Đúng / Sai</option>
+              <option value="hotspot">Chọn vùng ảnh</option>
             </select>
           </div>
         </div>
@@ -402,6 +410,10 @@ export const QuestionsPage = () => {
                       <span className="text-xs text-gray-500">
                         {q.question_type === 'dragdrop'
                           ? `🔀 ${pairsCount} cặp`
+                          : q.question_type === 'truefalse'
+                            ? `✅ ${q.truefalse_statements?.length || 0} nhận định`
+                          : q.question_type === 'hotspot'
+                            ? `🎯 ${q.hotspot_regions?.filter(r => r.is_correct).length || 0} vùng đúng`
                           : <>{totalAnswers} đáp án · <span className="text-emerald-600 font-medium">{correctCount} đúng</span></>
                         }
                       </span>
@@ -521,6 +533,10 @@ export const QuestionsPage = () => {
                       <td className="px-4 py-4 whitespace-nowrap">
                         {q.question_type === 'dragdrop' ? (
                           <span className="text-xs text-gray-500">🔀 {pairsCount} cặp</span>
+                        ) : q.question_type === 'truefalse' ? (
+                          <span className="text-xs text-gray-500">✅ {q.truefalse_statements?.length || 0} nhận định</span>
+                        ) : q.question_type === 'hotspot' ? (
+                          <span className="text-xs text-gray-500">🎯 {q.hotspot_regions?.filter(r => r.is_correct).length || 0} vùng đúng</span>
                         ) : (
                           <div className="text-xs">
                             <span className="text-gray-700 font-medium">{totalAnswers}</span>

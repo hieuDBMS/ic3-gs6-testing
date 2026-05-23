@@ -185,6 +185,9 @@ export const ExamPage = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showRefreshWarning, setShowRefreshWarning] = useState(false);
   const pendingReloadRef = useRef(false);
+  // Hard guard: useRef (not useState) to prevent double-submit race condition
+  // React state updates are async; ref changes are synchronous and immediate
+  const isSubmittingRef = useRef(false);
 
   // Ref to read remaining time from Timer on submit
   const timerRef = useRef(null);
@@ -192,15 +195,32 @@ export const ExamPage = () => {
 
   useEffect(() => { initExam(); }, [examId]);
 
-  // ── Intercept F5 / Ctrl+R to show custom popup ──
+  // ── Keyboard: F5/Ctrl+R intercept + arrow / enter navigation ──
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // --- F5 / Ctrl+R: show refresh warning ---
       const isF5 = e.key === 'F5';
       const isCtrlR = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r';
       if (isF5 || isCtrlR) {
         e.preventDefault();
         e.stopPropagation();
         setShowRefreshWarning(true);
+        return;
+      }
+
+      // --- Arrow / Enter navigation ---
+      // Don't hijack keys when user is typing in an input field
+      const tag = document.activeElement?.tagName ?? '';
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
+      // Also ignore if a modal is open
+      if (showConfirm || showRefreshWarning) return;
+
+      if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        e.preventDefault();
+        setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1));
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setCurrentIndex(prev => Math.max(0, prev - 1));
       }
     };
 
@@ -218,39 +238,46 @@ export const ExamPage = () => {
       window.removeEventListener('keydown', handleKeyDown, true);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, []);
+  }, [questions.length, showConfirm, showRefreshWarning]);
 
   const initExam = async () => {
     try {
-      const { data: examData, error: examError } = await supabase
-        .from('exams')
-        .select('*, exam_levels(label)')
-        .eq('id', examId)
-        .single();
-      if (examError) throw examError;
-      setExam(examData);
+      // ⚡ Parallel fetch: exam info + questions at the same time (saves 1 network RTT)
+      const [examResult, qResult] = await Promise.all([
+        supabase
+          .from('exams')
+          .select('*, exam_levels(label)')
+          .eq('id', examId)
+          .single(),
+        supabase
+          .from('questions')
+          .select(`
+            id, content, image_url, question_type, order_index, hotspot_multi,
+            answers ( id, content, image_url, is_correct, order_index ),
+            dragdrop_pairs ( id, drag_content, drag_image_url, drop_content, drop_image_url, order_index ),
+            truefalse_statements ( id, content, is_true, order_index ),
+            hotspot_regions ( id, x, y, width, height, is_correct, label, order_index )
+          `)
+          .eq('exam_id', examId)
+          .order('order_index'),
+      ]);
 
-      const { data: qData, error: qError } = await supabase
-        .from('questions')
-        .select(`
-          id, content, image_url, question_type, order_index,
-          answers ( id, content, image_url, order_index ),
-          dragdrop_pairs ( id, drag_content, drag_image_url, drop_content, drop_image_url, order_index )
-        `)
-        .eq('exam_id', examId)
-        .order('order_index');
-      if (qError) throw qError;
-      setQuestions(qData || []);
+      if (examResult.error) throw examResult.error;
+      if (qResult.error) throw qResult.error;
 
+      setExam(examResult.data);
+      setQuestions(qResult.data || []);
+
+      // Create attempt after we have question count
       const { data: attempt, error: attemptError } = await supabase
         .from('exam_attempts')
         .insert({
           user_id: user.id,
           exam_id: examId,
-          total_questions: qData?.length || 0,
+          total_questions: qResult.data?.length || 0,
           status: 'in_progress'
         })
-        .select()
+        .select('id')
         .single();
       if (attemptError) throw attemptError;
       setAttemptId(attempt.id);
@@ -278,87 +305,62 @@ export const ExamPage = () => {
   };
 
   const doSubmit = useCallback(async (isAutoSubmit = false) => {
+    // ⭐ Hard guard: prevents double-submit from timer + manual click race condition
+    // useRef is synchronous unlike useState, so no async window for a 2nd call
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setSubmitting(true);
     setShowConfirm(false);
+
     try {
       const timeLeft = timerRef.current?.getTimeLeft?.() ?? 0;
       const timeSpent = Math.max(0, (exam?.duration_seconds ?? 0) - timeLeft) ||
         Math.floor((Date.now() - startTimeRef.current) / 1000);
 
-      const questionIds = questions.map(q => q.id);
-
-      const { data: correctAnswers } = await supabase
-        .from('answers')
-        .select('id, question_id')
-        .in('question_id', questionIds)
-        .eq('is_correct', true);
-
-      const { data: dragDropPairs } = await supabase
-        .from('dragdrop_pairs')
-        .select('*')
-        .in('question_id', questionIds);
-
-      let correctCount = 0;
-      const payload = [];
+      // ⭐ Build serializable payloads from local state
+      //    (data already in memory from initExam — no extra DB round-trips)
+      const p_answers   = {}; // choice, multi, hotspot: { qId: [ansId, ...] }
+      const p_tf_answers = {}; // truefalse: { qId: { stmtId: bool } }
+      const p_dd_answers = {}; // dragdrop:  { qId: { pairId: value } }
 
       for (const q of questions) {
         const userAnswer = answers[q.id];
-        let isCorrect = false;
+        if (userAnswer === undefined) continue;
 
         if (q.question_type === 'choice' || q.question_type === 'multi') {
-          const correctIds = (correctAnswers || [])
-            .filter(a => a.question_id === q.id)
-            .map(a => a.id);
-
-          if (userAnswer && Array.isArray(userAnswer)) {
-            if (q.question_type === 'multi') {
-              isCorrect = JSON.stringify([...userAnswer].sort()) === JSON.stringify([...correctIds].sort());
-            } else {
-              isCorrect = correctIds.includes(userAnswer[0]);
-            }
-          }
-          payload.push({
-            attempt_id: attemptId,
-            question_id: q.id,
-            selected_answer_ids: userAnswer || [],
-            dragdrop_response: null,
-            is_correct: isCorrect
-          });
+          p_answers[q.id] = Array.isArray(userAnswer) ? userAnswer : [userAnswer];
+        } else if (q.question_type === 'hotspot') {
+          p_answers[q.id] = Array.isArray(userAnswer) ? userAnswer : [];
+        } else if (q.question_type === 'truefalse') {
+          p_tf_answers[q.id] = userAnswer; // { stmtId: bool }
         } else if (q.question_type === 'dragdrop') {
-          const pairs = (dragDropPairs || []).filter(p => p.question_id === q.id);
-          if (userAnswer) {
-            isCorrect = pairs.every(pair => userAnswer[pair.id] === pair.drop_content);
-          }
-          payload.push({
-            attempt_id: attemptId,
-            question_id: q.id,
-            selected_answer_ids: null,
-            dragdrop_response: userAnswer || {},
-            is_correct: isCorrect
-          });
+          p_dd_answers[q.id] = userAnswer; // { pairId: value }
         }
-
-        if (isCorrect) correctCount++;
       }
 
-      const score = questions.length > 0 ? (correctCount / questions.length) * 100 : 0;
+      // ⭐ Single atomic RPC call — scores server-side with row-level lock
+      //    Replaces: fetch correctAnswers + fetch dragDropPairs + update attempt + insert attempt_answers
+      const { data: result, error: rpcError } = await supabase.rpc('submit_exam_attempt', {
+        p_attempt_id: attemptId,
+        p_time_spent: timeSpent,
+        p_answers:    p_answers,
+        p_tf_answers: p_tf_answers,
+        p_dd_answers: p_dd_answers,
+        p_is_auto:    isAutoSubmit,
+      });
 
-      await supabase.from('exam_attempts').update({
-        status: isAutoSubmit ? 'auto_submitted' : 'submitted',
-        submitted_at: new Date().toISOString(),
-        time_spent_seconds: timeSpent,
-        correct_count: correctCount,
-        score
-      }).eq('id', attemptId);
-
-      if (payload.length > 0) {
-        await supabase.from('attempt_answers').insert(payload);
-      }
+      if (rpcError) throw rpcError;
 
       navigate(`/exam/${attemptId}/result`);
     } catch (error) {
       console.error('Error submitting:', error);
-      alert('Lỗi khi nộp bài!');
+      // Check if it was already submitted (race condition with timer)
+      if (error?.message?.includes('already_submitted')) {
+        navigate(`/exam/${attemptId}/result`);
+      } else {
+        alert('Lỗi khi nộp bài! Vui lòng thử lại.');
+        isSubmittingRef.current = false; // allow retry on error
+      }
     } finally {
       setSubmitting(false);
     }
@@ -468,7 +470,9 @@ export const ExamPage = () => {
               <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-semibold border border-indigo-100">
                 {currentQ.question_type === 'choice' ? 'Chọn một'
                   : currentQ.question_type === 'multi' ? 'Chọn nhiều'
-                    : 'Kéo thả'}
+                  : currentQ.question_type === 'truefalse' ? 'Đúng / Sai'
+                  : currentQ.question_type === 'hotspot' ? 'Chọn vùng ảnh'
+                  : 'Kéo thả'}
               </span>
             </div>
             <button
@@ -497,10 +501,21 @@ export const ExamPage = () => {
             <button
               onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
               disabled={currentIndex === 0}
+              title="Câu trước (←)"
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 bg-white hover:border-indigo-300 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
-              <ArrowLeft className="w-4 h-4" /> Trước
+              <ArrowLeft className="w-4 h-4" />
+              Trước
+              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-400 border border-gray-200 leading-none">←</kbd>
             </button>
+
+            {/* Desktop: keyboard hint */}
+            <span className="hidden sm:flex items-center gap-1.5 text-[11px] text-gray-350 select-none">
+              <kbd className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-400 border border-gray-200 leading-none">←</kbd>
+              <kbd className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-400 border border-gray-200 leading-none">→</kbd>
+              <kbd className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-400 border border-gray-200 leading-none">Enter</kbd>
+              <span className="text-gray-300">để chuyển câu</span>
+            </span>
 
             {/* Mobile progress */}
             <span className="sm:hidden text-sm font-medium text-gray-500">
@@ -510,9 +525,12 @@ export const ExamPage = () => {
             <button
               onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))}
               disabled={currentIndex === questions.length - 1}
+              title="Câu tiếp theo (→ hoặc Enter)"
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
-              Tiếp <ArrowRight className="w-4 h-4" />
+              Tiếp
+              <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-indigo-500 text-indigo-200 border border-indigo-400 leading-none">→</kbd>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>

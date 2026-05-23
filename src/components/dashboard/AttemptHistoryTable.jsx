@@ -13,6 +13,29 @@ const formatTime = (secs) => {
   return `${Math.floor(secs / 60)}m ${secs % 60}s`;
 };
 
+const formatDateTime = (isoString) => {
+  if (!isoString) return '--';
+  return new Date(isoString).toLocaleString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
+const formatDateOnly = (isoString) => {
+  if (!isoString) return '--';
+  return new Date(isoString).toLocaleDateString('vi-VN', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
 const AttemptSkeleton = () => (
   <div className="space-y-3 p-4 animate-pulse">
     {[1, 2, 3].map(i => (
@@ -191,15 +214,29 @@ export const AttemptHistoryTable = ({ studentId }) => {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-gray-800 truncate">{attempt.exams?.title || 'Bài thi'}</p>
                   <p className="text-xs text-gray-400 truncate">{examLabel}</p>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 flex-wrap">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
-                      {new Date(attempt.started_at).toLocaleDateString('vi-VN')}
+                      {formatDateOnly(attempt.started_at)}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {formatTime(attempt.time_spent_seconds)}
                     </span>
+                    {attempt.submitted_at && (
+                      <span className="flex items-center gap-1 text-gray-500">
+                        <span className="text-gray-300">·</span>
+                        Nộp lúc{' '}
+                        <span className="font-semibold text-gray-600">
+                          {new Date(attempt.submitted_at).toLocaleTimeString('vi-VN', {
+                            timeZone: 'Asia/Ho_Chi_Minh',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: false,
+                          })}
+                        </span>
+                      </span>
+                    )}
                     <span className={`font-semibold ${isPassed ? 'text-emerald-500' : 'text-red-400'}`}>
                       {attempt.correct_count}/{attempt.total_questions} đúng
                     </span>

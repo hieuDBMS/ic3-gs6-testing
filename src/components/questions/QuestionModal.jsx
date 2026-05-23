@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Save, Loader2, Eye, EyeOff, ArrowLeftRight } from 'luc
 import { supabase } from '../../lib/supabase';
 import { ImageUploader } from './ImageUploader';
 import { AnswerEditor } from './AnswerEditor';
+import { HotspotEditor } from './HotspotEditor';
 
 const DEFAULT_ANSWER = (order = 0) => ({
   id: crypto.randomUUID(),
@@ -18,6 +19,13 @@ const DEFAULT_PAIR = (order = 0) => ({
   drag_image_url: null,
   drop_content: '',
   drop_image_url: null,
+  order_index: order,
+});
+
+const DEFAULT_STATEMENT = (order = 0) => ({
+  id: crypto.randomUUID(),
+  content: '',
+  is_true: true,
   order_index: order,
 });
 
@@ -46,6 +54,10 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
   const [form, setForm] = useState(INITIAL_FORM);
   const [answers, setAnswers] = useState([DEFAULT_ANSWER(0), DEFAULT_ANSWER(1), DEFAULT_ANSWER(2), DEFAULT_ANSWER(3)]);
   const [pairs, setPairs] = useState([DEFAULT_PAIR(0), DEFAULT_PAIR(1)]);
+  const [statements, setStatements] = useState([DEFAULT_STATEMENT(0), DEFAULT_STATEMENT(1)]);
+  const [regions, setRegions] = useState([]);       // hotspot regions
+  const [hotspotMulti, setHotspotMulti] = useState(false); // hotspot multi-select mode
+  const [hotspotImageUrl, setHotspotImageUrl] = useState(null); // separate from question image_url
 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -82,6 +94,10 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
       });
       setAnswers(editQuestion._answers || [DEFAULT_ANSWER()]);
       setPairs(editQuestion._pairs || [DEFAULT_PAIR()]);
+      setStatements(editQuestion._statements || [DEFAULT_STATEMENT(0), DEFAULT_STATEMENT(1)]);
+      setRegions(editQuestion._regions || []);
+      setHotspotMulti(editQuestion.hotspot_multi || false);
+      setHotspotImageUrl(editQuestion.image_url || null);
     } else {
       resetForm();
     }
@@ -107,6 +123,10 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
     setForm(INITIAL_FORM);
     setAnswers([DEFAULT_ANSWER(0), DEFAULT_ANSWER(1), DEFAULT_ANSWER(2), DEFAULT_ANSWER(3)]);
     setPairs([DEFAULT_PAIR(0), DEFAULT_PAIR(1)]);
+    setStatements([DEFAULT_STATEMENT(0), DEFAULT_STATEMENT(1)]);
+    setRegions([]);
+    setHotspotMulti(false);
+    setHotspotImageUrl(null);
     setErrors({});
     setShowPreview(false);
   };
@@ -116,15 +136,21 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
   const validate = () => {
     const e = {};
     if (!form.level_id) e.level_id = 'Chọn Level';
-    if (!form.exam_id) e.exam_id = 'Chọn bài thi';
+    if (!form.exam_id)  e.exam_id  = 'Chọn bài thi';
     if (!form.content.trim()) e.content = 'Nhập nội dung câu hỏi';
-    if (form.question_type !== 'dragdrop') {
+    if (form.question_type === 'truefalse') {
+      if (statements.length < 2) e.statements = 'Cần ít nhất 2 nhận định';
+      if (statements.some(s => !s.content.trim())) e.statements = 'Mỗi nhận định phải có nội dung';
+    } else if (form.question_type === 'hotspot') {
+      if (!hotspotImageUrl) e.regions = 'Độc phải upload ảnh cho hotspot';
+      else if (regions.filter(r => r.is_correct).length === 0) e.regions = 'Cần ít nhất 1 vùng đúng';
+    } else if (form.question_type !== 'dragdrop') {
       if (answers.length < 2) e.answers = 'Cần ít nhất 2 đáp án';
-      if (!answers.some((a) => a.is_correct)) e.answers = 'Phải có ít nhất 1 đáp án đúng';
-      if (answers.some((a) => !a.content.trim())) e.answers = 'Mỗi đáp án phải có nội dung';
+      if (!answers.some(a => a.is_correct)) e.answers = 'Phải có ít nhất 1 đáp án đúng';
+      if (answers.some(a => !a.content.trim())) e.answers = 'Mỗi đáp án phải có nội dung';
     } else {
       if (pairs.length < 1) e.pairs = 'Cần ít nhất 1 cặp kéo-thả';
-      if (pairs.some((p) => !p.drag_content.trim() || !p.drop_content.trim()))
+      if (pairs.some(p => !p.drag_content.trim() || !p.drop_content.trim()))
         e.pairs = 'Mỗi cặp phải có đủ nội dung';
     }
     setErrors(e);
@@ -141,8 +167,9 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
         exam_id: form.exam_id,
         question_type: form.question_type,
         content: form.content.trim(),
-        image_url: form.image_url,
+        image_url: form.question_type === 'hotspot' ? hotspotImageUrl : form.image_url,
         order_index: Number(form.order_index) || 0,
+        hotspot_multi: form.question_type === 'hotspot' ? hotspotMulti : false,
       };
 
       if (editQuestion) {
@@ -161,8 +188,38 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
         questionId = data.id;
       }
 
-      // Save answers / dragdrop pairs
-      if (form.question_type !== 'dragdrop') {
+      // Save answers / dragdrop pairs / truefalse statements / hotspot regions
+      if (form.question_type === 'hotspot') {
+        if (editQuestion) {
+          await supabase.from('hotspot_regions').delete().eq('question_id', questionId);
+        }
+        const regionRows = regions.map((r, i) => ({
+          question_id: questionId,
+          label:       r.label || null,
+          x:           r.x,
+          y:           r.y,
+          width:       r.width,
+          height:      r.height,
+          is_correct:  r.is_correct,
+          order_index: i,
+        }));
+        if (regionRows.length > 0) {
+          const { error: regErr } = await supabase.from('hotspot_regions').insert(regionRows);
+          if (regErr) throw regErr;
+        }
+      } else if (form.question_type === 'truefalse') {
+        if (editQuestion) {
+          await supabase.from('truefalse_statements').delete().eq('question_id', questionId);
+        }
+        const stmtRows = statements.map((s, i) => ({
+          question_id: questionId,
+          content:     s.content.trim(),
+          is_true:     s.is_true,
+          order_index: i,
+        }));
+        const { error: stmtErr } = await supabase.from('truefalse_statements').insert(stmtRows);
+        if (stmtErr) throw stmtErr;
+      } else if (form.question_type !== 'dragdrop') {
         // Delete old answers if editing
         if (editQuestion) {
           await supabase.from('answers').delete().eq('question_id', questionId);
@@ -206,10 +263,15 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
     onClose();
   };
 
-  const addPair = () => setPairs((p) => [...p, DEFAULT_PAIR(p.length)]);
-  const removePair = (i) => setPairs((p) => p.filter((_, idx) => idx !== i));
+  const addPair = () => setPairs(p => [...p, DEFAULT_PAIR(p.length)]);
+  const removePair = (i) => setPairs(p => p.filter((_, idx) => idx !== i));
   const updatePair = (i, field, val) =>
-    setPairs((p) => p.map((pair, idx) => (idx === i ? { ...pair, [field]: val } : pair)));
+    setPairs(p => p.map((pair, idx) => (idx === i ? { ...pair, [field]: val } : pair)));
+
+  const addStatement = () => setStatements(s => [...s, DEFAULT_STATEMENT(s.length)]);
+  const removeStatement = (i) => setStatements(s => s.filter((_, idx) => idx !== i));
+  const updateStatement = (i, field, val) =>
+    setStatements(s => s.map((stmt, idx) => (idx === i ? { ...stmt, [field]: val } : stmt)));
 
   if (!open) return null;
 
@@ -363,11 +425,13 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
                 2. Loại câu hỏi
               </h3>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {[
-                  { value: 'choice', label: 'Chọn một', desc: 'Single choice', icon: '🔘' },
-                  { value: 'multi', label: 'Chọn nhiều', desc: 'Multiple choice', icon: '☑️' },
-                  { value: 'dragdrop', label: 'Kéo thả', desc: 'Drag & Drop', icon: '🔀' },
+                  { value: 'choice',    label: 'Chọn một',   desc: 'Single choice',  icon: '🔘' },
+                  { value: 'multi',     label: 'Chọn nhiều',  desc: 'Multiple choice', icon: '☑️' },
+                  { value: 'dragdrop',  label: 'Kéo thả',    desc: 'Drag & Drop',    icon: '🔀' },
+                  { value: 'truefalse', label: 'Đúng / Sai',   desc: 'True / False',   icon: '✅' },
+                  { value: 'hotspot',   label: 'Chọn vùng ảnh', desc: 'Click on image',  icon: '🎯' },
                 ].map((t) => (
                   <button
                     key={t.value}
@@ -402,28 +466,41 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                   <textarea
                     value={form.content}
                     onChange={(e) => set('content', e.target.value)}
-                    placeholder="Nhập nội dung câu hỏi..."
+                    onInput={(e) => {
+                      e.target.style.height = 'auto';
+                      e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
+                    placeholder={form.question_type === 'hotspot'
+                      ? 'Ví dụ: "Click vào nút Save As..." (Enter để xuống dòng)'
+                      : 'Nhập nội dung câu hỏi... (Enter để xuống dòng)'}
                     rows={3}
-                    className={`w-full text-sm border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none ${
+                    className={`w-full text-sm border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y overflow-hidden ${
                       errors.content ? 'border-red-400' : 'border-gray-200'
                     }`}
+                    style={{ minHeight: '80px' }}
                   />
                   {errors.content && <p className="text-xs text-red-500 mt-1">{errors.content}</p>}
                 </div>
 
-                <ImageUploader
-                  bucket="question-images"
-                  value={form.image_url}
-                  onChange={(url) => set('image_url', url)}
-                  label="Ảnh câu hỏi (tuỳ chọn)"
-                />
+                {/* Image uploader — hidden for hotspot (handled in HotspotEditor) */}
+                {form.question_type !== 'hotspot' && (
+                  <ImageUploader
+                    bucket="question-images"
+                    value={form.image_url}
+                    onChange={(url) => set('image_url', url)}
+                    label="Ảnh câu hỏi (tuỳ chọn)"
+                  />
+                )}
               </div>
             </div>
 
-            {/* === Section 4: Đáp án === */}
+            {/* === Section 4: Đáp án / Nhận định / Hotspot === */}
             <div>
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
-                4. {form.question_type === 'dragdrop' ? 'Cặp kéo-thả' : 'Đáp án'}
+                4. {form.question_type === 'dragdrop' ? 'Cặp kéo-thả'
+                  : form.question_type === 'truefalse' ? 'Nhận định Đúng / Sai'
+                  : form.question_type === 'hotspot' ? 'Vùng Hotspot trên ảnh'
+                  : 'Đáp án'}
               </h3>
 
               {errors.answers && (
@@ -436,8 +513,130 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                   ⚠️ {errors.pairs}
                 </div>
               )}
+              {errors.statements && (
+                <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+                  ⚠️ {errors.statements}
+                </div>
+              )}
+              {errors.regions && (
+                <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+                  ⚠️ {errors.regions}
+                </div>
+              )}
 
-              {form.question_type === 'dragdrop' ? (
+              {form.question_type === 'hotspot' ? (
+                /* ── Hotspot editor ── */
+                <HotspotEditor
+                  imageUrl={hotspotImageUrl}
+                  onImageChange={setHotspotImageUrl}
+                  regions={regions}
+                  onRegionsChange={setRegions}
+                  multiMode={hotspotMulti}
+                  onMultiModeChange={setHotspotMulti}
+                />
+              ) : form.question_type === 'truefalse' ? (
+                /* ── True/False statements editor ── */
+                <div className="space-y-3">
+                  {/* Header hint */}
+                  <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 border border-teal-200 rounded-xl">
+                    <span className="text-lg">✅</span>
+                    <p className="text-xs text-teal-700 leading-relaxed">
+                      Nhập từng nhận định và chọn đáp án đúng là <strong>Đúng</strong> hay <strong>Sai</strong>.
+                      Học sinh sẽ chọn cho từng nhận định bằng dropdown.
+                    </p>
+                  </div>
+
+                  {statements.map((stmt, i) => (
+                    <div
+                      key={stmt.id}
+                      className={`relative border rounded-xl p-3 transition-all ${
+                        stmt.is_true
+                          ? 'border-emerald-300 bg-emerald-50/40'
+                          : 'border-red-300 bg-red-50/40'
+                      }`}
+                    >
+                      {/* Row: number + textarea + toggle + delete */}
+                      <div className="flex items-start gap-2">
+                        {/* Index badge */}
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs font-bold flex items-center justify-center mt-1">
+                          {i + 1}
+                        </span>
+
+                        {/* Content textarea */}
+                        <textarea
+                          value={stmt.content}
+                          onChange={(e) => updateStatement(i, 'content', e.target.value)}
+                          onInput={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                          }}
+                          placeholder={`Nhận định ${i + 1}... (Enter để xuống dòng)`}
+                          rows={1}
+                          className="flex-1 min-w-0 text-sm border-0 bg-transparent resize-none outline-none focus:ring-0 placeholder-gray-300 overflow-hidden leading-relaxed"
+                          style={{ minHeight: '28px' }}
+                        />
+
+                        {/* True / False toggle */}
+                        <div className="flex-shrink-0 flex rounded-xl overflow-hidden border border-gray-200 mt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => updateStatement(i, 'is_true', true)}
+                            className={`px-3 py-1.5 text-xs font-bold transition-all ${
+                              stmt.is_true
+                                ? 'bg-emerald-500 text-white shadow-inner'
+                                : 'bg-white text-gray-400 hover:bg-emerald-50 hover:text-emerald-600'
+                            }`}
+                          >
+                            Đúng
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateStatement(i, 'is_true', false)}
+                            className={`px-3 py-1.5 text-xs font-bold transition-all border-l border-gray-200 ${
+                              !stmt.is_true
+                                ? 'bg-red-500 text-white shadow-inner'
+                                : 'bg-white text-gray-400 hover:bg-red-50 hover:text-red-600'
+                            }`}
+                          >
+                            Sai
+                          </button>
+                        </div>
+
+                        {/* Delete */}
+                        <button
+                          type="button"
+                          onClick={() => removeStatement(i)}
+                          className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors mt-1"
+                          disabled={statements.length <= 2}
+                          title={statements.length <= 2 ? 'Cần ít nhất 2 nhận định' : 'Xóa nhận định'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Answer label */}
+                      <div className="mt-2 ml-8">
+                        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          stmt.is_true
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}>
+                          {stmt.is_true ? '✔ Đáp án: Đúng' : '✘ Đáp án: Sai'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add statement button */}
+                  <button
+                    type="button"
+                    onClick={addStatement}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-teal-600 hover:text-teal-800 font-medium border border-dashed border-teal-300 hover:border-teal-500 rounded-xl w-full justify-center transition-colors"
+                  >
+                    <Plus className="w-4 h-4" /> Thêm nhận định
+                  </button>
+                </div>
+              ) : form.question_type === 'dragdrop' ? (
                 /* Drag-drop pairs editor — card layout with images */
                 <div className="space-y-4">
                   {pairs.map((pair, i) => (
@@ -466,11 +665,17 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                               🔵 Kéo (Drag)
                             </span>
                           </div>
-                          <input
+                          <textarea
                             value={pair.drag_content}
                             onChange={(e) => updatePair(i, 'drag_content', e.target.value)}
-                            placeholder={`Nội dung kéo ${i + 1}...`}
-                            className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            onInput={(e) => {
+                              e.target.style.height = 'auto';
+                              e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            placeholder={`Nội dung kéo ${i + 1}... (Enter để xuống dòng)`}
+                            rows={2}
+                            className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden"
+                            style={{ minHeight: '64px' }}
                           />
                           <ImageUploader
                             bucket="question-images"
@@ -492,11 +697,17 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                               🟣 Thả (Drop)
                             </span>
                           </div>
-                          <input
+                          <textarea
                             value={pair.drop_content}
                             onChange={(e) => updatePair(i, 'drop_content', e.target.value)}
-                            placeholder={`Nội dung thả ${i + 1}...`}
-                            className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            onInput={(e) => {
+                              e.target.style.height = 'auto';
+                              e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            placeholder={`Nội dung thả ${i + 1}... (Enter để xuống dòng)`}
+                            rows={2}
+                            className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none overflow-hidden"
+                            style={{ minHeight: '64px' }}
                           />
                           <ImageUploader
                             bucket="answer-images"
@@ -534,11 +745,52 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                   👁 Xem trước
                 </h3>
                 <div className="bg-gray-900 text-white rounded-xl p-5 space-y-4">
-                  <p className="font-medium text-base">{form.content || <span className="text-gray-400 italic">Chưa có nội dung</span>}</p>
+                  <p className="font-medium text-base whitespace-pre-wrap">{form.content || <span className="text-gray-400 italic">Chưa có nội dung</span>}</p>
                   {form.image_url && (
                     <img src={form.image_url} alt="Question" className="max-h-48 rounded-lg object-contain" />
                   )}
-                  {form.question_type !== 'dragdrop' ? (
+                  {form.question_type === 'truefalse' ? (
+                    <div className="space-y-2">
+                      {statements.map((stmt, i) => (
+                        <div key={stmt.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-600 bg-gray-800">
+                          <span className="text-xs font-bold text-gray-400 w-5 flex-shrink-0">{i + 1}.</span>
+                          <span className="text-sm flex-1 whitespace-pre-wrap">{stmt.content || <em className="text-gray-500">Chưa có nội dung</em>}</span>
+                          <div className="flex-shrink-0 flex rounded-lg overflow-hidden border border-gray-600 opacity-50">
+                            <span className={`px-2.5 py-1 text-xs font-bold ${
+                              stmt.is_true ? 'bg-emerald-700 text-emerald-100' : 'bg-gray-700 text-gray-400'
+                            }`}>Đúng</span>
+                            <span className={`px-2.5 py-1 text-xs font-bold border-l border-gray-600 ${
+                              !stmt.is_true ? 'bg-red-700 text-red-100' : 'bg-gray-700 text-gray-400'
+                            }`}>Sai</span>
+                          </div>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                            stmt.is_true ? 'bg-emerald-800 text-emerald-300' : 'bg-red-900 text-red-300'
+                          }`}>{stmt.is_true ? '✔ Đúng' : '✘ Sai'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : form.question_type === 'hotspot' ? (
+                    <div className="relative rounded-xl overflow-hidden">
+                      {hotspotImageUrl ? (
+                        <div className="relative">
+                          <img src={hotspotImageUrl} alt="Hotspot preview" className="w-full h-auto rounded-xl" />
+                          {regions.map((r, i) => (
+                            <div
+                              key={r.id}
+                              style={{ left: `${r.x}%`, top: `${r.y}%`, width: `${r.width}%`, height: `${r.height}%` }}
+                              className={`absolute border-2 ${r.is_correct ? 'border-emerald-400 bg-emerald-400/20' : 'border-red-400 bg-red-400/20'}`}
+                            >
+                              <span className={`absolute top-0.5 left-0.5 text-[9px] font-bold px-1 rounded ${r.is_correct ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>{i+1}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-24 rounded-xl border border-gray-700 bg-gray-800 text-gray-400 text-sm">
+                          Chưa upload ảnh
+                        </div>
+                      )}
+                    </div>
+                  ) : form.question_type !== 'dragdrop' ? (
                     <div className="space-y-2">
                       {answers.map((a, i) => (
                         <div
@@ -550,7 +802,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                           }`}
                         >
                           <span className="font-bold text-sm">{String.fromCharCode(65 + i)}.</span>
-                          <span className="text-sm flex-1">{a.content || <em className="text-gray-500">Chưa có nội dung</em>}</span>
+                          <span className="text-sm flex-1 whitespace-pre-wrap">{a.content || <em className="text-gray-500">Chưa có nội dung</em>}</span>
                           {a.image_url && <img src={a.image_url} alt="" className="h-8 w-8 rounded object-cover" />}
                           {a.is_correct && <span className="text-emerald-400 text-xs font-semibold">✓ Đúng</span>}
                         </div>
