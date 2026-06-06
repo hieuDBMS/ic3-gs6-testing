@@ -44,80 +44,78 @@ const scoreAnswer = (q, sel) => {
   }
 };
 
-/* ══════════════════════════════════════
-   SHARED ANSWER BUTTON  — modern pill style
-══════════════════════════════════════ */
-const AnswerBtn = ({ idx, isSelected, ansCorrect, isWrong, revealed, disabled, onClick, children, shape = 'circle' }) => {
+/* ══════════════════════════════════════════════════════════
+   SHARED ANSWER BUTTON  — modern pill style (sync with Exam)
+══════════════════════════════════════════════════════════ */
+const AnswerBtn = ({ idx, isSelected, ansCorrect, isWrong, revealed, disabled, onClick, children }) => {
   const letter = String.fromCharCode(65 + idx);
 
-  /* ── state styles ── */
-  let wrapStyle, letterStyle, textColor;
+  let wrapClass = '';
+  let wrapStyle = {};
+  let letterClass = '';
+  let letterStyle = {};
+  let textClass = '';
 
   if (!revealed) {
     if (isSelected) {
-      wrapStyle = {
-        background: 'linear-gradient(135deg,#eff6ff 0%,#e0f2fe 100%)',
-        border: '1.5px solid #60a5fa',
-        boxShadow: '0 2px 14px rgba(59,130,246,0.14)',
-        transform: 'scale(1.008)',
-      };
-      letterStyle = { background: 'linear-gradient(135deg,#3b82f6,#6366f1)', color: '#fff' };
-      textColor = '#1e3a8a';
+      wrapClass = 'border-2 border-indigo-400 shadow-lg shadow-indigo-100/70 scale-[1.01]';
+      wrapStyle = { background: 'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%)' };
+      letterClass = 'text-white';
+      letterStyle = { background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', boxShadow: '0 4px 12px rgba(99,102,241,0.35)' };
+      textClass = 'text-indigo-900 font-semibold';
     } else {
-      wrapStyle = { background: '#fff', border: '1.5px solid #e8edf3', boxShadow: '0 1px 3px rgba(15,23,42,0.04)' };
-      letterStyle = { background: '#f1f5f9', color: '#64748b' };
-      textColor = '#475569';
+      wrapClass = 'border-2 border-gray-100 bg-white hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-50 hover:-translate-y-px group';
+      letterClass = 'bg-gray-100 text-gray-400 group-hover:bg-indigo-100 group-hover:text-indigo-600';
+      textClass = 'text-gray-700';
     }
   } else {
     if (ansCorrect) {
-      wrapStyle = { background: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '1.5px solid #86efac', boxShadow: '0 2px 10px rgba(34,197,94,0.10)' };
-      letterStyle = { background: 'linear-gradient(135deg,#22c55e,#16a34a)', color: '#fff' };
-      textColor = '#166534';
+      wrapClass = 'border-2 border-green-400 shadow-lg shadow-green-100/50 scale-[1.01] z-10';
+      wrapStyle = { background: 'linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)' };
+      letterClass = 'text-white';
+      letterStyle = { background: 'linear-gradient(135deg, #22C55E, #16A34A)', boxShadow: '0 4px 12px rgba(34,197,94,0.25)' };
+      textClass = 'text-green-800 font-semibold';
     } else if (isWrong) {
-      wrapStyle = { background: 'linear-gradient(135deg,#fef2f2,#fee2e2)', border: '1.5px solid #fca5a5', boxShadow: '0 2px 10px rgba(239,68,68,0.10)' };
-      letterStyle = { background: 'linear-gradient(135deg,#f87171,#ef4444)', color: '#fff' };
-      textColor = '#991b1b';
+      wrapClass = 'border-2 border-red-400 shadow-lg shadow-red-100/50 scale-[1.01] z-10';
+      wrapStyle = { background: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)' };
+      letterClass = 'text-white';
+      letterStyle = { background: 'linear-gradient(135deg, #F87171, #EF4444)', boxShadow: '0 4px 12px rgba(239,68,68,0.25)' };
+      textClass = 'text-red-800 font-semibold';
     } else {
-      wrapStyle = { background: '#f8fafc', border: '1.5px solid #f1f5f9' };
-      letterStyle = { background: '#f1f5f9', color: '#cbd5e1' };
-      textColor = '#cbd5e1';
+      wrapClass = 'border-2 border-gray-100 bg-gray-50 opacity-60';
+      letterClass = 'bg-gray-200 text-gray-400';
+      textClass = 'text-gray-400';
     }
   }
 
   return (
     <button disabled={disabled} onClick={onClick}
-      className={`w-full flex items-center gap-0 text-left rounded-2xl overflow-hidden transition-all duration-200 ${!revealed && !isSelected ? 'hover:border-blue-300 hover:shadow-md hover:bg-slate-50/60 hover:-translate-y-px' : ''}`}
+      className={`w-full flex items-center gap-4 p-4 text-left rounded-2xl transition-all duration-200 select-none ${wrapClass}`}
       style={wrapStyle}>
 
-      {/* Left accent stripe */}
-      {isSelected && !revealed && <div style={{ width: 4, alignSelf: 'stretch', flexShrink: 0, background: 'linear-gradient(180deg,#3b82f6,#6366f1)', borderRadius: '0 2px 2px 0' }} />}
-      {ansCorrect && revealed    && <div style={{ width: 4, alignSelf: 'stretch', flexShrink: 0, background: 'linear-gradient(180deg,#22c55e,#16a34a)', borderRadius: '0 2px 2px 0' }} />}
-      {isWrong   && revealed     && <div style={{ width: 4, alignSelf: 'stretch', flexShrink: 0, background: 'linear-gradient(180deg,#f87171,#ef4444)', borderRadius: '0 2px 2px 0' }} />}
-
-      <div className="flex items-center gap-3 px-4 py-3.5 flex-1 min-w-0">
-        {/* Letter pill */}
-        <span className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shadow-sm flex-shrink-0 transition-all duration-200"
-          style={letterStyle}>
-          {letter}
-        </span>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0 text-[13.5px] leading-relaxed font-medium" style={{ color: textColor }}>
-          {children}
-        </div>
-
-        {/* Status icon */}
-        {revealed && ansCorrect && (
-          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center mr-1">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
-          </div>
-        )}
-        {revealed && isWrong && (
-          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mr-1">
-            <XCircle className="w-4 h-4 text-red-500" />
-          </div>
-        )}
+      {/* Letter pill */}
+      <div
+        className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-extrabold flex-shrink-0 transition-all duration-200 ${letterClass}`}
+        style={letterStyle}>
+        {letter}
       </div>
+
+      {/* Content */}
+      <div className={`flex-1 min-w-0 text-[13.5px] leading-relaxed transition-colors ${textClass}`}>
+        {children}
+      </div>
+
+      {/* Status icon */}
+      {revealed && ansCorrect && (
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center ml-2">
+          <CheckCircle2 className="w-4 h-4 text-green-600" />
+        </div>
+      )}
+      {revealed && isWrong && (
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center ml-2">
+          <XCircle className="w-4 h-4 text-red-500" />
+        </div>
+      )}
     </button>
   );
 };
@@ -132,9 +130,9 @@ const ChoicePanel = ({ answers, revealed, selection, onSelect }) => (
         isWrong={revealed && selection === ans.id && !ans.is_correct}
         revealed={revealed} disabled={revealed}
         onClick={() => onSelect(ans.id)}>
-        <div>
-          {ans.image_url && <img src={ans.image_url} alt="" className="h-20 object-contain rounded-xl mb-2" />}
-          <p>{ans.content}</p>
+        <div className="flex items-center gap-3">
+          {ans.image_url && <img src={ans.image_url} alt="" className="h-14 w-20 object-contain rounded-lg border border-gray-100 flex-shrink-0 bg-white" />}
+          <div dangerouslySetInnerHTML={{ __html: ans.content }} />
         </div>
       </AnswerBtn>
     ))}
@@ -162,9 +160,9 @@ const MultiPanel = ({ answers, revealed, selection, onSelect }) => {
             isWrong={revealed && isS && !ans.is_correct}
             revealed={revealed} disabled={revealed}
             onClick={() => toggle(ans.id)}>
-            <div>
-              {ans.image_url && <img src={ans.image_url} alt="" className="h-20 object-contain rounded-xl mb-2" />}
-              <p>{ans.content}</p>
+            <div className="flex items-center gap-3">
+              {ans.image_url && <img src={ans.image_url} alt="" className="h-14 w-20 object-contain rounded-lg border border-gray-100 flex-shrink-0 bg-white" />}
+              <div dangerouslySetInnerHTML={{ __html: ans.content }} />
             </div>
           </AnswerBtn>
         );

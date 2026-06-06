@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
   Plus, Edit2, Trash2, Search, Filter, ChevronLeft,
   ChevronRight, Image as ImageIcon, BookOpen, X, Loader2, Layers,
   ArrowUpDown, ArrowUp, ArrowDown
 } from 'lucide-react';
-import { QuestionModal } from '../components/questions/QuestionModal';
 
 const PAGE_SIZE = 20;
 
@@ -47,9 +47,7 @@ export const QuestionsPage = () => {
     { value: 'content:desc',    label: 'Nội dung Z → A',  icon: 'desc' },
   ];
 
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editQuestion, setEditQuestion] = useState(null);
+  const navigate = useNavigate();
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -169,18 +167,8 @@ export const QuestionsPage = () => {
     }
   };
 
-  const handleEdit = (q) => {
-    setEditQuestion({
-      ...q,
-      _answers:    q.answers?.sort((a, b) => a.order_index - b.order_index) || [],
-      _pairs:      q.dragdrop_pairs?.sort((a, b) => a.order_index - b.order_index) || [],
-      _statements: q.truefalse_statements?.sort((a, b) => a.order_index - b.order_index) || [],
-      _regions:    q.hotspot_regions?.sort((a, b) => a.order_index - b.order_index) || [],
-    });
-    setModalOpen(true);
-  };
-
-  const handleAdd = () => { setEditQuestion(null); setModalOpen(true); };
+  const handleEdit = (q) => navigate(`/questions/${q.id}/edit`);
+  const handleAdd  = () => navigate('/questions/new');
 
   const handleSaved = () => {
     showToast(editQuestion ? 'Đã cập nhật câu hỏi' : 'Đã thêm câu hỏi mới');
@@ -635,13 +623,7 @@ export const QuestionsPage = () => {
         )}
       </div>
 
-      {/* Modal */}
-      <QuestionModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSaved={handleSaved}
-        editQuestion={editQuestion}
-      />
+      {/* (Modal removed — using /questions/new and /questions/:id/edit routes) */}
     </div>
   );
 };

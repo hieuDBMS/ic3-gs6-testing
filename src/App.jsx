@@ -9,6 +9,7 @@ import { ExamListPage } from './pages/ExamListPage';
 import { ExamPage } from './pages/ExamPage';
 import { ResultPage } from './pages/ResultPage';
 import { QuestionsPage } from './pages/QuestionsPage';
+import { QuestionFormPage } from './pages/QuestionFormPage';
 import { StudentManagementPage } from './pages/StudentManagementPage';
 import { StudentProgressPage } from './pages/StudentProgressPage';
 import { ExamStructurePage } from './pages/ExamStructurePage';
@@ -46,7 +47,9 @@ function App() {
             {/* Teacher Only Routes */}
             <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
               <Route element={<Layout />}>
-                <Route path="/questions" element={<QuestionsPage />} />
+              <Route path="/questions" element={<QuestionsPage />} />
+                <Route path="/questions/new" element={<QuestionFormPage />} />
+                <Route path="/questions/:id/edit" element={<QuestionFormPage />} />
                 <Route path="/teacher/exam-structure" element={<ExamStructurePage />} />
                 <Route path="/teacher/students" element={<StudentManagementPage />} />
                 <Route path="/teacher/students/:studentId" element={<StudentProgressPage />} />

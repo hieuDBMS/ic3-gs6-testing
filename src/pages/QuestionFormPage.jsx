@@ -1,0 +1,602 @@
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import {
+  ChevronLeft, Save, Loader2, Plus, Trash2, ArrowLeftRight,
+  BookOpen, LayoutList, Type, CheckSquare, AlertCircle, CheckCircle2,
+} from 'lucide-react';
+import { ImageUploader } from '../components/questions/ImageUploader';
+import { AnswerEditor } from '../components/questions/AnswerEditor';
+import { HotspotEditor } from '../components/questions/HotspotEditor';
+import { RichTextEditor } from '../components/questions/RichTextEditor';
+
+/* ─── Defaults ─── */
+const uid = () => crypto.randomUUID();
+const DEF_ANSWER    = (o = 0) => ({ id: uid(), content: '', image_url: null, is_correct: false, order_index: o });
+const DEF_PAIR      = (o = 0) => ({ id: uid(), drag_content: '', drag_image_url: null, drop_content: '', drop_image_url: null, order_index: o });
+const DEF_STMT      = (o = 0) => ({ id: uid(), content: '', is_true: true, order_index: o });
+const INIT_FORM     = { level_id: '', exam_type: 'testing', exam_id: '', question_type: 'choice', content: '', image_url: null, order_index: 0 };
+
+/* ─── Question type options ─── */
+const Q_TYPES = [
+  { value: 'choice',    label: 'Chọn một',       desc: 'Single choice',   icon: '🔘' },
+  { value: 'multi',     label: 'Chọn nhiều',      desc: 'Multiple choice', icon: '☑️' },
+  { value: 'dragdrop',  label: 'Kéo thả',         desc: 'Drag & Drop',     icon: '🔀' },
+  { value: 'truefalse', label: 'Đúng / Sai',      desc: 'True / False',    icon: '✅' },
+  { value: 'hotspot',   label: 'Chọn vùng ảnh',   desc: 'Click on image',  icon: '🎯' },
+];
+
+const stripHtml = (h) => (h ?? '').replace(/<[^>]*>/g, '').trim();
+
+/* ─── Toast ─── */
+const Toast = ({ msg, type }) => (
+  <div className={`fixed top-4 right-4 z-50 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold transition-all
+    ${type === 'error' ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'}`}>
+    {type === 'error' ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+    {msg}
+  </div>
+);
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN PAGE
+═══════════════════════════════════════════════════════════ */
+export const QuestionFormPage = () => {
+  const { id } = useParams();          // undefined = new, else = edit
+  const navigate  = useNavigate();
+  const isEdit    = !!id;
+
+  const [levels,         setLevels]         = useState([]);
+  const [exams,          setExams]          = useState([]);
+  const [filteredExams,  setFilteredExams]  = useState([]);
+  const [loadingInit,    setLoadingInit]    = useState(true);
+
+  const [form,           setForm]           = useState(INIT_FORM);
+  const [answers,        setAnswers]        = useState([DEF_ANSWER(0), DEF_ANSWER(1), DEF_ANSWER(2), DEF_ANSWER(3)]);
+  const [pairs,          setPairs]          = useState([DEF_PAIR(0), DEF_PAIR(1)]);
+  const [statements,     setStatements]     = useState([DEF_STMT(0), DEF_STMT(1)]);
+  const [regions,        setRegions]        = useState([]);
+  const [hotspotMulti,   setHotspotMulti]   = useState(false);
+  const [hotspotImg,     setHotspotImg]     = useState(null);
+
+  const [saving,  setSaving]  = useState(false);
+  const [errors,  setErrors]  = useState({});
+  const [toast,   setToast]   = useState(null);
+
+  // Remember last used exam for "save & add next"
+  const lastExamRef = useRef({ level_id: '', exam_type: 'testing', exam_id: '' });
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  /* ── Load reference data ── */
+  useEffect(() => {
+    const load = async () => {
+      const [{ data: lvls }, { data: exs }] = await Promise.all([
+        supabase.from('exam_levels').select('*').order('version').order('level_number'),
+        supabase.from('exams').select('*').order('exam_type').order('exam_number'),
+      ]);
+      setLevels(lvls || []);
+      setExams(exs || []);
+
+      if (isEdit) {
+        // Load question data
+        const { data: q, error } = await supabase
+          .from('questions')
+          .select(`*, answers(*), dragdrop_pairs(*), truefalse_statements(*), hotspot_regions(*)`)
+          .eq('id', id)
+          .single();
+        if (error || !q) { navigate('/questions'); return; }
+
+        const exam = (exs || []).find(e => e.id === q.exam_id);
+        setForm({
+          level_id:      exam?.level_id    || '',
+          exam_type:     exam?.exam_type   || 'testing',
+          exam_id:       q.exam_id         || '',
+          question_type: q.question_type,
+          content:       q.content,
+          image_url:     q.image_url       || null,
+          order_index:   q.order_index     || 0,
+        });
+        setAnswers(q.answers?.sort((a,b)=>a.order_index-b.order_index) || [DEF_ANSWER()]);
+        setPairs(q.dragdrop_pairs?.sort((a,b)=>a.order_index-b.order_index) || [DEF_PAIR()]);
+        setStatements(q.truefalse_statements?.sort((a,b)=>a.order_index-b.order_index) || [DEF_STMT(0),DEF_STMT(1)]);
+        setRegions(q.hotspot_regions?.sort((a,b)=>a.order_index-b.order_index) || []);
+        setHotspotMulti(q.hotspot_multi || false);
+        setHotspotImg(q.image_url || null);
+      }
+
+      setLoadingInit(false);
+    };
+    load();
+  }, [id]);
+
+  /* ── Filter exams by level + type ── */
+  useEffect(() => {
+    if (!form.level_id) { setFilteredExams([]); return; }
+    const f = exams.filter(e => e.level_id === form.level_id && e.exam_type === form.exam_type);
+    setFilteredExams(f);
+    if (f.length && !f.find(e => e.id === form.exam_id)) {
+      setForm(prev => ({ ...prev, exam_id: f[0]?.id || '' }));
+    }
+  }, [form.level_id, form.exam_type, exams]);
+
+  const set = (field, val) => setForm(f => ({ ...f, [field]: val }));
+
+  /* ── Validation ── */
+  const validate = () => {
+    const e = {};
+    if (!form.level_id)             e.level_id = 'Chọn level';
+    if (!form.exam_id)              e.exam_id  = 'Chọn bài thi';
+    if (!stripHtml(form.content))   e.content  = 'Nhập nội dung câu hỏi';
+    if (form.question_type === 'truefalse') {
+      if (statements.length < 2)                         e.statements = 'Cần ít nhất 2 nhận định';
+      if (statements.some(s => !stripHtml(s.content)))   e.statements = 'Mỗi nhận định phải có nội dung';
+    } else if (form.question_type === 'hotspot') {
+      if (!hotspotImg)                                         e.regions = 'Phải upload ảnh';
+      else if (!regions.some(r => r.is_correct))               e.regions = 'Cần ít nhất 1 vùng đúng';
+    } else if (form.question_type !== 'dragdrop') {
+      if (answers.length < 2)                                  e.answers = 'Cần ít nhất 2 đáp án';
+      if (!answers.some(a => a.is_correct))                    e.answers = 'Phải có ít nhất 1 đáp án đúng';
+      if (answers.some(a => !stripHtml(a.content)))            e.answers = 'Mỗi đáp án phải có nội dung';
+    } else {
+      if (!pairs.length)                                         e.pairs = 'Cần ít nhất 1 cặp';
+      if (pairs.some(p => !p.drag_content.trim() || !p.drop_content.trim())) e.pairs = 'Mỗi cặp phải đủ nội dung';
+    }
+    setErrors(e);
+    return !Object.keys(e).length;
+  };
+
+  /* ── Save ── */
+  const doSave = async (andAddNext = false) => {
+    if (!validate()) {
+      showToast('Vui lòng kiểm tra lại thông tin', 'error');
+      // Scroll to first error
+      document.querySelector('[data-error]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setSaving(true);
+    try {
+      let qId = id;
+      const qData = {
+        exam_id:       form.exam_id,
+        question_type: form.question_type,
+        content:       form.content,
+        image_url:     form.question_type === 'hotspot' ? hotspotImg : form.image_url,
+        order_index:   Number(form.order_index) || 0,
+        hotspot_multi: form.question_type === 'hotspot' ? hotspotMulti : false,
+      };
+
+      if (isEdit) {
+        await supabase.from('questions').update({ ...qData, updated_at: new Date().toISOString() }).eq('id', qId);
+      } else {
+        const { data, error } = await supabase.from('questions').insert(qData).select('id').single();
+        if (error) throw error;
+        qId = data.id;
+      }
+
+      // Save sub-data
+      if (form.question_type === 'hotspot') {
+        if (isEdit) await supabase.from('hotspot_regions').delete().eq('question_id', qId);
+        if (regions.length) {
+          const rows = regions.map((r, i) => ({
+            question_id: qId, label: r.label||null, x: r.x, y: r.y,
+            width: r.width, height: r.height, is_correct: r.is_correct,
+            color: r.color || '#6366F1', order_index: i,
+          }));
+          const { error } = await supabase.from('hotspot_regions').insert(rows);
+          if (error) throw error;
+        }
+      } else if (form.question_type === 'truefalse') {
+        if (isEdit) await supabase.from('truefalse_statements').delete().eq('question_id', qId);
+        const rows = statements.map((s, i) => ({ question_id: qId, content: s.content, is_true: s.is_true, order_index: i }));
+        const { error } = await supabase.from('truefalse_statements').insert(rows);
+        if (error) throw error;
+      } else if (form.question_type !== 'dragdrop') {
+        if (isEdit) await supabase.from('answers').delete().eq('question_id', qId);
+        const rows = answers.map((a, i) => ({ question_id: qId, content: a.content, image_url: a.image_url||null, is_correct: a.is_correct, order_index: i }));
+        const { error } = await supabase.from('answers').insert(rows);
+        if (error) throw error;
+      } else {
+        if (isEdit) await supabase.from('dragdrop_pairs').delete().eq('question_id', qId);
+        const rows = pairs.map((p, i) => ({ question_id: qId, drag_content: p.drag_content.trim(), drag_image_url: p.drag_image_url||null, drop_content: p.drop_content.trim(), drop_image_url: p.drop_image_url||null, order_index: i }));
+        const { error } = await supabase.from('dragdrop_pairs').insert(rows);
+        if (error) throw error;
+      }
+
+      // Reorder
+      await supabase.rpc('reorder_questions_in_exam', { p_exam_id: form.exam_id });
+
+      if (andAddNext) {
+        showToast('Đã lưu! Sẵn sàng thêm câu tiếp theo ✨');
+        // Keep exam info, reset rest
+        const saved = { level_id: form.level_id, exam_type: form.exam_type, exam_id: form.exam_id };
+        lastExamRef.current = saved;
+        setForm({ ...INIT_FORM, ...saved, order_index: Number(form.order_index) + 1 });
+        setAnswers([DEF_ANSWER(0), DEF_ANSWER(1), DEF_ANSWER(2), DEF_ANSWER(3)]);
+        setPairs([DEF_PAIR(0), DEF_PAIR(1)]);
+        setStatements([DEF_STMT(0), DEF_STMT(1)]);
+        setRegions([]);
+        setHotspotImg(null);
+        setHotspotMulti(false);
+        setErrors({});
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        navigate('/questions');
+      }
+    } catch (err) {
+      showToast(err.message || 'Lỗi khi lưu', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Ctrl+S shortcut
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); doSave(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [form, answers, pairs, statements, regions, hotspotImg]);
+
+  /* ─── Pair helpers ─── */
+  const addPair       = () => setPairs(p => [...p, DEF_PAIR(p.length)]);
+  const removePair    = (i) => setPairs(p => p.filter((_,idx) => idx !== i));
+  const updatePair    = (i, field, val) => setPairs(p => p.map((pair, idx) => idx === i ? { ...pair, [field]: val } : pair));
+  const addStmt       = () => setStatements(s => [...s, DEF_STMT(s.length)]);
+  const removeStmt    = (i) => setStatements(s => s.filter((_,idx) => idx !== i));
+  const updateStmt    = (i, field, val) => setStatements(s => s.map((st, idx) => idx === i ? { ...st, [field]: val } : st));
+
+  /* ── Derived ── */
+  const versions = [...new Set(levels.map(l => l.version))].sort();
+  const filteredLevels = form.version ? levels.filter(l => l.version === form.version) : levels;
+  const selectedExam = filteredExams.find(e => e.id === form.exam_id);
+  const selectedLevel = levels.find(l => l.id === form.level_id);
+
+  /* ── Loading ── */
+  if (loadingInit) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  const isHotspot = form.question_type === 'hotspot';
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {toast && <Toast {...toast} />}
+
+      {/* ══ TOP HEADER ══ */}
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-screen-xl mx-auto flex items-center gap-3 px-4 sm:px-6 py-3">
+          {/* Back */}
+          <button
+            onClick={() => navigate('/questions')}
+            className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium flex-shrink-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Ngân hàng câu hỏi</span>
+          </button>
+
+          <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
+
+          {/* Title */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
+              <BookOpen className="w-3.5 h-3.5 text-white" />
+            </div>
+            <h1 className="text-sm font-bold text-gray-900 truncate">
+              {isEdit ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới'}
+            </h1>
+            {form.exam_id && selectedExam && (
+              <span className="hidden sm:inline text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                {selectedLevel?.label} · {selectedExam.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {selectedExam.exam_number}
+              </span>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="hidden lg:inline text-[11px] text-gray-400">Ctrl+S để lưu</span>
+
+            {/* Save & add next (only in add mode) */}
+            {!isEdit && (
+              <button
+                onClick={() => doSave(true)}
+                disabled={saving}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-indigo-300 text-indigo-700 text-xs font-bold hover:bg-indigo-50 transition-all disabled:opacity-50"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Lưu &amp; Thêm tiếp
+              </button>
+            )}
+
+            <button
+              onClick={() => doSave(false)}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-sm font-bold transition-all disabled:opacity-50"
+              style={{ background: saving ? '#94a3b8' : 'linear-gradient(135deg, #6366F1, #8B5CF6)', boxShadow: saving ? 'none' : '0 4px 14px rgba(99,102,241,0.35)' }}
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {isEdit ? 'Cập nhật' : 'Lưu câu hỏi'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ══ BODY ══ */}
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
+        <div className={`flex gap-6 ${isHotspot ? 'flex-col xl:flex-row' : 'flex-col lg:flex-row'}`}>
+
+          {/* ════ LEFT: Exam + Type config (sticky sidebar on desktop) ════ */}
+          <div className={`flex-shrink-0 space-y-4 ${isHotspot ? 'xl:w-72' : 'lg:w-72'}`}>
+            <div className="sticky top-[61px] space-y-4">
+
+              {/* Section 1: Bài thi */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
+                  <LayoutList className="w-4 h-4 text-gray-400" />
+                  <h2 className="text-xs font-bold text-gray-600 uppercase tracking-wider">1. Thuộc về bài thi</h2>
+                </div>
+                <div className="p-4 space-y-3">
+                  {/* Level */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Level <span className="text-red-500">*</span></label>
+                    <select
+                      value={form.level_id}
+                      onChange={e => { set('level_id', e.target.value); set('exam_id', ''); }}
+                      className={`w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${errors.level_id ? 'border-red-400' : 'border-gray-200'}`}
+                    >
+                      <option value="">-- Chọn Level --</option>
+                      {versions.map(v => (
+                        <optgroup key={v} label={`── IC3 ${v} ──`}>
+                          {levels.filter(l => l.version === v).map(l => (
+                            <option key={l.id} value={l.id}>{v} — {l.label}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    {errors.level_id && <p data-error className="text-xs text-red-500 mt-1">{errors.level_id}</p>}
+                  </div>
+
+                  {/* Exam type */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Loại bài</label>
+                    <div className="flex gap-2">
+                      {['testing','gmetrix'].map(t => (
+                        <button key={t} type="button" onClick={() => set('exam_type', t)}
+                          className={`flex-1 py-2 text-xs rounded-xl border-2 font-bold capitalize transition-all ${form.exam_type === t ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                          {t === 'testing' ? 'Testing' : 'Gmetrix'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Specific exam */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Số bài <span className="text-red-500">*</span></label>
+                    <select
+                      value={form.exam_id}
+                      onChange={e => set('exam_id', e.target.value)}
+                      disabled={!form.level_id}
+                      className={`w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-40 ${errors.exam_id ? 'border-red-400' : 'border-gray-200'}`}
+                    >
+                      <option value="">-- Chọn bài --</option>
+                      {filteredExams.map(e => (
+                        <option key={e.id} value={e.id}>{e.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {e.exam_number}</option>
+                      ))}
+                    </select>
+                    {errors.exam_id && <p data-error className="text-xs text-red-500 mt-1">{errors.exam_id}</p>}
+                  </div>
+
+                  {/* Order index */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Thứ tự câu</label>
+                    <input type="number" min={0} value={form.order_index}
+                      onChange={e => set('order_index', e.target.value)}
+                      className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Loại câu hỏi */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
+                  <CheckSquare className="w-4 h-4 text-gray-400" />
+                  <h2 className="text-xs font-bold text-gray-600 uppercase tracking-wider">2. Loại câu hỏi</h2>
+                </div>
+                <div className="p-3 grid grid-cols-1 gap-1.5">
+                  {Q_TYPES.map(t => (
+                    <button key={t.value} type="button" onClick={() => set('question_type', t.value)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 text-left transition-all ${
+                        form.question_type === t.value
+                          ? 'border-indigo-500 bg-indigo-50'
+                          : 'border-gray-100 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'
+                      }`}>
+                      <span className="text-lg flex-shrink-0">{t.icon}</span>
+                      <div className="min-w-0">
+                        <p className={`text-xs font-bold leading-none ${form.question_type === t.value ? 'text-indigo-700' : 'text-gray-700'}`}>{t.label}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{t.desc}</p>
+                      </div>
+                      {form.question_type === t.value && (
+                        <CheckCircle2 className="w-4 h-4 text-indigo-500 ml-auto flex-shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile: Save & add next */}
+              {!isEdit && (
+                <button onClick={() => doSave(true)} disabled={saving}
+                  className="sm:hidden w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-indigo-300 text-indigo-700 text-sm font-bold hover:bg-indigo-50 transition-all disabled:opacity-50">
+                  <Plus className="w-4 h-4" /> Lưu &amp; Thêm câu tiếp theo
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ════ RIGHT: Content + Answers ════ */}
+          <div className="flex-1 min-w-0 space-y-4">
+
+            {/* Section 3: Nội dung câu hỏi */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
+                <Type className="w-4 h-4 text-gray-400" />
+                <h2 className="text-xs font-bold text-gray-600 uppercase tracking-wider">3. Nội dung câu hỏi</h2>
+              </div>
+              <div className="p-5 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                    Câu hỏi <span className="text-red-500">*</span>
+                    <span className="ml-1.5 text-gray-300 font-normal">(hỗ trợ in đậm, màu sắc, gạch dưới)</span>
+                  </label>
+                  <RichTextEditor
+                    value={form.content}
+                    onChange={html => set('content', html)}
+                    placeholder={isHotspot ? 'Ví dụ: "Click vào nút nào dùng để lưu file?"' : 'Nhập nội dung câu hỏi...'}
+                    minHeight={100}
+                    hasError={!!errors.content}
+                  />
+                  {errors.content && <p data-error className="text-xs text-red-500 mt-1">{errors.content}</p>}
+                </div>
+
+                {/* Image uploader — not for hotspot */}
+                {!isHotspot && (
+                  <ImageUploader
+                    bucket="question-images"
+                    value={form.image_url}
+                    onChange={url => set('image_url', url)}
+                    label="Ảnh câu hỏi (tuỳ chọn)"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Section 4: Đáp án / Hotspot / etc. */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-5 py-3 bg-gray-50 border-b border-gray-100">
+                <h2 className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  4. {form.question_type === 'dragdrop' ? 'Cặp kéo-thả'
+                    : form.question_type === 'truefalse' ? 'Nhận định Đúng / Sai'
+                    : form.question_type === 'hotspot' ? 'Vùng chọn trên ảnh'
+                    : 'Đáp án'}
+                </h2>
+              </div>
+              <div className="p-5">
+                {/* Error banner */}
+                {(errors.answers || errors.pairs || errors.statements || errors.regions) && (
+                  <div data-error className="flex items-center gap-2 mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    {errors.answers || errors.pairs || errors.statements || errors.regions}
+                  </div>
+                )}
+
+                {/* ── Hotspot ── */}
+                {form.question_type === 'hotspot' && (
+                  <HotspotEditor
+                    imageUrl={hotspotImg}
+                    onImageChange={setHotspotImg}
+                    regions={regions}
+                    onRegionsChange={setRegions}
+                    multiMode={hotspotMulti}
+                    onMultiModeChange={setHotspotMulti}
+                  />
+                )}
+
+                {/* ── True/False ── */}
+                {form.question_type === 'truefalse' && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-3 py-2.5 bg-teal-50 border border-teal-200 rounded-xl">
+                      <span>✅</span>
+                      <p className="text-xs text-teal-700">Nhập từng nhận định và chọn <strong>Đúng</strong> hoặc <strong>Sai</strong>.</p>
+                    </div>
+                    {statements.map((stmt, i) => (
+                      <div key={stmt.id} className={`rounded-xl border-2 overflow-hidden ${stmt.is_true ? 'border-emerald-300' : 'border-red-300'}`}>
+                        <div className={`flex items-center gap-2 px-3 py-2 border-b ${stmt.is_true ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                          <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-600 text-xs font-bold flex items-center justify-center flex-shrink-0">{i+1}</span>
+                          <span className={`text-xs font-semibold flex-1 ${stmt.is_true ? 'text-emerald-700' : 'text-red-700'}`}>{stmt.is_true ? '✔ Đúng' : '✘ Sai'}</span>
+                          <div className="flex rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                            <button type="button" onClick={() => updateStmt(i,'is_true',true)} className={`px-3 py-1 text-xs font-bold transition-all ${stmt.is_true ? 'bg-emerald-500 text-white' : 'bg-white text-gray-400 hover:bg-emerald-50'}`}>Đúng</button>
+                            <button type="button" onClick={() => updateStmt(i,'is_true',false)} className={`px-3 py-1 text-xs font-bold border-l border-gray-200 transition-all ${!stmt.is_true ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:bg-red-50'}`}>Sai</button>
+                          </div>
+                          <button type="button" onClick={() => removeStmt(i)} disabled={statements.length <= 2} className="text-gray-300 hover:text-red-400 disabled:opacity-30 flex-shrink-0"><Trash2 className="w-4 h-4"/></button>
+                        </div>
+                        <div className="p-3 bg-white">
+                          <RichTextEditor value={stmt.content} onChange={html => updateStmt(i,'content',html)} placeholder={`Nhận định ${i+1}...`} minHeight={44} />
+                        </div>
+                      </div>
+                    ))}
+                    <button type="button" onClick={addStmt} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-teal-600 font-semibold border-2 border-dashed border-teal-300 hover:border-teal-500 rounded-xl transition-colors">
+                      <Plus className="w-4 h-4"/> Thêm nhận định
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Drag-drop ── */}
+                {form.question_type === 'dragdrop' && (
+                  <div className="space-y-4">
+                    {pairs.map((pair, i) => (
+                      <div key={pair.id} className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+                        <div className="flex items-center justify-between px-4 py-2 bg-gray-100 border-b border-gray-200">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Cặp {i+1}</span>
+                          <button type="button" onClick={() => removePair(i)} className="text-gray-300 hover:text-red-400"><Trash2 className="w-4 h-4"/></button>
+                        </div>
+                        <div className="flex flex-col sm:grid sm:grid-cols-[1fr_32px_1fr] gap-0">
+                          <div className="p-4 space-y-2 border-b sm:border-b-0 sm:border-r border-gray-200">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700">🔵 Kéo (Drag)</span>
+                            <textarea value={pair.drag_content} onChange={e => updatePair(i,'drag_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={`Nội dung kéo ${i+1}...`} rows={2} className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
+                            <ImageUploader bucket="question-images" value={pair.drag_image_url} onChange={url => updatePair(i,'drag_image_url',url)} label="Ảnh (tuỳ chọn)"/>
+                          </div>
+                          <div className="hidden sm:flex items-center justify-center bg-gray-50"><ArrowLeftRight className="w-4 h-4 text-gray-300"/></div>
+                          <div className="p-4 space-y-2">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-700">🟣 Thả (Drop)</span>
+                            <textarea value={pair.drop_content} onChange={e => updatePair(i,'drop_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={`Nội dung thả ${i+1}...`} rows={2} className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
+                            <ImageUploader bucket="answer-images" value={pair.drop_image_url} onChange={url => updatePair(i,'drop_image_url',url)} label="Ảnh (tuỳ chọn)"/>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <button type="button" onClick={addPair} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-indigo-600 font-semibold border-2 border-dashed border-indigo-300 hover:border-indigo-500 rounded-xl">
+                      <Plus className="w-4 h-4"/> Thêm cặp kéo-thả
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Choice / Multi ── */}
+                {(form.question_type === 'choice' || form.question_type === 'multi') && (
+                  <AnswerEditor answers={answers} onChange={setAnswers} multiSelect={form.question_type === 'multi'} />
+                )}
+              </div>
+            </div>
+
+            {/* Bottom action bar */}
+            <div className="flex items-center justify-between gap-3 pt-2 pb-8">
+              <button onClick={() => navigate('/questions')} className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 rounded-xl transition-all">
+                <ChevronLeft className="w-4 h-4" /> Huỷ
+              </button>
+              <div className="flex items-center gap-2">
+                {!isEdit && (
+                  <button onClick={() => doSave(true)} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 text-sm text-indigo-700 font-bold border-2 border-indigo-300 hover:bg-indigo-50 rounded-xl transition-all disabled:opacity-50">
+                    <Plus className="w-4 h-4" /> Lưu &amp; Thêm tiếp
+                  </button>
+                )}
+                <button onClick={() => doSave(false)} disabled={saving}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold transition-all disabled:opacity-50"
+                  style={{ background: saving ? '#94a3b8' : 'linear-gradient(135deg, #6366F1, #8B5CF6)', boxShadow: saving ? 'none' : '0 4px 14px rgba(99,102,241,0.35)' }}>
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+                  {isEdit ? 'Cập nhật' : 'Lưu câu hỏi'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

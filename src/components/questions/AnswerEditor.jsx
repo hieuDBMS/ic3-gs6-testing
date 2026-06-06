@@ -1,6 +1,7 @@
 import React, { useId } from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { ImageUploader } from './ImageUploader';
+import { RichTextEditor } from './RichTextEditor';
 
 const DEFAULT_ANSWER = () => ({
   id: crypto.randomUUID(),
@@ -17,14 +18,11 @@ const DEFAULT_ANSWER = () => ({
  * @param {boolean} props.multiSelect - true for 'multi', false for 'choice'
  */
 export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
-  // Unique group name per AnswerEditor instance to avoid radio name conflicts
-  // when multiple modals or forms exist in the same page
   const groupName = useId();
 
   const update = (index, field, val) => {
     const next = answers.map((a, i) => {
       if (i !== index) {
-        // For single-choice: deselect all others when one is selected
         if (!multiSelect && field === 'is_correct' && val) {
           return { ...a, is_correct: false };
         }
@@ -35,11 +33,6 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
     onChange(next);
   };
 
-  // For single-choice (radio), clicking a radio only fires onChange for the
-  // selected element — browser deselects others visually but React state is
-  // NOT updated for them. We must explicitly set is_correct=false for all
-  // other answers through the update() helper above.
-  // For safety, also provide a dedicated radio handler:
   const handleRadioChange = (index) => {
     const next = answers.map((a, i) => ({ ...a, is_correct: i === index }));
     onChange(next);
@@ -53,52 +46,61 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
     onChange(answers.filter((_, i) => i !== index));
   };
 
+  const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
   return (
     <div className="space-y-3">
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium text-gray-700 flex items-center flex-wrap gap-1.5">
           Đáp án
           {multiSelect
-            ? <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">Chọn nhiều đáp án đúng</span>
-            : <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Chọn một đáp án đúng</span>
+            ? <span className="text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">☑ Chọn nhiều đáp án đúng</span>
+            : <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">🔘 Chọn một đáp án đúng</span>
           }
         </p>
         <button
           type="button"
           onClick={addAnswer}
-          className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium gap-1 whitespace-nowrap flex-shrink-0"
+          className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-semibold gap-1 whitespace-nowrap flex-shrink-0 px-3 py-1.5 border border-indigo-200 hover:border-indigo-400 rounded-xl transition-all"
         >
           <Plus className="w-4 h-4" /> Thêm đáp án
         </button>
       </div>
 
       {answers.length === 0 && (
-        <p className="text-xs text-gray-400 italic text-center py-4 border border-dashed border-gray-200 rounded-lg">
+        <p className="text-xs text-gray-400 italic text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">
           Chưa có đáp án nào. Bấm "Thêm đáp án" để bắt đầu.
         </p>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {answers.map((answer, index) => (
           <div
             key={answer.id}
-            className={`relative border rounded-xl p-3 transition-colors ${
+            className={`relative rounded-2xl border-2 overflow-hidden transition-all ${
               answer.is_correct
-                ? 'border-emerald-400 bg-emerald-50/50'
-                : 'border-gray-200 bg-white hover:border-gray-300'
+                ? 'border-emerald-400 shadow-sm shadow-emerald-100'
+                : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            {/* Header row */}
-            <div className="flex items-start gap-3">
-              <div className="flex items-center gap-2 pt-1 flex-shrink-0">
-                <GripVertical className="w-4 h-4 text-gray-300 cursor-grab" />
-                <span className="text-xs font-bold text-gray-400 w-5 text-center">
-                  {String.fromCharCode(65 + index)}
-                </span>
-              </div>
+            {/* ── Card header: letter badge + correct toggle + delete ── */}
+            <div className={`flex items-center gap-3 px-3 py-2.5 border-b ${
+              answer.is_correct ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200'
+            }`}>
+              <GripVertical className="w-4 h-4 text-gray-300 cursor-grab flex-shrink-0" />
 
-              {/* Correct checkbox */}
-              <label className="flex items-center gap-1.5 cursor-pointer flex-shrink-0 pt-1">
+              {/* Letter badge */}
+              <span className={`w-7 h-7 rounded-xl text-sm font-extrabold flex items-center justify-center flex-shrink-0 ${
+                answer.is_correct
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-gray-200 text-gray-500'
+              }`}>
+                {LETTERS[index] ?? index + 1}
+              </span>
+
+              {/* Correct toggle */}
+              <label className="flex items-center gap-2 cursor-pointer flex-1">
                 <input
                   type={multiSelect ? 'checkbox' : 'radio'}
                   name={groupName}
@@ -108,46 +110,43 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
                       ? (e) => update(index, 'is_correct', e.target.checked)
                       : () => handleRadioChange(index)
                   }
-                  className={multiSelect
-                    ? 'w-4 h-4 rounded accent-emerald-500'
-                    : 'w-4 h-4 accent-emerald-500'
-                  }
+                  className="w-4 h-4 accent-emerald-500 flex-shrink-0"
                 />
-                <span className="text-xs text-gray-500">Đúng</span>
+                <span className={`text-xs font-semibold ${answer.is_correct ? 'text-emerald-700' : 'text-gray-400'}`}>
+                  {answer.is_correct ? '✔ Đáp án đúng' : 'Đánh dấu là đúng'}
+                </span>
               </label>
 
-              {/* Content */}
-              <textarea
-                value={answer.content}
-                onChange={(e) => update(index, 'content', e.target.value)}
-                onInput={(e) => {
-                  e.target.style.height = 'auto';
-                  e.target.style.height = e.target.scrollHeight + 'px';
-                }}
-                placeholder={`Nội dung đáp án ${String.fromCharCode(65 + index)}... (Enter để xuống dòng)`}
-                rows={1}
-                className="flex-1 min-w-0 text-sm border-0 bg-transparent resize-none outline-none focus:ring-0 placeholder-gray-300 overflow-hidden"
-                style={{ minHeight: '28px' }}
-              />
-
-              {/* Remove */}
+              {/* Delete */}
               <button
                 type="button"
                 onClick={() => removeAnswer(index)}
-                className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 pt-1"
+                className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0"
+                title="Xóa đáp án"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Image uploader */}
-            <div className="ml-[52px] sm:ml-[64px] mt-2">
-              <ImageUploader
-                bucket="answer-images"
-                value={answer.image_url}
-                onChange={(url) => update(index, 'image_url', url)}
-                label="Ảnh đáp án (tuỳ chọn)"
+            {/* ── Card body: rich text editor ── */}
+            <div className="p-3 space-y-2 bg-white">
+              <RichTextEditor
+                value={answer.content}
+                onChange={(html) => update(index, 'content', html)}
+                placeholder={`Nội dung đáp án ${LETTERS[index] ?? index + 1}... (có thể in đậm, đổi màu...)`}
+                minHeight={52}
+                hasError={false}
               />
+
+              {/* Image uploader */}
+              <div className="pt-1">
+                <ImageUploader
+                  bucket="answer-images"
+                  value={answer.image_url}
+                  onChange={(url) => update(index, 'image_url', url)}
+                  label="Ảnh đáp án (tuỳ chọn)"
+                />
+              </div>
             </div>
           </div>
         ))}

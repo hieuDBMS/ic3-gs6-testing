@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { ImageUploader } from './ImageUploader';
 import { AnswerEditor } from './AnswerEditor';
 import { HotspotEditor } from './HotspotEditor';
+import { RichTextEditor } from './RichTextEditor';
 
 const DEFAULT_ANSWER = (order = 0) => ({
   id: crypto.randomUUID(),
@@ -133,21 +134,24 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
 
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
+  // Strip HTML tags to get plain text for validation
+  const stripHtml = (html) => html?.replace(/<[^>]*>/g, '').trim() ?? '';
+
   const validate = () => {
     const e = {};
     if (!form.level_id) e.level_id = 'Chọn Level';
     if (!form.exam_id)  e.exam_id  = 'Chọn bài thi';
-    if (!form.content.trim()) e.content = 'Nhập nội dung câu hỏi';
+    if (!stripHtml(form.content)) e.content = 'Nhập nội dung câu hỏi';
     if (form.question_type === 'truefalse') {
       if (statements.length < 2) e.statements = 'Cần ít nhất 2 nhận định';
-      if (statements.some(s => !s.content.trim())) e.statements = 'Mỗi nhận định phải có nội dung';
+      if (statements.some(s => !stripHtml(s.content))) e.statements = 'Mỗi nhận định phải có nội dung';
     } else if (form.question_type === 'hotspot') {
-      if (!hotspotImageUrl) e.regions = 'Độc phải upload ảnh cho hotspot';
+      if (!hotspotImageUrl) e.regions = 'Phải upload ảnh cho hotspot';
       else if (regions.filter(r => r.is_correct).length === 0) e.regions = 'Cần ít nhất 1 vùng đúng';
     } else if (form.question_type !== 'dragdrop') {
       if (answers.length < 2) e.answers = 'Cần ít nhất 2 đáp án';
       if (!answers.some(a => a.is_correct)) e.answers = 'Phải có ít nhất 1 đáp án đúng';
-      if (answers.some(a => !a.content.trim())) e.answers = 'Mỗi đáp án phải có nội dung';
+      if (answers.some(a => !stripHtml(a.content))) e.answers = 'Mỗi đáp án phải có nội dung';
     } else {
       if (pairs.length < 1) e.pairs = 'Cần ít nhất 1 cặp kéo-thả';
       if (pairs.some(p => !p.drag_content.trim() || !p.drop_content.trim()))
@@ -166,7 +170,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
       const questionData = {
         exam_id: form.exam_id,
         question_type: form.question_type,
-        content: form.content.trim(),
+        content: form.content, // stored as HTML
         image_url: form.question_type === 'hotspot' ? hotspotImageUrl : form.image_url,
         order_index: Number(form.order_index) || 0,
         hotspot_multi: form.question_type === 'hotspot' ? hotspotMulti : false,
@@ -213,7 +217,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
         }
         const stmtRows = statements.map((s, i) => ({
           question_id: questionId,
-          content:     s.content.trim(),
+          content:     s.content, // stored as HTML
           is_true:     s.is_true,
           order_index: i,
         }));
@@ -462,22 +466,16 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     Câu hỏi <span className="text-red-500">*</span>
+                    <span className="ml-2 text-gray-400 font-normal">(hỗ trợ in đậm, màu sắc, gạch dưới...)</span>
                   </label>
-                  <textarea
+                  <RichTextEditor
                     value={form.content}
-                    onChange={(e) => set('content', e.target.value)}
-                    onInput={(e) => {
-                      e.target.style.height = 'auto';
-                      e.target.style.height = e.target.scrollHeight + 'px';
-                    }}
+                    onChange={(html) => set('content', html)}
                     placeholder={form.question_type === 'hotspot'
-                      ? 'Ví dụ: "Click vào nút Save As..." (Enter để xuống dòng)'
-                      : 'Nhập nội dung câu hỏi... (Enter để xuống dòng)'}
-                    rows={3}
-                    className={`w-full text-sm border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y overflow-hidden ${
-                      errors.content ? 'border-red-400' : 'border-gray-200'
-                    }`}
-                    style={{ minHeight: '80px' }}
+                      ? 'Ví dụ: "Click vào nút Save As..."'
+                      : 'Nhập nội dung câu hỏi...'}
+                    minHeight={90}
+                    hasError={!!errors.content}
                   />
                   {errors.content && <p className="text-xs text-red-500 mt-1">{errors.content}</p>}
                 </div>
@@ -562,19 +560,15 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                           {i + 1}
                         </span>
 
-                        {/* Content textarea */}
-                        <textarea
-                          value={stmt.content}
-                          onChange={(e) => updateStatement(i, 'content', e.target.value)}
-                          onInput={(e) => {
-                            e.target.style.height = 'auto';
-                            e.target.style.height = e.target.scrollHeight + 'px';
-                          }}
-                          placeholder={`Nhận định ${i + 1}... (Enter để xuống dòng)`}
-                          rows={1}
-                          className="flex-1 min-w-0 text-sm border-0 bg-transparent resize-none outline-none focus:ring-0 placeholder-gray-300 overflow-hidden leading-relaxed"
-                          style={{ minHeight: '28px' }}
-                        />
+                        {/* Content — RichTextEditor */}
+                        <div className="flex-1 min-w-0">
+                          <RichTextEditor
+                            value={stmt.content}
+                            onChange={(html) => updateStatement(i, 'content', html)}
+                            placeholder={`Nhận định ${i + 1}... (hỗ trợ in đậm, màu sắc...)`}
+                            minHeight={44}
+                          />
+                        </div>
 
                         {/* True / False toggle */}
                         <div className="flex-shrink-0 flex rounded-xl overflow-hidden border border-gray-200 mt-0.5">
