@@ -71,11 +71,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const login = async (usernameOrEmail, password) => {
+    // If no '@', treat as username → construct fake email
+    const email = usernameOrEmail.includes('@')
+      ? usernameOrEmail
+      : `${usernameOrEmail.toLowerCase()}@ic3fighter.local`;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     return data;
   };
@@ -91,8 +92,11 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    isStudent: profile?.role === 'student',
-    isTeacher: profile?.role === 'teacher',
+    isStudent:      profile?.role === 'student',
+    isTeacher:      profile?.role === 'teacher',
+    isAdminCreated: profile?.account_source === 'ADMIN' || profile?.role === 'teacher',
+    isSelfRegistered: profile?.account_source === 'SELF',
+    accountSource:  profile?.account_source ?? 'ADMIN',
   };
 
   return (

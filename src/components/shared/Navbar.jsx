@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   LogOut, BookOpen, Users, LayoutDashboard,
-  Settings, Layers, Menu, X, ChevronDown, Brain
+  Settings, Layers, Menu, X, ChevronDown, Brain, Sword, CreditCard, ShieldCheck
 } from 'lucide-react';
 
 const COLORS = [
@@ -45,7 +45,7 @@ const NavLink = ({ to, icon, children }) => {
 };
 
 export const Navbar = () => {
-  const { profile, logout, isTeacher } = useAuth();
+  const { profile, logout, isTeacher, isSelfRegistered, isAdminCreated } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -62,10 +62,16 @@ export const Navbar = () => {
 
   const initials = getInitials(profile.full_name);
   const avatarColor = getAvatarColor(profile.full_name);
-  const roleLabel = isTeacher ? 'Giáo viên' : 'Học sinh';
+  // Display username without @ic3fighter.local domain
+  const displayEmail = profile.email?.endsWith('@ic3fighter.local')
+    ? profile.email.replace('@ic3fighter.local', '')
+    : profile.email;
+  const roleLabel = isTeacher ? 'Giáo viên' : isAdminCreated ? 'Học sinh (Full)' : 'Học sinh';
   const roleBadge = isTeacher
     ? 'bg-violet-100 text-violet-700 border border-violet-200'
-    : 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+    : isAdminCreated
+    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+    : 'bg-amber-100 text-amber-700 border border-amber-200';
 
   return (
     <>
@@ -75,12 +81,12 @@ export const Navbar = () => {
 
             {/* ── Logo ── */}
             <Link to="/dashboard" className="flex items-center gap-2.5 flex-shrink-0 group">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-600 to-accent-500 flex items-center justify-center shadow-md shadow-primary-200 group-hover:shadow-lg group-hover:scale-105 transition-all duration-200">
-                <BookOpen className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-md shadow-violet-200 group-hover:shadow-lg group-hover:scale-105 transition-all duration-200">
+                <Sword className="w-5 h-5 text-white" />
               </div>
               <div className="leading-tight">
-                <span className="block text-base font-bold text-gray-900 tracking-tight">IC3</span>
-                <span className="block text-[10px] font-semibold text-primary-600 tracking-widest uppercase -mt-0.5">Platform</span>
+                <span className="block text-base font-bold text-gray-900 tracking-tight">IC3-Fighter</span>
+                <span className="block text-[10px] font-semibold text-violet-600 tracking-widest uppercase -mt-0.5">Exam Platform</span>
               </div>
             </Link>
 
@@ -89,11 +95,13 @@ export const Navbar = () => {
               <NavLink to="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />}>Dashboard</NavLink>
               <NavLink to="/exam" icon={<BookOpen className="w-4 h-4" />}>Bài thi</NavLink>
               <NavLink to="/flashcard" icon={<Brain className="w-4 h-4" />}>Flashcard</NavLink>
+              <NavLink to="/payments" icon={<CreditCard className="w-4 h-4" />}>Thanh toán</NavLink>
               {isTeacher && (
                 <>
                   <NavLink to="/questions" icon={<Settings className="w-4 h-4" />}>Câu hỏi</NavLink>
                   <NavLink to="/teacher/exam-structure" icon={<Layers className="w-4 h-4" />}>Cấu trúc</NavLink>
                   <NavLink to="/teacher/students" icon={<Users className="w-4 h-4" />}>Học sinh</NavLink>
+                  <NavLink to="/teacher/payment-settings" icon={<CreditCard className="w-4 h-4" />}>Cài đặt TT</NavLink>
                 </>
               )}
             </div>
@@ -107,7 +115,9 @@ export const Navbar = () => {
                 </div>
                 <div className="leading-tight min-w-0">
                   <p className="text-xs font-semibold text-gray-800 truncate max-w-[120px]">{profile.full_name}</p>
-                  <span className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full ${roleBadge} leading-none`}>{roleLabel}</span>
+                  <div className="flex items-center gap-1">
+                    <span className={`inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full ${roleBadge} leading-none`}>{roleLabel}</span>
+                  </div>
                 </div>
               </div>
 
@@ -137,12 +147,14 @@ export const Navbar = () => {
           <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1 animate-slide-up">
             {[
               { to: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Dashboard' },
-              { to: '/exam',      icon: <BookOpen className="w-4 h-4" />,        label: 'Bài thi' },
-              { to: '/flashcard', icon: <Brain className="w-4 h-4" />,           label: 'Flashcard' },
+              { to: '/exam', icon: <BookOpen className="w-4 h-4" />, label: 'Bài thi' },
+              { to: '/flashcard', icon: <Brain className="w-4 h-4" />, label: 'Flashcard' },
+              { to: '/payments', icon: <CreditCard className="w-4 h-4" />, label: 'Thanh toán' },
               ...(isTeacher ? [
                 { to: '/questions', icon: <Settings className="w-4 h-4" />, label: 'Câu hỏi' },
                 { to: '/teacher/exam-structure', icon: <Layers className="w-4 h-4" />, label: 'Cấu trúc thi' },
                 { to: '/teacher/students', icon: <Users className="w-4 h-4" />, label: 'Học sinh' },
+                { to: '/teacher/payment-settings', icon: <CreditCard className="w-4 h-4" />, label: 'Cài đặt thanh toán' },
               ] : [])
             ].map(item => (
               <Link

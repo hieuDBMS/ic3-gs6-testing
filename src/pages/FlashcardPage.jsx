@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import {
   ArrowRight, Shuffle, CheckCircle2, XCircle,
   Brain, BookOpen, ChevronLeft, Keyboard, Trophy,
@@ -861,6 +862,16 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
 export const FlashcardPage = () => {
   const { examId } = useParams();
   const navigate   = useNavigate();
+  const { user, isSelfRegistered } = useAuth();
+
+  /* ── Access guard ── */
+  useEffect(() => {
+    if (!isSelfRegistered || !user || !examId) return;
+    supabase.rpc('user_can_access_exam', { p_user_id: user.id, p_exam_id: examId })
+      .then(({ data: canAccess }) => {
+        if (!canAccess) navigate('/flashcard', { replace: true });
+      });
+  }, [isSelfRegistered, user, examId]);
 
   const [exam,          setExam]          = useState(null);
   const [allQuestions,  setAllQuestions]  = useState([]);

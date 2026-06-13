@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, LogIn, BookOpen, ShieldCheck, Monitor, Award } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Sword, ShieldCheck, Monitor, Award } from 'lucide-react';
 
 /* ── Decorative feature list shown on the left panel ── */
 const features = [
@@ -11,7 +11,7 @@ const features = [
 ];
 
 export const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -27,10 +27,10 @@ export const LoginPage = () => {
     setError('');
     setIsLoading(true);
     try {
-      await login(email, password);
+      await login(emailOrUsername, password);
       navigate('/dashboard');
     } catch {
-      setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+      setError('Tên đăng nhập / email hoặc mật khẩu không đúng. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -62,10 +62,10 @@ export const LoginPage = () => {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm">
-              <BookOpen className="w-6 h-6 text-white" />
+              <Sword className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-white font-extrabold text-xl tracking-tight leading-none">IC3 Platform</p>
+              <p className="text-white font-extrabold text-xl tracking-tight leading-none">IC3-Fighter</p>
               <p className="text-white/50 text-xs font-medium tracking-wider uppercase mt-0.5">Exam System</p>
             </div>
           </div>
@@ -115,10 +115,10 @@ export const LoginPage = () => {
 
         {/* Mobile logo */}
         <div className="lg:hidden flex flex-col items-center mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-600 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-200 mb-3">
-            <BookOpen className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-200 mb-3">
+            <Sword className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900">IC3 Platform</h1>
+          <h1 className="text-2xl font-extrabold text-gray-900">IC3-Fighter</h1>
           <p className="text-sm text-gray-500 mt-1">Hệ thống thi trực tuyến</p>
         </div>
 
@@ -143,16 +143,16 @@ export const LoginPage = () => {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Địa chỉ Email
+                Tên đăng nhập hoặc Email
               </label>
               <input
                 id="email"
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
                 required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="example@school.edu.vn"
+                value={emailOrUsername}
+                onChange={e => setEmailOrUsername(e.target.value)}
+                placeholder="Tên đăng nhập hoặc email..."
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                            focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
                            transition-all duration-150 shadow-sm hover:border-gray-300"
@@ -219,8 +219,14 @@ export const LoginPage = () => {
           </form>
 
           {/* Footer note */}
-          <p className="mt-8 text-center text-xs text-gray-400">
-            Liên hệ giáo viên nếu quên mật khẩu hoặc chưa có tài khoản.
+          <p className="mt-8 text-center text-sm text-gray-500">
+            Chưa có tài khoản?{' '}
+            <Link to="/register" className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
+              Đăng ký ngay
+            </Link>
+          </p>
+          <p className="mt-2 text-center text-xs text-gray-400">
+            Liên hệ giáo viên nếu quên mật khẩu.
           </p>
         </div>
       </div>

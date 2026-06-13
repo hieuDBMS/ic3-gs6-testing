@@ -188,7 +188,7 @@ const MobileNavSheet = ({ questions, currentIndex, answers, flagged, onSelect, o
 export const ExamPage = () => {
   const { examId }  = useParams();
   const navigate    = useNavigate();
-  const { user }    = useAuth();
+  const { user, isSelfRegistered }    = useAuth();
 
   const [exam,              setExam]              = useState(null);
   const [questions,         setQuestions]         = useState([]);
@@ -206,6 +206,17 @@ export const ExamPage = () => {
   const isSubmittingRef   = useRef(false);
   const timerRef          = useRef(null);
   const startTimeRef      = useRef(Date.now());
+
+  /* ── Access check for self-registered users ── */
+  useEffect(() => {
+    if (!isSelfRegistered || !user || !examId) return;
+    supabase.rpc('user_can_access_exam', { p_user_id: user.id, p_exam_id: examId })
+      .then(({ data: canAccess }) => {
+        if (!canAccess) {
+          navigate('/exam', { replace: true, state: { toast: 'Bạn chưa mua bài thi này.' } });
+        }
+      });
+  }, [isSelfRegistered, user, examId]);
 
   /* ── Init ── */
   useEffect(() => { initExam(); }, [examId]);

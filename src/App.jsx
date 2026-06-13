@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/shared/ProtectedRoute';
 import { Navbar } from './components/shared/Navbar';
 import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ExamListPage } from './pages/ExamListPage';
 import { ExamPage } from './pages/ExamPage';
@@ -15,6 +16,8 @@ import { StudentProgressPage } from './pages/StudentProgressPage';
 import { ExamStructurePage } from './pages/ExamStructurePage';
 import { FlashcardListPage } from './pages/FlashcardListPage';
 import { FlashcardPage } from './pages/FlashcardPage';
+import { PaymentHistoryPage } from './pages/PaymentHistoryPage';
+import { PaymentSettingsPage } from './pages/PaymentSettingsPage';
 
 const Layout = () => (
   <>
@@ -32,6 +35,7 @@ function App() {
         <div className="min-h-screen bg-slate-50 flex flex-col">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
@@ -41,6 +45,8 @@ function App() {
                 <Route path="/exam/:examId/result" element={<ResultPage />} />
                 <Route path="/flashcard" element={<FlashcardListPage />} />
                 <Route path="/flashcard/:examId" element={<FlashcardPage />} />
+                <Route path="/payments" element={<PaymentHistoryPage />} />
+                <Route path="/teacher/payment-settings" element={<PaymentSettingsPage />} />
               </Route>
             </Route>
 

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Link } from 'react-router-dom';
-import { Book, Clock, ChevronDown, ChevronRight, Monitor, Search, BookOpen, Zap } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Book, Clock, ChevronDown, ChevronRight, Monitor, Search, BookOpen, Zap, Lock, CheckCircle, ShoppingCart } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { PaymentModal } from '../components/shared/PaymentModal';
 
 /* ── Version pill colors ── */
 const VERSION_STYLES = {
@@ -32,13 +34,18 @@ const Skeleton = () => (
 );
 
 export const ExamListPage = () => {
+  const { isSelfRegistered, user } = useAuth();
+  const navigate = useNavigate();
   const [allLevels, setAllLevels] = useState([]);
   const [availableVersions, setAvailableVersions] = useState([]);
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [expandedLevel, setExpandedLevel] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [purchases, setPurchases] = useState({}); // examId -> purchase
+  const [paymentExam, setPaymentExam] = useState(null); // exam for PaymentModal
 
   useEffect(() => { fetchExams(); }, []);
+  useEffect(() => { if (isSelfRegistered && user) fetchPurchases(); }, [isSelfRegistered, user]);
 
   const fetchExams = async () => {
     try {
@@ -67,6 +74,19 @@ export const ExamListPage = () => {
     }
   };
 
+  const fetchPurchases = async () => {
+    try {
+      const { data } = await supabase.functions.invoke('manage-purchase', {
+        body: { action: 'list-mine' },
+      });
+      if (data?.purchases) {
+        const map = {};
+        data.purchases.forEach(p => { map[p.exam_id] = p; });
+        setPurchases(map);
+      }
+    } catch {}
+  };
+
   const handleSelectVersion = (v) => {
     setSelectedVersion(v);
     setExpandedLevel(null);
@@ -80,6 +100,7 @@ export const ExamListPage = () => {
   const totalExams = filteredLevels.reduce((acc, l) => acc + l.exams.length, 0);
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
       {/* ── Page hero header ── */}
       <div className="relative overflow-hidden"
@@ -222,14 +243,26 @@ export const ExamListPage = () => {
                   {isOpen && (
                     <div className={`border-t ${style.border} px-5 py-5 sm:px-6 ${style.bg} animate-slide-up`}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {level.exams.map(exam => (
-                          <div
+                        {level.exams.map(exam => {
+                          const purchase = isSelfRegistered ? purchases[exam.id] : null;
+                          const isPurchased = !isSelfRegistered || purchase?.status === 'SUCCESS';
+                          const isPending = isSelfRegistered && purchase && purchase.status !== 'SUCCESS';
+
+                          return (
+                           <div
                             key={exam.id}
                             className="bg-white rounded-xl border border-gray-100 p-4 flex flex-col gap-3 hover:border-primary-200 hover:shadow-card transition-all duration-150 group"
-                          >
+                           >
                             <div className="flex items-start justify-between gap-2">
                               <h3 className="text-sm font-bold text-gray-900 leading-snug">{exam.title}</h3>
-                              <TypeBadge type={exam.exam_type} />
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <TypeBadge type={exam.exam_type} />
+                                {isSelfRegistered && (
+                                  isPurchased
+                                    ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200"><CheckCircle className="w-3 h-3" /> Đã mua</span>
+                                    : <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200"><Lock className="w-3 h-3" /> Chưa mua</span>
+                                )}
+                              </div>
                             </div>
 
                             <div className="flex items-center gap-1.5 text-xs text-gray-400">
@@ -237,18 +270,35 @@ export const ExamListPage = () => {
                               <span>{Math.floor(exam.duration_seconds / 60)} phút</span>
                             </div>
 
-                            <Link
-                              to={`/exam/${exam.id}`}
-                              className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white
-                                bg-gradient-to-r ${style.from} ${style.to}
-                                hover:opacity-90 hover:shadow-md active:scale-[0.97]
-                                transition-all duration-150 shadow-sm mt-auto`}
-                            >
-                              <Zap className="w-3.5 h-3.5" />
-                              Bắt đầu làm bài
-                            </Link>
-                          </div>
-                        ))}
+                            {isPurchased ? (
+                              <Link
+                                to={`/exam/${exam.id}`}
+                                className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white
+                                  bg-gradient-to-r ${style.from} ${style.to}
+                                  hover:opacity-90 hover:shadow-md active:scale-[0.97]
+                                  transition-all duration-150 shadow-sm mt-auto`}
+                              >
+                                <Zap className="w-3.5 h-3.5" />
+                                Bắt đầu làm bài
+                              </Link>
+                            ) : (
+                              <button
+                                onClick={() => setPaymentExam(exam)}
+                                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold
+                                  bg-gradient-to-r from-amber-500 to-orange-400 text-white
+                                  hover:opacity-90 hover:shadow-md active:scale-[0.97]
+                                  transition-all duration-150 shadow-sm mt-auto"
+                              >
+                                {isPending ? (
+                                  <><Clock className="w-3.5 h-3.5" /> Chờ xác nhận</>
+                                ) : (
+                                  <><ShoppingCart className="w-3.5 h-3.5" /> Mua ngay — {new Intl.NumberFormat('vi-VN').format(exam.required_amount || 100000)}đ</>
+                                )}
+                              </button>
+                            )}
+                           </div>
+                          );
+                         })}
 
                         {level.exams.length === 0 && (
                           <div className="col-span-full py-6 text-center text-sm text-gray-400 italic">
@@ -265,5 +315,20 @@ export const ExamListPage = () => {
         )}
       </div>
     </div>
+
+    {/* Payment Modal */}
+    {paymentExam && (
+      <PaymentModal
+        exam={paymentExam}
+        onClose={() => setPaymentExam(null)}
+        onSuccess={() => {
+          fetchPurchases();
+          setPaymentExam(null);
+          navigate(`/exam/${paymentExam.id}`);
+        }}
+      />
+    )}
+  </>
   );
 };
+
