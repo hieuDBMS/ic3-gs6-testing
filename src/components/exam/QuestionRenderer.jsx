@@ -67,6 +67,13 @@ const AnswerOption = ({ ans, idx, selected, onSelect, type }) => {
         value={ans.id}
         checked={isSelected || false}
         onChange={onSelect}
+        onKeyDown={(e) => {
+          // Prevent arrow keys from changing the selected answer;
+          // arrow key navigation is handled at the ExamPage level.
+          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            e.preventDefault();
+          }
+        }}
         className="sr-only"
       />
     </label>

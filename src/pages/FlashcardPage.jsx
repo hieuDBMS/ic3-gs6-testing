@@ -190,7 +190,10 @@ const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
                 style={{ background: revealed ? correct ? '#22c55e' : '#ef4444' : '#e2e8f0', color: revealed ? '#fff' : '#64748b' }}>
                 {i + 1}
               </span>
-              <p className="text-sm flex-1 leading-relaxed text-slate-700 whitespace-pre-wrap">{stmt.content}</p>
+              <p
+                className={`text-sm flex-1 leading-relaxed ${!answered ? 'text-slate-700' : ok ? 'text-emerald-900' : 'text-red-900'}`}
+                dangerouslySetInnerHTML={{ __html: stmt.content }}
+              />
               {revealed && correct && <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />}
               {revealed && !correct && <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />}
             </div>
@@ -684,43 +687,78 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
     }
   })();
 
+  const progressPct = total > 0 ? ((index) / total) * 100 : 0;
+
   return (
-    <div className="rounded-3xl overflow-hidden bg-white"
-      style={{ border: '1.5px solid #e2e8f0', boxShadow: '0 4px 24px rgba(15,23,42,0.08), 0 1px 4px rgba(15,23,42,0.04)' }}>
+    <div
+      className="rounded-3xl overflow-hidden"
+      style={{
+        background: '#ffffff',
+        border: '1.5px solid #e8edf3',
+        boxShadow: '0 4px 24px rgba(15,23,42,0.07), 0 1px 4px rgba(15,23,42,0.04)',
+      }}
+    >
+      {/* ── Header: type badge + counter + progress ── */}
+      <div className="px-6 pt-5 pb-5" style={{ borderBottom: '1px solid #f1f5f9' }}>
 
-      {/* Color bar */}
-      <div style={{ height: 4, background: typeCfg.bar }} />
-
-      {/* Question area */}
-      <div className="px-6 pt-5 pb-4" style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
-        <div className="flex items-center justify-between mb-4">
-          <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full border uppercase tracking-wider ${typeCfg.badge}`}>
-            {typeCfg.label}
-          </span>
-
-          {/* Progress dots */}
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(total, 14) }).map((_, di) => (
-              <div key={di} className="w-1.5 h-1.5 rounded-full transition-all duration-300"
-                style={{ background: di < index ? '#93c5fd' : di === index ? '#3b82f6' : '#e2e8f0' }} />
-            ))}
-            {total > 14 && <span className="text-[9px] text-slate-400 ml-0.5 font-medium">+{total-14}</span>}
+        {/* Row: badge + counter */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Type badge — colored dot + label */}
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ background: typeCfg.bar }}
+            />
+            <span
+              className={`text-[11px] font-bold uppercase tracking-wider ${typeCfg.badge} px-2.5 py-1 rounded-full border`}
+            >
+              {typeCfg.label}
+            </span>
+            {isReviewPhase && (
+              <span
+                className="text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
+                style={{ background: '#fffbeb', color: '#92400e', border: '1px solid #fcd34d' }}
+              >
+                Ôn lại
+              </span>
+            )}
           </div>
 
+          {/* Counter */}
           <span className="text-xs text-slate-400 font-medium tabular-nums">
-            <span className="text-slate-700 text-base font-bold">{index+1}</span> / {total}
+            <span className="text-slate-700 text-sm font-bold">{index + 1}</span>
+            <span className="text-slate-400"> / {total}</span>
           </span>
         </div>
-        <p className="text-[15px] font-semibold text-slate-800 leading-relaxed whitespace-pre-wrap" style={{ fontFamily: 'Inter, sans-serif' }}>
-          {question.content}
-        </p>
+
+        {/* Progress bar — sits right below the badge row */}
+        <div className="h-1 rounded-full overflow-hidden mb-5" style={{ background: '#f1f5f9' }}>
+          <div
+            className="h-full rounded-full transition-all duration-700"
+            style={{
+              width: `${progressPct}%`,
+              background: typeCfg.bar,
+            }}
+          />
+        </div>
+
+        {/* Question text — renders HTML formatting */}
+        <div
+          className="text-[15.5px] font-semibold text-slate-800 leading-relaxed"
+          style={{ fontFamily: 'Inter, sans-serif', wordBreak: 'break-word' }}
+          dangerouslySetInnerHTML={{ __html: question.content }}
+        />
         {question.image_url && question.question_type !== 'hotspot' && (
-          <img src={question.image_url} alt="Q" className="mt-4 max-h-56 w-full object-contain rounded-2xl border border-slate-200 bg-white" />
+          <img
+            src={question.image_url}
+            alt="Q"
+            className="mt-4 max-h-56 w-full object-contain rounded-2xl border border-slate-100 bg-slate-50"
+          />
         )}
       </div>
 
-      {/* Answers */}
-      <div className="px-6 py-5 space-y-2 bg-white">
+      {/* ── Answer area ── */}
+      <div className="px-6 py-5 space-y-2.5" style={{ background: '#fff' }}>
         {question.question_type === 'choice'    && <ChoicePanel    answers={shuffledAnswers} revealed={revealed} selection={selection} onSelect={handleChoiceSelect} />}
         {question.question_type === 'multi'     && <MultiPanel     answers={shuffledAnswers} revealed={revealed} selection={selection} onSelect={setSelection} />}
         {question.question_type === 'truefalse' && <TrueFalsePanel statements={question.truefalse_statements||[]} revealed={revealed} selection={selection} onSelect={setSelection} />}
@@ -728,45 +766,84 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
         {question.question_type === 'hotspot'   && <HotspotPanel   question={question} revealed={revealed} selection={selection} onSelect={setSelection} />}
       </div>
 
-      {/* Result */}
+      {/* ── Result banner ── */}
       {revealed && (
-        <div className="px-6 pb-4 bg-white">
+        <div className="px-6 pb-4" style={{ background: '#fff' }}>
           <ResultBanner correct={isCorrect} />
         </div>
       )}
 
-      {/* Action bar */}
-      <div className="px-6 pb-5 pt-3 bg-white" style={{ borderTop: '1px solid #f1f5f9' }}>
-        <div className="flex items-center gap-2.5">
+      {/* ── Action bar ── */}
+      <div
+        className="px-6 pb-6 pt-4"
+        style={{ background: '#fff', borderTop: '1px solid #f1f5f9' }}
+      >
+        <div className="flex items-center gap-3">
+          {/* Skip button */}
           {!revealed && (
-            <button id="fc-skip" onClick={onSkip}
-              className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold border transition-all flex-shrink-0"
-              style={isReviewPhase
-                ? { background: '#fffbeb', borderColor: '#fcd34d', color: '#92400e' }
-                : { background: '#f8fafc', borderColor: '#e2e8f0', color: '#64748b' }}>
+            <button
+              id="fc-skip"
+              onClick={onSkip}
+              className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold border transition-all duration-200 flex-shrink-0 hover:scale-[1.02] active:scale-[0.97]"
+              style={
+                isReviewPhase
+                  ? { background: '#fffbeb', borderColor: '#fcd34d', color: '#92400e' }
+                  : { background: '#f8fafc', borderColor: '#e2e8f0', color: '#64748b' }
+              }
+            >
               <SkipForward className="w-4 h-4" />
               {isReviewPhase ? 'Bỏ qua lần 2' : 'Bỏ qua'}
             </button>
           )}
 
+          {/* Check button (non-choice types) */}
           {!revealed && question.question_type !== 'choice' && (
-            <button id="fc-action" onClick={handleCheck} disabled={!canCheck}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-semibold text-sm transition-all active:scale-[0.97]"
-              style={canCheck
-                ? { background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', color: '#fff', boxShadow: '0 4px 20px rgba(99,102,241,0.3)' }
-                : { background: '#f1f5f9', color: '#94a3b8', cursor: 'not-allowed', border: '1.5px solid #e2e8f0' }}>
+            <button
+              id="fc-action"
+              onClick={handleCheck}
+              disabled={!canCheck}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-sm transition-all duration-200 active:scale-[0.97]"
+              style={
+                canCheck
+                  ? {
+                      background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                      color: '#fff',
+                      boxShadow: '0 6px 24px rgba(99,102,241,0.35)',
+                    }
+                  : {
+                      background: '#f1f5f9',
+                      color: '#94a3b8',
+                      cursor: 'not-allowed',
+                      border: '1.5px solid #e2e8f0',
+                    }
+              }
+            >
               <Sparkles className="w-4 h-4" />
               Kiểm tra đáp án
-              {canCheck && <kbd className="hidden sm:inline px-1.5 py-0.5 bg-white/20 rounded text-[10px] font-mono">↵</kbd>}
+              {canCheck && (
+                <kbd className="hidden sm:inline px-1.5 py-0.5 bg-white/20 rounded text-[10px] font-mono">↵</kbd>
+              )}
             </button>
           )}
 
+          {/* Next / Result button */}
           {revealed && (
-            <button id="fc-action" onClick={() => onResult(isCorrect)}
-              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-semibold text-sm text-white transition-all active:scale-[0.97]"
-              style={isCorrect
-                ? { background: 'linear-gradient(135deg,#16a34a,#22c55e)', boxShadow: '0 4px 20px rgba(34,197,94,0.3)' }
-                : { background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 4px 20px rgba(99,102,241,0.3)' }}>
+            <button
+              id="fc-action"
+              onClick={() => onResult(isCorrect)}
+              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-sm text-white transition-all duration-200 active:scale-[0.97] hover:scale-[1.01]"
+              style={
+                isCorrect
+                  ? {
+                      background: 'linear-gradient(135deg, #16a34a, #22c55e)',
+                      boxShadow: '0 6px 24px rgba(34,197,94,0.35)',
+                    }
+                  : {
+                      background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                      boxShadow: '0 6px 24px rgba(99,102,241,0.35)',
+                    }
+              }
+            >
               {isCorrect ? <CheckCircle2 className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
               {index < total - 1 ? 'Câu tiếp theo' : 'Xem kết quả'}
               <kbd className="hidden sm:inline px-1.5 py-0.5 bg-white/20 rounded text-[10px] font-mono">→</kbd>

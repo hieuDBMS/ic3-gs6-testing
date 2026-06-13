@@ -153,6 +153,38 @@ export const RichTextEditor = ({
           contentEditable
           suppressContentEditableWarning
           onInput={handleInput}
+          onKeyDown={(e) => {
+            if (e.key === 'Tab') {
+              e.preventDefault();
+              if (e.shiftKey) {
+                // Shift+Tab: try to remove leading spaces from current selection
+                const sel = window.getSelection();
+                if (sel && sel.rangeCount > 0) {
+                  const range = sel.getRangeAt(0);
+                  const node = range.startContainer;
+                  if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent;
+                    const offset = range.startOffset;
+                    // Check if there are 4 spaces before the cursor
+                    const before = text.substring(0, offset);
+                    const spaces = '    ';
+                    if (before.endsWith(spaces)) {
+                      node.textContent = text.substring(0, offset - 4) + text.substring(offset);
+                      range.setStart(node, offset - 4);
+                      range.setEnd(node, offset - 4);
+                      sel.removeAllRanges();
+                      sel.addRange(range);
+                      handleInput();
+                    }
+                  }
+                }
+              } else {
+                // Tab: insert 4 spaces
+                document.execCommand('insertText', false, '    ');
+                handleInput();
+              }
+            }
+          }}
           spellCheck={false}
           className="w-full text-sm text-gray-800 px-4 py-3 outline-none leading-relaxed"
           style={{ minHeight: `${minHeight}px`, wordBreak: 'break-word' }}

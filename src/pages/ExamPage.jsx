@@ -217,16 +217,31 @@ export const ExamPage = () => {
       const isCtrlR = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r';
       if (isF5 || isCtrlR) { e.preventDefault(); e.stopPropagation(); setShowRefreshWarn(true); return; }
 
-      const tag = document.activeElement?.tagName ?? '';
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
       if (showConfirm || showRefreshWarn) return;
 
-      if (e.key === 'ArrowRight' || e.key === 'Enter') {
+      const tag       = document.activeElement?.tagName ?? '';
+      const inputType = (document.activeElement?.type ?? '').toLowerCase();
+
+      // Block navigation for text-entry inputs (but NOT for radio/checkbox —
+      // those get focused when the user clicks an answer, and we still want
+      // arrow keys to navigate questions, not cycle through radio options).
+      const isTextEntry = tag === 'TEXTAREA' || tag === 'SELECT'
+        || (tag === 'INPUT' && !['radio', 'checkbox'].includes(inputType));
+      if (isTextEntry) return;
+
+      const isNext = e.key === 'ArrowRight' || e.key === 'ArrowDown'
+        || e.key === 'Enter'
+        || e.key === 'd' || e.key === 'D'
+        || e.key === 's' || e.key === 'S';
+      const isPrev = e.key === 'ArrowLeft' || e.key === 'ArrowUp'
+        || e.key === 'a' || e.key === 'A'
+        || e.key === 'w' || e.key === 'W';
+
+      if (isNext || isPrev) {
+        // Prevent radio/checkbox from responding to arrow keys
         e.preventDefault();
-        setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1));
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setCurrentIndex(prev => Math.max(0, prev - 1));
+        if (isNext) setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1));
+        else        setCurrentIndex(prev => Math.max(0, prev - 1));
       }
     };
     const handleBeforeUnload = (e) => {

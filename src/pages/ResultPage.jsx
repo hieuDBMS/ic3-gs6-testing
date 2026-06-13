@@ -84,7 +84,10 @@ const QuestionCard = ({ detail, index }) => {
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
             Câu {index + 1} · {q.question_type === 'choice' ? 'Chọn một' : q.question_type === 'multi' ? 'Chọn nhiều' : q.question_type === 'truefalse' ? 'Đúng / Sai' : 'Kéo thả'}
           </p>
-          <p className="text-sm font-medium text-gray-900 line-clamp-2 whitespace-pre-wrap">{q.content}</p>
+          <div
+            className="text-sm font-medium text-gray-900 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: q.content }}
+          />
         </div>
         <span className="flex-shrink-0 mt-1 text-gray-400">
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -122,7 +125,10 @@ const QuestionCard = ({ detail, index }) => {
                     {ans.image_url && (
                       <ZoomableImage src={ans.image_url} alt="" className="h-10 w-14 object-contain rounded-lg bg-white border border-gray-100 flex-shrink-0" />
                     )}
-                    <span className="flex-1 whitespace-pre-wrap">{ans.content}</span>
+                    <span
+                      className="flex-1 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: ans.content }}
+                    />
                     <div className="flex gap-1.5 flex-shrink-0">
                       {wasSelected && (
                         <span className="text-xs px-1.5 py-0.5 rounded bg-white/70 border font-medium">Bạn chọn</span>
@@ -204,7 +210,10 @@ const QuestionCard = ({ detail, index }) => {
                           : ok ? 'bg-emerald-200 text-emerald-800'
                           : 'bg-red-200 text-red-800'
                         }`}>{si + 1}</span>
-                        <p className="text-sm text-gray-800 flex-1 whitespace-pre-wrap leading-relaxed">{stmt.content}</p>
+                        <div
+                          className="text-sm text-gray-800 flex-1 leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: stmt.content }}
+                        />
                         {ok ? <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
                           : answered ? <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                           : <Minus className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />}
