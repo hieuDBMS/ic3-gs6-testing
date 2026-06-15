@@ -22,6 +22,9 @@ const StudentProgressPage   = lazy(() => import('./pages/StudentProgressPage').t
 const ExamStructurePage     = lazy(() => import('./pages/ExamStructurePage').then(m => ({ default: m.ExamStructurePage })));
 const FlashcardListPage     = lazy(() => import('./pages/FlashcardListPage').then(m => ({ default: m.FlashcardListPage })));
 const FlashcardPage         = lazy(() => import('./pages/FlashcardPage').then(m => ({ default: m.FlashcardPage })));
+const MockExamSetupPage     = lazy(() => import('./pages/MockExamSetupPage').then(m => ({ default: m.MockExamSetupPage })));
+const MockExamPage          = lazy(() => import('./pages/MockExamPage').then(m => ({ default: m.MockExamPage })));
+const MockResultPage        = lazy(() => import('./pages/MockResultPage').then(m => ({ default: m.MockResultPage })));
 const PaymentHistoryPage    = lazy(() => import('./pages/PaymentHistoryPage').then(m => ({ default: m.PaymentHistoryPage })));
 const PaymentSettingsPage   = lazy(() => import('./pages/PaymentSettingsPage').then(m => ({ default: m.PaymentSettingsPage })));
 
@@ -67,7 +70,10 @@ function App() {
                   <Route path="/dashboard"                 element={<DashboardPage />} />
                   <Route path="/exam"                      element={<ExamListPage />} />
                   <Route path="/exam/:examId"              element={<ExamPage />} />
-                  <Route path="/exam/:examId/result"       element={<ResultPage />} />
+                  <Route path="/exam/:attemptId/result"    element={<ResultPage />} />
+                  <Route path="/mock-exam"                 element={<MockExamSetupPage />} />
+                  <Route path="/mock-exam/:attemptId"      element={<MockExamPage />} />
+                  <Route path="/mock-exam/:attemptId/result" element={<MockResultPage />} />
                   <Route path="/flashcard"                 element={<FlashcardListPage />} />
                   <Route path="/flashcard/:examId"         element={<FlashcardPage />} />
                   <Route path="/payments"                  element={<PaymentHistoryPage />} />

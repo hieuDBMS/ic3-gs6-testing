@@ -5,7 +5,7 @@ import {
   LogOut, BookOpen, Users, LayoutDashboard,
   Settings2, Layers, Menu, X, Brain, CreditCard,
   ChevronDown, Sword, ListChecks, GraduationCap,
-  Banknote, ChevronRight,
+  Banknote, ChevronRight, PlayCircle,
 } from 'lucide-react';
 
 /* ── Avatar helpers ── */
@@ -192,7 +192,8 @@ export const Navbar = () => {
             {/* ── Desktop Nav ── */}
             <div className="hidden md:flex items-center gap-0.5 ml-4">
               <NavLink to="/dashboard" icon={<LayoutDashboard className="w-4 h-4" />}>Dashboard</NavLink>
-              <NavLink to="/exam"      icon={<BookOpen className="w-4 h-4" />}>Bài thi</NavLink>
+              <NavLink to="/exam"      icon={<BookOpen className="w-4 h-4" />}>Ôn tập</NavLink>
+              <NavLink to="/mock-exam" icon={<PlayCircle className="w-4 h-4" />}>Thi thử</NavLink>
               <NavLink to="/flashcard" icon={<Brain className="w-4 h-4" />}>Flashcard</NavLink>
               {!isAdminCreated && <NavLink to="/payments"  icon={<CreditCard className="w-4 h-4" />}>Thanh toán</NavLink>}
               {isTeacher && <TeacherDropdown />}
@@ -257,7 +258,8 @@ export const Navbar = () => {
             <div className="px-3 py-3 space-y-0.5">
               {[
                 { to: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Dashboard' },
-                { to: '/exam',      icon: <BookOpen className="w-4 h-4" />,        label: 'Bài thi' },
+                { to: '/exam',      icon: <BookOpen className="w-4 h-4" />,        label: 'Ôn tập' },
+                { to: '/mock-exam', icon: <PlayCircle className="w-4 h-4" />,      label: 'Thi thử' },
                 { to: '/flashcard', icon: <Brain className="w-4 h-4" />,           label: 'Flashcard' },
                 !isAdminCreated && { to: '/payments',  icon: <CreditCard className="w-4 h-4" />,      label: 'Thanh toán' },
               ].filter(Boolean).map(item => {
