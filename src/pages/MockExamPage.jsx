@@ -50,12 +50,15 @@ const useExamFullscreen = (ref) => {
    Skeleton
 ───────────────────────────────────────────────────────── */
 const ExamSkeleton = () => (
-  <div className="h-screen flex overflow-hidden animate-pulse">
-    <div className="w-[280px] flex-shrink-0 bg-slate-800" />
+  <div className="flex flex-col md:flex-row overflow-hidden animate-pulse" style={{ height: 'calc(100vh - 64px)' }}>
+    {/* Aside Skeleton (top bar on mobile, left column on desktop) */}
+    <div className="flex-shrink-0 bg-slate-800 flex items-center px-4 h-14 md:h-full md:w-[280px] md:flex-col md:px-0" />
+    
+    {/* Main Content Skeleton */}
     <div className="flex-1 flex flex-col bg-[#EEF2FF]">
       <div className="h-[3px] bg-slate-200" />
-      <div className="h-14 bg-white border-b border-gray-100" />
-      <div className="flex-1 p-8 space-y-5">
+      <div className="h-16 bg-white border-b border-gray-100 flex-shrink-0" />
+      <div className="flex-1 p-5 md:p-8 space-y-5">
         <div className="h-6 bg-gray-200 rounded-xl w-2/3" />
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="h-14 bg-white rounded-2xl border-2 border-gray-100" />
