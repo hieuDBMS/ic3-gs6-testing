@@ -70,7 +70,7 @@ function App() {
                   <Route path="/dashboard"                 element={<DashboardPage />} />
                   <Route path="/exam"                      element={<ExamListPage />} />
                   <Route path="/exam/:examId"              element={<ExamPage />} />
-                  <Route path="/exam/:attemptId/result"    element={<ResultPage />} />
+                  <Route path="/exam/:examId/result"       element={<ResultPage />} />
                   <Route path="/mock-exam"                 element={<MockExamSetupPage />} />
                   <Route path="/mock-exam/:attemptId"      element={<MockExamPage />} />
                   <Route path="/mock-exam/:attemptId/result" element={<MockResultPage />} />

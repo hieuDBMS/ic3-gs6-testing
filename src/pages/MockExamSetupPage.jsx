@@ -199,6 +199,8 @@ export const MockExamSetupPage = () => {
                 isFullyPaid = (totalExams > 0 && paidCount >= totalExams);
               }
 
+              const isGmetrixMissing = level.exams.filter(e => e.exam_type === 'gmetrix').length === 0;
+
               return (
               <div
                 key={level.id}
@@ -222,22 +224,27 @@ export const MockExamSetupPage = () => {
                       <p className="text-sm text-slate-500 mt-1">
                         {isFullyPaid ? '45 Câu hỏi' : '10 Câu hỏi (Dùng thử)'} • 50 Phút • Mức đạt: 700/1000
                       </p>
-                      {!isFullyPaid && (
+                      {!isFullyPaid && !isGmetrixMissing && (
                         <div className="mt-2 text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 flex items-start sm:items-center gap-1.5 max-w-sm">
                           <Lock className="w-3.5 h-3.5 mt-0.5 sm:mt-0 flex-shrink-0" />
                           <span>Thanh toán toàn bộ bài tập của Level này để thi thử đầy đủ 45 câu.</span>
+                        </div>
+                      )}
+                      {isGmetrixMissing && (
+                        <div className="mt-2 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                          Chưa có bài thi GMetrix cho Level này, tạm thời không thể thi thử.
                         </div>
                       )}
                     </div>
                   </div>
                   <button
                     onClick={() => handleCreateMockExam(level.id)}
-                    disabled={creatingMock === level.id}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50 hover:-translate-y-0.5"
-                    style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)' }}
+                    disabled={creatingMock === level.id || isGmetrixMissing}
+                    className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50 ${!isGmetrixMissing && 'hover:-translate-y-0.5'}`}
+                    style={isGmetrixMissing ? { background: '#9CA3AF' } : { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' }}
                   >
                     {creatingMock === level.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <PlayCircle className="w-5 h-5" />}
-                    {creatingMock === level.id ? 'Đang tạo...' : 'Bắt đầu thi thử'}
+                    {creatingMock === level.id ? 'Đang tạo...' : isGmetrixMissing ? 'Chưa có GMetrix' : 'Bắt đầu thi thử'}
                   </button>
                 </div>
               </div>
