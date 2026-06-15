@@ -7,7 +7,7 @@ import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } f
  *
  * Exposes getTimeLeft() via ref so parent can read elapsed time on submit.
  */
-export const Timer = forwardRef(function Timer({ durationSeconds, onTimeUp }, ref) {
+export const Timer = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = true }, ref) {
   const [timeLeft, setTimeLeft] = useState(durationSeconds);
   const firedRef    = useRef(false);
   const onTimeUpRef = useRef(onTimeUp);
@@ -34,15 +34,16 @@ export const Timer = forwardRef(function Timer({ durationSeconds, onTimeUp }, re
 
   /* ── Dynamic colors ── */
   const strokeA    = isDanger ? '#EF4444' : isWarning ? '#F59E0B' : '#6366F1';
-  const strokeB    = isDanger ? '#F97316' : isWarning ? '#FBBF24' : '#A855F7';
-  const trackAlpha = isDanger ? '0.18'    : isWarning ? '0.18'    : '0.14';
+  const strokeB    = isDanger ? '#F97316' : isWarning ? '#FBBF24' : '#8B5CF6';
+  const trackAlpha = isDanger ? '0.18'    : isWarning ? '0.18'    : dark ? '0.14' : '0.1';
   const trackColor = isDanger
     ? `rgba(239,68,68,${trackAlpha})`
     : isWarning
       ? `rgba(245,158,11,${trackAlpha})`
-      : `rgba(99,102,241,${trackAlpha})`;
-  const timeColor = isDanger ? '#F87171' : isWarning ? '#FCD34D' : '#A5B4FC';
-  const labelColor = isDanger ? '#F87171' : isWarning ? '#FCD34D' : '#64748B';
+      : dark ? `rgba(99,102,241,${trackAlpha})` : `rgba(99,102,241,0.15)`;
+  
+  const timeColor = isDanger ? '#EF4444' : isWarning ? (dark ? '#FCD34D' : '#D97706') : (dark ? '#A5B4FC' : '#1E293B');
+  const labelColor = isDanger ? '#EF4444' : isWarning ? (dark ? '#FCD34D' : '#D97706') : (dark ? '#64748B' : '#64748B');
 
   /* ── Compact geometry ── */
   const cr    = 13;
@@ -124,7 +125,7 @@ export const Timer = forwardRef(function Timer({ durationSeconds, onTimeUp }, re
             >
               {timeStr}
             </span>
-            <span className="text-[10px] font-medium mt-1" style={{ color: '#475569' }}>
+            <span className="text-[10px] font-bold mt-1 uppercase tracking-widest" style={{ color: dark ? '#475569' : '#94A3B8' }}>
               phút : giây
             </span>
           </div>

@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Flag } from 'lucide-react';
 
 export const QuestionNavigator = ({ questions, currentIndex, answers, flagged, onSelect, dark = false }) => {
+  useEffect(() => {
+    const el = document.getElementById(`nav-btn-${currentIndex}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [currentIndex]);
   const answeredCount = questions.filter(q => answers[q.id] !== undefined).length;
   const total = questions.length;
   const pct   = total > 0 ? (answeredCount / total) * 100 : 0;
@@ -29,6 +35,7 @@ export const QuestionNavigator = ({ questions, currentIndex, answers, flagged, o
 
   const QButton = ({ q, index }) => (
     <button
+      id={`nav-btn-${index}`}
       onClick={() => onSelect(index)}
       title={`Câu ${index + 1}`}
       className={`relative w-9 h-9 border-2 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-150 ${getButtonStyle(q, index)}`}
@@ -74,7 +81,7 @@ export const QuestionNavigator = ({ questions, currentIndex, answers, flagged, o
       </div>
 
       {/* ── Question grid (scrollable) ── */}
-      <div className="p-4 space-y-3 flex-1 overflow-y-auto min-h-0">
+      <div className={`p-4 space-y-3 flex-1 overflow-y-auto min-h-0 pr-2 ${dark ? 'custom-scrollbar-dark' : 'custom-scrollbar-light'}`}>
         {/* Unflagged */}
         <div className="grid grid-cols-5 gap-1.5">
           {unflaggedQuestions.map(q => {
