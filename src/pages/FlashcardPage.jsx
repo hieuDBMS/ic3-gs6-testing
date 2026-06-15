@@ -192,7 +192,7 @@ const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
                 {i + 1}
               </span>
               <p
-                className={`text-sm flex-1 leading-relaxed ${!answered ? 'text-slate-700' : ok ? 'text-emerald-900' : 'text-red-900'}`}
+                className={`text-sm flex-1 leading-relaxed ${!revealed ? 'text-slate-700' : correct ? 'text-emerald-900' : 'text-red-900'}`}
                 dangerouslySetInnerHTML={{ __html: stmt.content }}
               />
               {revealed && correct && <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />}

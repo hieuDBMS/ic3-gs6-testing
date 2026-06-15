@@ -1,345 +1,528 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
-  CreditCard, CheckCircle, Clock, AlertCircle, X,
-  RefreshCw, DollarSign, Search, AlertTriangle,
-  RotateCcw, Trash2, Info, Zap, ArrowRight,
+  CreditCard, CheckCircle2, Clock, AlertCircle, X,
+  RefreshCw, Search, Trash2, Zap, ArrowRight,
+  TrendingUp, ShieldCheck, Loader2, AlertTriangle,
 } from 'lucide-react';
 import { PaymentModal } from '../components/shared/PaymentModal';
 
-const formatVND = (n) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n ?? 0);
+/* ─── Formatters ───────────────────────────────────────── */
+const fmtVND  = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n ?? 0);
+const fmtDate = (d) => d ? new Date(d).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
-const formatDate = (d) =>
-  d ? new Date(d).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—';
-
-const STATUS_CFG = {
-  PENDING: { label: 'Chờ thanh toán', color: 'bg-amber-100 text-amber-700 border border-amber-200',   icon: <Clock className="w-3.5 h-3.5" /> },
-  PARTIAL: { label: 'Một phần',       color: 'bg-orange-100 text-orange-700 border border-orange-200', icon: <AlertCircle className="w-3.5 h-3.5" /> },
-  SUCCESS: { label: 'Đã mở khoá',     color: 'bg-emerald-100 text-emerald-700 border border-emerald-200', icon: <CheckCircle className="w-3.5 h-3.5" /> },
-  FAILED:  { label: 'Thất bại',       color: 'bg-red-100 text-red-700 border border-red-200',           icon: <X className="w-3.5 h-3.5" /> },
+/* ─── Status config ─────────────────────────────────────── */
+const S = {
+  PENDING: { label: 'Chờ TT',      dot: 'bg-amber-400',   text: 'text-amber-700',   bg: 'bg-amber-50',   border: 'border-amber-200'  },
+  PARTIAL: { label: 'Một phần',    dot: 'bg-orange-400',  text: 'text-orange-700',  bg: 'bg-orange-50',  border: 'border-orange-200' },
+  SUCCESS: { label: 'Đã mở khoá', dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200'},
+  FAILED:  { label: 'Thất bại',   dot: 'bg-red-400',     text: 'text-red-700',     bg: 'bg-red-50',     border: 'border-red-200'    },
 };
-
-const StatusBadge = ({ status }) => {
-  const cfg = STATUS_CFG[status] || STATUS_CFG.PENDING;
+const Badge = ({ status }) => {
+  const c = S[status] ?? S.PENDING;
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${cfg.color}`}>
-      {cfg.icon} {cfg.label}
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap ${c.bg} ${c.text} ${c.border}`}>
+      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${c.dot}`} />
+      {c.label}
     </span>
   );
 };
 
-/* ── Cancel Confirm Dialog ── */
-const CancelDialog = ({ purchase, onClose, onCancelled }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState('');
+/* ─── Toast (floating, auto-dismiss) ───────────────────── */
+const Toast = ({ msg, type = 'info' }) => {
+  const colors = { info: 'bg-gray-900', success: 'bg-emerald-600', error: 'bg-red-600' };
+  return (
+    <div className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-[200] ${colors[type]} text-white px-5 py-3 rounded-2xl shadow-2xl text-sm font-medium whitespace-nowrap flex items-center gap-2`}
+      style={{ boxShadow: '0 8px 32px rgba(0,0,0,.3)', animation: 'fadeUp .2s ease' }}>
+      {type === 'success' && <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+      {type === 'error'   && <AlertTriangle className="w-4 h-4 flex-shrink-0" />}
+      {msg}
+      <style>{`@keyframes fadeUp { from { opacity:0; transform:translateX(-50%) translateY(8px) } to { opacity:1; transform:translateX(-50%) translateY(0) } }`}</style>
+    </div>
+  );
+};
 
-  const handleCancel = async () => {
-    setLoading(true); setError('');
+/* ─── Confirm Cancel Sheet ──────────────────────────────── */
+const CancelSheet = ({ purchase, onClose, onDone }) => {
+  const [busy, setBusy] = useState(false);
+  const [err,  setErr]  = useState('');
+
+  const confirm = async () => {
+    setBusy(true); setErr('');
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke('manage-purchase', {
+      const { data, error: fe } = await supabase.functions.invoke('manage-purchase', {
         body: { action: 'cancel', purchaseId: purchase.id },
       });
-      if (fnErr || data?.error) throw new Error(fnErr?.message || data?.error);
-      onCancelled();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+      if (fe || data?.error) throw new Error(fe?.message || data?.error);
+      onDone();
+    } catch (e) { setErr(e.message); setBusy(false); }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
+      style={{ background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl overflow-hidden"
+        style={{ boxShadow: '0 40px 80px rgba(0,0,0,.3)' }}>
+        {/* drag pill */}
+        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
+        </div>
+
+        <div className="px-6 pt-4 pb-6 space-y-4">
+          {/* Icon + title */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center flex-shrink-0">
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
-            <h2 className="text-base font-bold text-gray-900">Huỷ giao dịch</h2>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-gray-400 hover:bg-gray-100 transition">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 text-sm text-amber-800">
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold mb-1">Bạn chắc chắn muốn huỷ?</p>
-              <p>Giao dịch <strong>{purchase?.transaction_code}</strong> sẽ bị xoá. Bạn có thể tạo lại sau.</p>
+              <h3 className="font-bold text-gray-900">Huỷ giao dịch?</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Thao tác này không thể hoàn tác</p>
             </div>
+            <button onClick={onClose} className="ml-auto w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
+              <X className="w-3.5 h-3.5 text-gray-500" />
+            </button>
           </div>
-        </div>
 
-        {error && (
-          <div className="mb-4 flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
+          {/* Info */}
+          <div className="p-3.5 bg-gray-50 rounded-2xl text-sm text-gray-600 leading-relaxed">
+            Giao dịch <code className="font-mono text-[11px] bg-gray-200 px-1.5 py-0.5 rounded">{purchase?.transaction_code}</code> sẽ bị xoá.
+            Bạn có thể mở lại và tạo giao dịch mới sau.
           </div>
-        )}
 
-        <div className="flex gap-3">
-          <button onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition">
-            Giữ lại
-          </button>
-          <button onClick={handleCancel} disabled={loading}
-            className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2">
-            {loading ? <><RotateCcw className="w-4 h-4 animate-spin" /> Đang xoá...</> : <><Trash2 className="w-4 h-4" /> Xác nhận huỷ</>}
-          </button>
+          {err && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl text-xs text-red-700">
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" /> {err}
+            </div>
+          )}
+
+          {/* Buttons */}
+          <div className="flex gap-2.5">
+            <button onClick={onClose}
+              className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition active:scale-[.98]">
+              Giữ lại
+            </button>
+            <button onClick={confirm} disabled={busy}
+              className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[.98]">
+              {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang huỷ...</> : <><Trash2 className="w-4 h-4" /> Xác nhận huỷ</>}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-/* ══════════════════════════════════════════════════════
+/* ─── Purchase row (live updating via realtime) ─────────── */
+const PurchaseRow = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUpdated }) => {
+  const [p, setP] = useState(initial);
+
+  /* Realtime: update this row live when status changes (student view) */
+  useEffect(() => {
+    if (p.status === 'SUCCESS') return;
+    const ch = supabase
+      .channel(`row:${p.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'purchases',
+        filter: `id=eq.${p.id}`,
+      }, ({ new: row }) => {
+        setP(row);
+        if (row.status === 'SUCCESS') { supabase.removeChannel(ch); onUpdated?.(); }
+      })
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+  }, [p.id, p.status]);
+
+  // Keep in sync with parent data refreshes
+  useEffect(() => { setP(initial); }, [initial]);
+
+  const amt    = liveAmt(p);
+  const paidN  = p.paid_amount || 0;
+  const pct    = Math.min(100, Math.round((paidN / amt) * 100));
+  const isLive = p.status !== 'SUCCESS';
+
+  return (
+    <tr className={`hover:bg-slate-50/60 transition-colors group ${p.status === 'SUCCESS' ? '' : ''}`}>
+      {isTeacher && (
+        <td className="px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+              {p.profiles?.full_name?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate max-w-[140px]">{p.profiles?.full_name || '—'}</p>
+              <p className="text-[11px] text-gray-400 truncate max-w-[140px]">
+                {(p.profiles?.email || '').replace('@ic3fighter.local', '')}
+              </p>
+            </div>
+          </div>
+        </td>
+      )}
+      <td className="px-5 py-4">
+        <p className="text-sm font-medium text-gray-900 line-clamp-1 max-w-[180px]">{p.exams?.title || '—'}</p>
+        <code className="text-[10px] text-indigo-400 font-mono">{p.transaction_code}</code>
+      </td>
+      <td className="px-5 py-4 text-sm font-medium text-gray-600 tabular-nums">{fmtVND(amt)}</td>
+      <td className="px-5 py-4">
+        <span className={`text-sm font-bold tabular-nums ${paidN >= amt ? 'text-emerald-600' : 'text-orange-500'}`}>
+          {fmtVND(paidN)}
+        </span>
+        {p.status === 'PARTIAL' && (
+          <div className="mt-1 w-16 h-1 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-orange-400 rounded-full" style={{ width: `${pct}%` }} />
+          </div>
+        )}
+      </td>
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-1.5">
+          {isLive && !isTeacher && (
+            <span className="relative flex h-2 w-2 flex-shrink-0">
+              <span className="animate-ping absolute inset-0 rounded-full bg-amber-400 opacity-60" />
+              <span className="relative rounded-full h-2 w-2 bg-amber-400" />
+            </span>
+          )}
+          <Badge status={p.status} />
+        </div>
+      </td>
+      <td className="px-5 py-4 text-[11px] text-gray-400 whitespace-nowrap">{fmtDate(p.created_at)}</td>
+      <td className="px-5 py-4">
+        <div className="flex items-center gap-2 justify-end">
+          {isTeacher && p.status === 'SUCCESS' && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">
+              <Zap className="w-3 h-3" /> Auto
+            </span>
+          )}
+          {!isTeacher && p.status !== 'SUCCESS' && (
+            <>
+              <button onClick={() => onResume(p)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100 transition active:scale-95">
+                <ArrowRight className="w-3.5 h-3.5" /> Tiếp tục
+              </button>
+              <button onClick={() => onCancel(p)}
+                className="p-1.5 rounded-xl bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 transition active:scale-95"
+                title="Huỷ giao dịch">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+};
+
+/* ─── Mobile purchase card (also live-updating) ─────────── */
+const PurchaseCard = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUpdated }) => {
+  const [p, setP] = useState(initial);
+
+  useEffect(() => {
+    if (p.status === 'SUCCESS') return;
+    const ch = supabase
+      .channel(`card:${p.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'purchases',
+        filter: `id=eq.${p.id}`,
+      }, ({ new: row }) => {
+        setP(row);
+        if (row.status === 'SUCCESS') { supabase.removeChannel(ch); onUpdated?.(); }
+      })
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+  }, [p.id, p.status]);
+
+  useEffect(() => { setP(initial); }, [initial]);
+
+  const amt  = liveAmt(p);
+  const paid = p.paid_amount || 0;
+  const pct  = Math.min(100, Math.round((paid / amt) * 100));
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all hover:shadow-md"
+      style={{ boxShadow: '0 1px 8px rgba(15,23,42,.06)' }}>
+
+      {/* header */}
+      <div className="flex items-start gap-3 p-4">
+        {isTeacher && (
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+            {p.profiles?.full_name?.charAt(0)?.toUpperCase() || '?'}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          {isTeacher && <p className="text-[11px] font-bold text-violet-600 mb-0.5 truncate">{p.profiles?.full_name}</p>}
+          <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug">{p.exams?.title || '—'}</p>
+          <code className="text-[10px] font-mono text-gray-400 mt-0.5">{p.transaction_code}</code>
+        </div>
+        <Badge status={p.status} />
+      </div>
+
+      {/* partial progress */}
+      {p.status === 'PARTIAL' && (
+        <div className="px-4 pb-2">
+          <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+            <span>Đã TT: {fmtVND(paid)}</span><span>{pct}%</span>
+          </div>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+      )}
+
+      {/* amounts */}
+      <div className="flex divide-x divide-gray-100 border-t border-gray-50 bg-gray-50/60">
+        <div className="flex-1 px-3.5 py-2.5">
+          <p className="text-[10px] text-gray-400">Cần TT</p>
+          <p className="text-sm font-bold text-gray-700">{fmtVND(amt)}</p>
+        </div>
+        <div className="flex-1 px-3.5 py-2.5">
+          <p className="text-[10px] text-gray-400">Đã nhận</p>
+          <p className={`text-sm font-bold ${paid >= amt ? 'text-emerald-600' : 'text-orange-500'}`}>{fmtVND(paid)}</p>
+        </div>
+        <div className="flex-1 px-3.5 py-2.5">
+          <p className="text-[10px] text-gray-400">Ngày tạo</p>
+          <p className="text-[11px] text-gray-500 leading-tight">{fmtDate(p.created_at)}</p>
+        </div>
+      </div>
+
+      {/* actions */}
+      {!isTeacher && p.status !== 'SUCCESS' && (
+        <div className="flex gap-2 px-4 py-3 border-t border-gray-100">
+          <button onClick={() => onResume(p)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100 transition active:scale-95">
+            <ArrowRight className="w-3.5 h-3.5" /> Tiếp tục thanh toán
+          </button>
+          <button onClick={() => onCancel(p)}
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-50 text-red-500 text-xs font-semibold hover:bg-red-100 transition active:scale-95">
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+      {isTeacher && p.status === 'SUCCESS' && (
+        <div className="px-4 py-2.5 border-t border-gray-100">
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+            <Zap className="w-3 h-3" /> Tự động qua SePay
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════
    MAIN PAGE
-══════════════════════════════════════════════════════ */
+═══════════════════════════════════════════════════════════ */
 export const PaymentHistoryPage = () => {
   const { isTeacher, isSelfRegistered } = useAuth();
 
-  const [purchases, setPurchases]    = useState([]);
-  const [loading,   setLoading]      = useState(true);
-  const [filter,    setFilter]       = useState('all');
-  const [search,    setSearch]       = useState('');
-  const [cancelPurchase, setCancelPurchase] = useState(null);
-  const [resumePaymentExam, setResumePaymentExam] = useState(null);
-  const [toast,    setToast]         = useState('');
+  const [purchases,   setPurchases]   = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [filter,      setFilter]      = useState('all');
+  const [search,      setSearch]      = useState('');
+  const [cancelP,     setCancelP]     = useState(null);
+  const [resumeExam,  setResumeExam]  = useState(null);
+  const [toast,       setToast]       = useState(null); // { msg, type }
+  const toastTimer = useRef(null);
 
-  const showToast = useCallback((msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3500);
+  const showToast = useCallback((msg, type = 'info') => {
+    setToast({ msg, type });
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3500);
   }, []);
 
-  const fetchPurchases = useCallback(async () => {
-    setLoading(true);
+  const fetchPurchases = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const action = isTeacher ? 'list-all' : 'list-mine';
-      const { data, error: fnErr } = await supabase.functions.invoke('manage-purchase', {
-        body: { action },
-      });
-      if (fnErr || data?.error) throw new Error(fnErr?.message || data?.error);
+      const { data, error: fe } = await supabase.functions.invoke('manage-purchase', { body: { action } });
+      if (fe || data?.error) throw new Error(fe?.message || data?.error);
       setPurchases(data?.purchases || []);
-    } catch (err) {
-      showToast('Lỗi tải dữ liệu: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { showToast('Lỗi tải dữ liệu: ' + e.message, 'error'); }
+    finally { setLoading(false); }
   }, [isTeacher, showToast]);
 
   useEffect(() => { fetchPurchases(); }, [fetchPurchases]);
 
+  const liveAmt = (p) => p.exams?.required_amount || p.required_amount || 100_000;
+
+  const FILTERS = [
+    { key: 'all',     label: 'Tất cả' },
+    { key: 'PENDING', label: 'Chờ TT' },
+    { key: 'PARTIAL', label: 'Một phần' },
+    { key: 'SUCCESS', label: 'Đã mở' },
+  ];
+
   const filtered = purchases.filter(p => {
-    const matchStatus = filter === 'all' || p.status === filter;
+    if (filter !== 'all' && p.status !== filter) return false;
+    if (!search) return true;
     const q = search.toLowerCase();
-    const matchSearch = !q || (
-      p.exams?.title?.toLowerCase().includes(q) ||
-      p.profiles?.full_name?.toLowerCase().includes(q) ||
-      p.transaction_code?.toLowerCase().includes(q)
-    );
-    return matchStatus && matchSearch;
+    return (p.exams?.title || '').toLowerCase().includes(q)
+      || (p.profiles?.full_name || '').toLowerCase().includes(q)
+      || (p.transaction_code || '').toLowerCase().includes(q);
   });
 
-  const totalSuccess = purchases.filter(p => p.status === 'SUCCESS').length;
-  const totalPending = purchases.filter(p => p.status === 'PENDING' || p.status === 'PARTIAL').length;
-  const totalRevenue = purchases.filter(p => p.status === 'SUCCESS').reduce((s, p) => s + (p.paid_amount || 0), 0);
+  const nSuccess = purchases.filter(p => p.status === 'SUCCESS').length;
+  const nPending = purchases.filter(p => p.status !== 'SUCCESS').length;
+  const revenue  = purchases.filter(p => p.status === 'SUCCESS').reduce((s, p) => s + (p.paid_amount || 0), 0);
 
   const handleCancelled = () => {
-    setCancelPurchase(null);
-    fetchPurchases();
-    showToast('🗑️ Đã huỷ giao dịch.');
+    setCancelP(null);
+    fetchPurchases(true);
+    showToast('Đã huỷ giao dịch', 'info');
   };
 
-  // Always use live exam price
-  const liveAmt = (p) => p.exams?.required_amount || p.required_amount || 100000;
+  const handleResume = (p) => {
+    setResumeExam({ id: p.exam_id, title: p.exams?.title, required_amount: p.exams?.required_amount || p.required_amount });
+  };
 
-  // ── Row component (desktop) ──
-  const Row = ({ p }) => {
-    const amt = liveAmt(p);
-    return (
-      <tr className="hover:bg-gray-50/80 transition-colors">
-        {isTeacher && (
-          <td className="px-5 py-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                {p.profiles?.full_name?.charAt(0)?.toUpperCase() || '?'}
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-gray-900">{p.profiles?.full_name || '—'}</div>
-                <div className="text-xs text-gray-400">
-                  {p.profiles?.email?.replace('@ic3fighter.local', '') || p.profiles?.email || ''}
-                </div>
-              </div>
-            </div>
-          </td>
-        )}
-        <td className="px-5 py-4">
-          <div className="text-sm font-medium text-gray-900 line-clamp-1">{p.exams?.title || '—'}</div>
-          {p.transaction_code && (
-            <code className="text-[10px] text-violet-600 font-mono">{p.transaction_code}</code>
-          )}
-        </td>
-        <td className="px-5 py-4 text-sm font-medium text-gray-700">{formatVND(amt)}</td>
-        <td className="px-5 py-4">
-          <span className={`text-sm font-bold ${p.paid_amount >= amt ? 'text-emerald-600' : 'text-orange-600'}`}>
-            {formatVND(p.paid_amount)}
-          </span>
-          {p.status === 'PARTIAL' && (
-            <div className="text-xs text-orange-500 mt-0.5">Còn {formatVND(amt - p.paid_amount)}</div>
-          )}
-        </td>
-        <td className="px-5 py-4"><StatusBadge status={p.status} /></td>
-        <td className="px-5 py-4 text-xs text-gray-400">{formatDate(p.created_at)}</td>
-        <td className="px-5 py-4">
-          <div className="flex items-center gap-2 justify-end">
-            {/* Auto badge for teacher view */}
-            {isTeacher && p.status === 'SUCCESS' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
-                <Zap className="w-3 h-3" /> Tự động
-              </span>
-            )}
-            {isTeacher && p.status !== 'SUCCESS' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200">
-                <Clock className="w-3 h-3" /> Chờ TT
-              </span>
-            )}
-            {/* Student action buttons */}
-            {!isTeacher && p.status !== 'SUCCESS' && (
-              <>
-                <button onClick={() => setResumePaymentExam({ id: p.exam_id, title: p.exams?.title, required_amount: p.exams?.required_amount || p.required_amount })}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition">
-                  <ArrowRight className="w-3.5 h-3.5" /> Tiếp tục
-                </button>
-                <button onClick={() => setCancelPurchase(p)}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition">
-                  <Trash2 className="w-3.5 h-3.5" /> Huỷ
-                </button>
-              </>
-            )}
-          </div>
-        </td>
-      </tr>
-    );
+  const handleRowUpdated = () => {
+    showToast('🎉 Thanh toán thành công!', 'success');
+    fetchPurchases(true);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-4 right-4 z-[100] bg-gray-900 text-white px-4 py-3 rounded-xl shadow-lg text-sm font-medium">
-          {toast}
-        </div>
-      )}
+    <div className="min-h-screen bg-[#f4f6fb]">
 
-      {/* Header */}
+      {/* Toast */}
+      {toast && <Toast msg={toast.msg} type={toast.type} />}
+
+      {/* ── Hero ── */}
       <div className="relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0f172a 0%, #182e89 60%, #0e7490 100%)' }}>
-        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-blue-400/20 blur-[80px] pointer-events-none" />
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
+        style={{ background: 'linear-gradient(135deg,#1e1b4b 0%,#312e81 55%,#1d4ed8 100%)' }}>
+        <div className="absolute inset-0 opacity-[.07] pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(#fff 1px,transparent 1px)', backgroundSize: '24px 24px' }} />
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-blue-400/20 blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-9 pb-8">
+          <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
                 <CreditCard className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-extrabold text-white">Lịch sử thanh toán</h1>
-                <p className="text-white/50 text-sm flex items-center gap-1.5 mt-0.5">
-                  <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                  {isTeacher ? 'Thanh toán tự động qua SePay' : 'Theo dõi trạng thái mua nội dung'}
+                <h1 className="text-xl font-extrabold text-white tracking-tight">
+                  {isTeacher ? 'Quản lý thanh toán' : 'Lịch sử thanh toán'}
+                </h1>
+                <p className="text-white/50 text-xs mt-0.5 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-emerald-400" />
+                  {isTeacher ? 'Tự động xử lý qua SePay' : 'Mua bài và theo dõi trạng thái'}
                 </p>
               </div>
             </div>
-            {/* Auto info badge for teacher */}
             {isTeacher && (
-              <div className="flex items-center gap-2 bg-emerald-500/20 border border-emerald-400/30 px-3.5 py-2 rounded-xl text-sm font-semibold text-emerald-200">
-                <Zap className="w-4 h-4" /> Bài tự mở khi nhận đủ tiền
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/20 border border-emerald-400/25">
+                <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                <span className="text-emerald-200 text-xs font-semibold">Tự động mở khi đủ tiền</span>
               </div>
             )}
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 mt-6">
+          <div className="grid grid-cols-3 gap-2.5 mt-6">
             {[
-              { label: 'Đã mở khoá',    value: totalSuccess,           color: 'text-emerald-300' },
-              { label: 'Chờ thanh toán',  value: totalPending,         color: 'text-amber-300' },
+              { val: nSuccess,             label: 'Đã mở khoá',  color: 'text-emerald-300' },
+              { val: nPending,             label: 'Chờ thanh toán', color: 'text-amber-300' },
               isTeacher
-                ? { label: 'Tổng doanh thu', value: formatVND(totalRevenue), color: 'text-blue-300' }
-                : { label: 'Tổng giao dịch', value: purchases.length,        color: 'text-blue-300' },
+                ? { val: fmtVND(revenue),  label: 'Doanh thu',   color: 'text-blue-300' }
+                : { val: purchases.length, label: 'Tổng GD',     color: 'text-blue-300' },
             ].map((s, i) => (
-              <div key={i} className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/15 px-4 py-3 text-center">
-                <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
-                <div className="text-white/50 text-xs mt-0.5">{s.label}</div>
+              <div key={i} className="bg-white/10 border border-white/15 rounded-2xl px-4 py-3 text-center">
+                <p className={`text-xl font-extrabold ${s.color} truncate`}>{s.val}</p>
+                <p className="text-[10px] text-white/50 mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* ── Content ── */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
 
-        {/* Auto-unlock info banner */}
+        {/* Teacher banner */}
         {isTeacher && (
-          <div className="flex items-start gap-3 mb-5 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
-            <Zap className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-emerald-800">
-              <p className="font-bold mb-0.5">Hệ thống tự động (SePay)</p>
-              <p className="text-emerald-700">Khi học sinh chuyển khoản đúng nội dung mã, bài thi sẽ <strong>tự động mở khoá ngay lập tức</strong> — không cần xác nhận thủ công.</p>
+          <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Zap className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-emerald-800">Thanh toán tự động (SePay Webhook)</p>
+              <p className="text-xs text-emerald-700 mt-0.5">Khi học sinh chuyển đúng mã, bài thi sẽ <strong>tự mở khoá ngay lập tức</strong> — không cần xác nhận thủ công.</p>
             </div>
           </div>
         )}
 
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3 mb-5">
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center gap-2.5">
           {isTeacher && (
-            <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 px-3 py-2 flex-1 sm:flex-none min-w-[200px]">
+            <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-200 px-3 py-2.5 flex-1 sm:flex-none sm:w-60 shadow-sm">
               <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Tìm người dùng, bài thi, mã..."
-                className="outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
-              />
+              <input value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Tìm tên, bài thi, mã..."
+                className="flex-1 outline-none text-sm text-gray-700 placeholder-gray-400 bg-transparent" />
+              {search && (
+                <button onClick={() => setSearch('')}>
+                  <X className="w-3.5 h-3.5 text-gray-300 hover:text-gray-500" />
+                </button>
+              )}
             </div>
           )}
-          <div className="flex flex-wrap gap-2">
-            {[
-              { key: 'all',     label: 'Tất cả' },
-              { key: 'PENDING', label: '⏳ Chờ' },
-              { key: 'PARTIAL', label: '⚡ Một phần' },
-              { key: 'SUCCESS', label: '✅ Đã mở' },
-            ].map(f => (
-              <button key={f.key} onClick={() => setFilter(f.key)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                  filter === f.key
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-                }`}>
-                {f.label}
-              </button>
-            ))}
+
+          <div className="flex gap-1.5 flex-wrap">
+            {FILTERS.map(f => {
+              const cnt = f.key === 'all' ? purchases.length : purchases.filter(p => p.status === f.key).length;
+              return (
+                <button key={f.key} onClick={() => setFilter(f.key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all active:scale-95
+                    ${filter === f.key
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                    }`}>
+                  {f.label}
+                  {cnt > 0 && (
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${filter === f.key ? 'bg-white/25 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                      {cnt}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
-          <button onClick={fetchPurchases}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-xs text-gray-500 hover:border-blue-300 hover:text-blue-600 transition bg-white ml-auto">
-            <RefreshCw className="w-3.5 h-3.5" /> Làm mới
+
+          <button onClick={() => fetchPurchases()} disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs text-gray-500 hover:border-indigo-300 hover:text-indigo-600 transition ml-auto shadow-sm disabled:opacity-40 active:scale-95">
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Làm mới</span>
           </button>
         </div>
 
-        {/* Table / Cards */}
+        {/* ── List ── */}
         {loading ? (
-          <div className="flex flex-col items-center py-20 text-gray-400">
-            <RotateCcw className="w-8 h-8 animate-spin mb-3 text-blue-400" />
-            <p className="text-sm">Đang tải...</p>
+          /* Skeleton */
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse" style={{ opacity: 1 - i * 0.25 }}>
+                <div className="flex gap-3 mb-4">
+                  <div className="w-9 h-9 rounded-full bg-gray-200 flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-gray-200 rounded-full w-1/2" />
+                    <div className="h-2.5 bg-gray-100 rounded-full w-1/3" />
+                  </div>
+                  <div className="h-6 w-20 bg-gray-100 rounded-full" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[1,2,3].map(j => <div key={j} className="h-11 bg-gray-50 rounded-xl" />)}
+                </div>
+              </div>
+            ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center py-20 text-gray-400">
-            <CreditCard className="w-12 h-12 mb-3 text-gray-200" />
-            <p className="font-semibold text-gray-500">
+          <div className="flex flex-col items-center py-20 text-center">
+            <div className="w-16 h-16 rounded-3xl bg-white border border-gray-100 flex items-center justify-center mb-4 shadow-sm">
+              <CreditCard className="w-8 h-8 text-gray-300" />
+            </div>
+            <p className="font-semibold text-gray-700">
               {purchases.length === 0 ? 'Chưa có giao dịch nào' : 'Không tìm thấy giao dịch'}
             </p>
-            <p className="text-sm mt-1">
+            <p className="text-sm text-gray-400 mt-1">
               {purchases.length === 0
                 ? (isSelfRegistered ? 'Mua nội dung để bắt đầu học.' : 'Chưa có học sinh nào thanh toán.')
                 : 'Thử thay đổi bộ lọc.'}
@@ -348,100 +531,58 @@ export const PaymentHistoryPage = () => {
         ) : (
           <>
             {/* Desktop table */}
-            <div className="hidden sm:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="hidden sm:block bg-white rounded-2xl border border-gray-100 overflow-hidden"
+              style={{ boxShadow: '0 2px 16px rgba(15,23,42,.05)' }}>
               <table className="min-w-full">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    {isTeacher && <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Người dùng</th>}
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Bài thi</th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Cần TT</th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Đã nhận</th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Trạng thái</th>
-                    <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Ngày tạo</th>
-                    <th className="px-5 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Thao tác</th>
+                  <tr className="border-b border-gray-100 bg-gray-50/80">
+                    {isTeacher && <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Người dùng</th>}
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Bài thi</th>
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Cần TT</th>
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Đã nhận</th>
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Trạng thái</th>
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ngày tạo</th>
+                    <th className="px-5 py-3.5 text-right text-[11px] font-bold text-gray-400 uppercase tracking-wider">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filtered.map(p => <Row key={p.id} p={p} />)}
+                  {filtered.map(p => (
+                    <PurchaseRow key={p.id} p={p} isTeacher={isTeacher} liveAmt={liveAmt}
+                      onResume={handleResume} onCancel={setCancelP} onUpdated={handleRowUpdated} />
+                  ))}
                 </tbody>
               </table>
+              <div className="px-5 py-3 border-t border-gray-50 bg-gray-50/40 flex items-center justify-between">
+                <p className="text-xs text-gray-400">{filtered.length} giao dịch{search && ` · tìm "${search}"`}</p>
+                {isTeacher && nSuccess > 0 && (
+                  <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" /> {fmtVND(revenue)}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Mobile cards */}
             <div className="flex flex-col gap-3 sm:hidden">
               {filtered.map(p => (
-                <div key={p.id} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="min-w-0">
-                      {isTeacher && (
-                        <div className="text-xs font-semibold text-violet-600 mb-0.5">{p.profiles?.full_name}</div>
-                      )}
-                      <div className="text-sm font-semibold text-gray-900 line-clamp-2">{p.exams?.title}</div>
-                      {p.transaction_code && (
-                        <code className="text-[10px] text-gray-400 font-mono">{p.transaction_code}</code>
-                      )}
-                    </div>
-                    <StatusBadge status={p.status} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                    <div className="bg-gray-50 rounded-xl p-2.5">
-                      <div className="text-gray-400 mb-0.5">Cần TT</div>
-                      <div className="font-bold text-gray-800">{formatVND(liveAmt(p))}</div>
-                    </div>
-                    <div className="bg-gray-50 rounded-xl p-2.5">
-                      <div className="text-gray-400 mb-0.5">Đã nhận</div>
-                      <div className={`font-bold ${p.paid_amount >= liveAmt(p) ? 'text-emerald-600' : 'text-orange-500'}`}>
-                        {formatVND(p.paid_amount)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-gray-400">{formatDate(p.created_at)}</span>
-                    <div className="flex gap-2">
-                      {/* Auto badge for teacher */}
-                      {isTeacher && p.status === 'SUCCESS' && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
-                          <Zap className="w-3 h-3" /> Tự động
-                        </span>
-                      )}
-                      {/* Student action buttons */}
-                      {!isTeacher && p.status !== 'SUCCESS' && (
-                        <>
-                          <button onClick={() => setResumePaymentExam({ id: p.exam_id, title: p.exams?.title, required_amount: p.exams?.required_amount || p.required_amount })}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-semibold hover:bg-blue-100 transition">
-                            <ArrowRight className="w-3 h-3" /> Tiếp tục
-                          </button>
-                          <button onClick={() => setCancelPurchase(p)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 transition">
-                            <Trash2 className="w-3 h-3" /> Huỷ
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <PurchaseCard key={p.id} p={p} isTeacher={isTeacher} liveAmt={liveAmt}
+                  onResume={handleResume} onCancel={setCancelP} onUpdated={handleRowUpdated} />
               ))}
+              <p className="text-center text-xs text-gray-400 pb-2">{filtered.length} giao dịch</p>
             </div>
-
-            <p className="mt-4 text-center text-xs text-gray-400">{filtered.length} giao dịch</p>
           </>
         )}
       </div>
 
-      {/* Cancel Modal */}
-      {cancelPurchase && (
-        <CancelDialog purchase={cancelPurchase} onClose={() => setCancelPurchase(null)} onCancelled={handleCancelled} />
+      {/* Modals */}
+      {cancelP && (
+        <CancelSheet purchase={cancelP} onClose={() => setCancelP(null)} onDone={handleCancelled} />
       )}
-
-      {/* Resume Payment Modal */}
-      {resumePaymentExam && (
-        <PaymentModal 
-          exam={resumePaymentExam} 
-          onClose={() => setResumePaymentExam(null)} 
-          onSuccess={() => {
-            setResumePaymentExam(null);
-            fetchPurchases();
-          }} 
+      {resumeExam && (
+        <PaymentModal
+          exam={resumeExam}
+          onClose={() => setResumeExam(null)}
+          onSuccess={() => { setResumeExam(null); fetchPurchases(true); showToast('🎉 Thanh toán thành công!', 'success'); }}
         />
       )}
     </div>
