@@ -67,12 +67,12 @@ export const ImageLightbox = ({ src, alt = '', onClose }) => {
 };
 
 /* ── Zoomable image wrapper ── */
-export const ZoomableImage = ({ src, alt = '', className = '' }) => {
+export const ZoomableImage = ({ src, alt = '', className = '', wrapperClassName = 'relative inline-block group cursor-zoom-in' }) => {
   const [open, setOpen] = React.useState(false);
   if (!src) return null;
   return (
     <>
-      <div className="relative inline-block group cursor-zoom-in" onClick={(e) => {
+      <div className={wrapperClassName} onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
         setOpen(true);

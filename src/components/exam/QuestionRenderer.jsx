@@ -95,8 +95,8 @@ const DragItemCard = ({ pair, dragging, onDragStart, onDragEnd, inZone = false, 
       draggable
       onDragStart={() => onDragStart(pair)}
       onDragEnd={onDragEnd}
-      style={{ minWidth: isLong ? '180px' : hasImage ? '150px' : '100px', maxWidth: '280px' }}
-      className={`flex flex-col items-center gap-2.5 px-4 py-3.5 rounded-2xl border-2 cursor-grab active:cursor-grabbing select-none transition-all ${
+      style={{ minWidth: isLong ? '130px' : hasImage ? '100px' : '80px', maxWidth: '200px' }}
+      className={`flex flex-col items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border-2 cursor-grab active:cursor-grabbing select-none transition-all ${
         isBeingDragged
           ? 'opacity-40 scale-95 shadow-none'
           : isSelected
@@ -107,12 +107,17 @@ const DragItemCard = ({ pair, dragging, onDragStart, onDragEnd, inZone = false, 
       }`}
     >
       {hasImage && (
-        <div className="w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center p-2 bg-white rounded-xl border border-gray-100 flex-shrink-0 shadow-sm w-full">
-          <ZoomableImage src={pair.drag_image_url} alt="" className="max-w-full max-h-full object-contain" />
+        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-100 flex-shrink-0 shadow-sm w-full">
+          <ZoomableImage 
+            src={pair.drag_image_url} 
+            alt="" 
+            wrapperClassName="relative flex items-center justify-center w-full h-full group cursor-zoom-in"
+            className="max-w-full max-h-full object-contain" 
+          />
         </div>
       )}
       {hasText && (
-        <span className={`text-sm sm:text-base font-bold text-center leading-snug break-words w-full ${
+        <span className={`text-xs sm:text-sm font-bold text-center leading-snug break-words w-full ${
           isSelected ? 'text-amber-800' : inZone ? 'text-indigo-700' : 'text-gray-700'
         }`}>
           {pair.drag_content}
