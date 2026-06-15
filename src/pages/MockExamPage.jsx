@@ -8,8 +8,43 @@ import { QuestionRenderer } from '../components/exam/QuestionRenderer';
 import {
   Flag, CheckCircle2, AlertTriangle, X,
   BookOpen, ShieldAlert, Send, LayoutGrid,
-  ChevronLeft, ChevronRight, PlayCircle
+  ChevronLeft, ChevronRight, PlayCircle, Maximize, Minimize
 } from 'lucide-react';
+
+/* ─────────────────────────────────────────────────────────
+   useExamFullscreen hook
+   — calls requestFullscreen() on the exam container
+   — navbar disappears because it's outside the fullscreen element
+───────────────────────────────────────────────────────── */
+const useExamFullscreen = (ref) => {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+    };
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (!document.fullscreenElement) {
+      const el = ref.current;
+      if (!el) return;
+      (el.requestFullscreen?.() ||
+       el.webkitRequestFullscreen?.() ||
+       Promise.resolve()).catch(() => {});
+    } else {
+      (document.exitFullscreen?.() ||
+       document.webkitExitFullscreen?.() ||
+       Promise.resolve()).catch(() => {});
+    }
+  }, [ref]);
+
+  return { isFullscreen, toggle };
+};
 
 /* ─────────────────────────────────────────────────────────
    Skeleton
@@ -200,6 +235,8 @@ export const MockExamPage = () => {
   const timerRef          = useRef(null);
   const startTimeRef      = useRef(Date.now());
   const DURATION_SECONDS  = 3000; // 50 minutes for mock exam
+  const containerRef      = useRef(null);
+  const { isFullscreen, toggle: toggleFullscreen } = useExamFullscreen(containerRef);
 
   /* ── Init ── */
   useEffect(() => { initExam(); }, [attemptId]);
@@ -396,7 +433,16 @@ export const MockExamPage = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col md:flex-row overflow-hidden" style={{ background: '#EEF2FF' }}>
+    <div
+      ref={containerRef}
+      className="flex flex-col md:flex-row overflow-hidden"
+      style={{
+        background: '#EEF2FF',
+        height: 'calc(100vh - 64px)',
+        transform: 'translateZ(0)',
+        willChange: 'contents',
+      }}
+    >
       {showRefreshWarn && (
         <RefreshWarningModal
           onStay={() => setShowRefreshWarn(false)}
@@ -426,7 +472,7 @@ export const MockExamPage = () => {
         flex flex-row items-center gap-3 px-4
         md:flex-col md:w-[280px] md:h-full md:overflow-hidden md:px-0 md:gap-0
       ">
-        <div className="hidden md:flex items-center gap-3 px-5 pt-6 pb-5 flex-shrink-0 w-full border-b border-white/10">
+        <div className="hidden md:flex items-center gap-3 px-5 h-[76px] flex-shrink-0 w-full border-b border-white/10">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #F59E0B, #EF4444)' }}>
             <PlayCircle className="w-4 h-4 text-white" />
           </div>
@@ -501,7 +547,7 @@ export const MockExamPage = () => {
           />
         </div>
 
-        <div className="flex-shrink-0 flex items-center gap-3 px-5 md:px-7 py-3.5 bg-white border-b border-gray-100 shadow-sm">
+        <div className="flex-shrink-0 flex items-center gap-3 px-5 md:px-7 h-[73px] bg-white border-b border-gray-100 shadow-sm">
           <div className="flex items-center gap-2.5">
             <span
               className="w-9 h-9 rounded-xl text-white text-sm font-bold flex items-center justify-center flex-shrink-0"
@@ -527,10 +573,26 @@ export const MockExamPage = () => {
             <Flag className={`w-3.5 h-3.5 ${isFlagged ? 'fill-amber-400' : ''}`} />
             <span className="hidden sm:inline">{isFlagged ? 'Đã đánh dấu' : 'Đánh dấu'}</span>
           </button>
+
+          {/* Fullscreen toggle */}
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Thoát toàn màn hình' : 'Toàn màn hình'}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+              isFullscreen
+                ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm'
+                : 'bg-white border-gray-200 text-gray-400 hover:border-amber-300 hover:text-amber-700 hover:bg-amber-50'
+            }`}
+          >
+            {isFullscreen
+              ? <><Minimize className="w-3.5 h-3.5" /><span className="hidden sm:inline">Thu nhỏ</span></>
+              : <><Maximize className="w-3.5 h-3.5" /><span className="hidden sm:inline">Toàn màn hình</span></>
+            }
+          </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
-          <div key={currentIndex} style={{ animation: 'questionIn 0.22s ease-out both' }}>
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 md:px-8 md:py-8" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div key={currentIndex} style={{ animation: 'questionIn 0.22s ease-out both', willChange: 'opacity, transform' }}>
             <QuestionRenderer
               question={currentQ}
               currentAnswer={answers[currentQ.id]}
@@ -593,20 +655,23 @@ export const MockExamPage = () => {
 
       <style>{`
         @keyframes questionIn {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translate3d(0, 14px, 0); }
+          to   { opacity: 1; transform: translate3d(0, 0, 0); }
         }
         @keyframes modalIn {
-          from { opacity: 0; transform: scale(0.88) translateY(16px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
+          from { opacity: 0; transform: scale(0.88) translate3d(0, 16px, 0); }
+          to   { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
         }
         @keyframes slideUp {
-          from { transform: translateY(100%); }
-          to   { transform: translateY(0); }
+          from { transform: translate3d(0, 100%, 0); }
+          to   { transform: translate3d(0, 0, 0); }
         }
         @keyframes refreshModalIn {
-          from { opacity: 0; transform: scale(0.85) translateY(12px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
+          from { opacity: 0; transform: scale(0.85) translate3d(0, 12px, 0); }
+          to   { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
+        }
+        :fullscreen, :-webkit-full-screen {
+          scrollbar-width: thin;
         }
       `}</style>
     </div>

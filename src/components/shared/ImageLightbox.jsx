@@ -61,7 +61,9 @@ export const ImageLightbox = ({ src, alt = '', onClose }) => {
     </div>
   );
 
-  return createPortal(lightboxContent, document.body);
+  // Gắn lightbox vào phần tử fullscreen nếu có, ngược lại gắn vào body
+  const container = document.fullscreenElement || document.body;
+  return createPortal(lightboxContent, container);
 };
 
 /* ── Zoomable image wrapper ── */

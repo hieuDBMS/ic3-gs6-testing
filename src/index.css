@@ -76,6 +76,25 @@
   }
 }
 
+/* ── Fullscreen exam container ── */
+/* When requestFullscreen() is called on the exam div,
+   these rules ensure it fills the entire screen cleanly */
+:fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #EEF2FF;
+}
+:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #EEF2FF;
+}
+:-moz-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  background: #EEF2FF;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

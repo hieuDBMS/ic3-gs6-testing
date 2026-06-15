@@ -8,14 +8,50 @@ import { QuestionRenderer } from '../components/exam/QuestionRenderer';
 import {
   Flag, CheckCircle2, AlertTriangle, X,
   BookOpen, ShieldAlert, Send, LayoutGrid,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Maximize, Minimize,
 } from 'lucide-react';
+
+/* ─────────────────────────────────────────────────────────
+   useExamFullscreen hook
+   — calls requestFullscreen() on the exam container
+   — navbar disappears because it's outside the fullscreen element
+───────────────────────────────────────────────────────── */
+const useExamFullscreen = (ref) => {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+    };
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (!document.fullscreenElement) {
+      // Request fullscreen on the exam container itself
+      const el = ref.current;
+      if (!el) return;
+      (el.requestFullscreen?.() ||
+       el.webkitRequestFullscreen?.() ||
+       Promise.resolve()).catch(() => {});
+    } else {
+      (document.exitFullscreen?.() ||
+       document.webkitExitFullscreen?.() ||
+       Promise.resolve()).catch(() => {});
+    }
+  }, [ref]);
+
+  return { isFullscreen, toggle };
+};
 
 /* ─────────────────────────────────────────────────────────
    Skeleton
 ───────────────────────────────────────────────────────── */
 const ExamSkeleton = () => (
-  <div className="h-screen flex overflow-hidden animate-pulse">
+  <div className="flex overflow-hidden animate-pulse" style={{ height: 'calc(100vh - 64px)' }}>
     <div className="w-[280px] flex-shrink-0 bg-slate-800" />
     <div className="flex-1 flex flex-col bg-[#EEF2FF]">
       <div className="h-[3px] bg-slate-200" />
@@ -206,6 +242,8 @@ export const ExamPage = () => {
   const isSubmittingRef   = useRef(false);
   const timerRef          = useRef(null);
   const startTimeRef      = useRef(Date.now());
+  const containerRef      = useRef(null);
+  const { isFullscreen, toggle: toggleFullscreen } = useExamFullscreen(containerRef);
 
   /* ── Access check for self-registered users ── */
   useEffect(() => {
@@ -423,7 +461,16 @@ export const ExamPage = () => {
 
   /* ── Render ── */
   return (
-    <div className="h-screen flex flex-col md:flex-row overflow-hidden" style={{ background: '#EEF2FF' }}>
+    <div
+      ref={containerRef}
+      className="flex flex-col md:flex-row overflow-hidden"
+      style={{
+        background: '#EEF2FF',
+        height: 'calc(100vh - 64px)',
+        transform: 'translateZ(0)',
+        willChange: 'contents',
+      }}
+    >
 
       {/* ═══ MODALS ═══ */}
       {showRefreshWarn && (
@@ -460,7 +507,7 @@ export const ExamPage = () => {
       ">
 
         {/* ── Branding — DESKTOP ONLY ── */}
-        <div className="hidden md:flex items-center gap-3 px-5 pt-6 pb-5 flex-shrink-0 w-full border-b border-white/10">
+        <div className="hidden md:flex items-center gap-3 px-5 h-[76px] flex-shrink-0 w-full border-b border-white/10">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
             <BookOpen className="w-4 h-4 text-white" />
           </div>
@@ -545,7 +592,7 @@ export const ExamPage = () => {
         </div>
 
         {/* ── Question header bar ── */}
-        <div className="flex-shrink-0 flex items-center gap-3 px-5 md:px-7 py-3.5 bg-white border-b border-gray-100 shadow-sm">
+        <div className="flex-shrink-0 flex items-center gap-3 px-5 md:px-7 h-[73px] bg-white border-b border-gray-100 shadow-sm">
           {/* Number + counter */}
           <div className="flex items-center gap-2.5">
             <span
@@ -574,12 +621,28 @@ export const ExamPage = () => {
             <Flag className={`w-3.5 h-3.5 ${isFlagged ? 'fill-amber-400' : ''}`} />
             <span className="hidden sm:inline">{isFlagged ? 'Đã đánh dấu' : 'Đánh dấu'}</span>
           </button>
+
+          {/* Fullscreen toggle */}
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Thoát toàn màn hình (F11)' : 'Toàn màn hình'}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+              isFullscreen
+                ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm'
+                : 'bg-white border-gray-200 text-gray-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50'
+            }`}
+          >
+            {isFullscreen
+              ? <><Minimize className="w-3.5 h-3.5" /><span className="hidden sm:inline">Thu nhỏ</span></>
+              : <><Maximize className="w-3.5 h-3.5" /><span className="hidden sm:inline">Toàn màn hình</span></>
+            }
+          </button>
         </div>
 
         {/* ── Question content (scrollable) ── */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 md:px-8 md:py-8">
+        <div className="flex-1 min-h-0 overflow-y-auto px-5 py-6 md:px-8 md:py-8" style={{ WebkitOverflowScrolling: 'touch' }}>
           {/* key triggers re-mount → animation plays on every question change */}
-          <div key={currentIndex} style={{ animation: 'questionIn 0.22s ease-out both' }}>
+          <div key={currentIndex} style={{ animation: 'questionIn 0.22s ease-out both', willChange: 'opacity, transform' }}>
             <QuestionRenderer
               question={currentQ}
               currentAnswer={answers[currentQ.id]}
@@ -649,20 +712,31 @@ export const ExamPage = () => {
       {/* ═══ Global animation keyframes ═══ */}
       <style>{`
         @keyframes questionIn {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translate3d(0, 14px, 0); }
+          to   { opacity: 1; transform: translate3d(0, 0, 0); }
         }
         @keyframes modalIn {
-          from { opacity: 0; transform: scale(0.88) translateY(16px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
+          from { opacity: 0; transform: scale(0.88) translate3d(0, 16px, 0); }
+          to   { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
         }
         @keyframes slideUp {
-          from { transform: translateY(100%); }
-          to   { transform: translateY(0); }
+          from { transform: translate3d(0, 100%, 0); }
+          to   { transform: translate3d(0, 0, 0); }
         }
         @keyframes refreshModalIn {
-          from { opacity: 0; transform: scale(0.85) translateY(12px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
+          from { opacity: 0; transform: scale(0.85) translate3d(0, 12px, 0); }
+          to   { opacity: 1; transform: scale(1) translate3d(0, 0, 0); }
+        }
+        /* Fullscreen: fill entire screen including notch areas */
+        :fullscreen .exam-container,
+        :-webkit-full-screen .exam-container {
+          width: 100vw !important;
+          height: 100vh !important;
+        }
+        /* Smooth scrollbar in fullscreen */
+        :fullscreen *,
+        :-webkit-full-screen * {
+          scrollbar-width: thin;
         }
       `}</style>
     </div>
