@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ProtectedRoute } from './components/shared/ProtectedRoute';
 import { Navbar } from './components/shared/Navbar';
 
@@ -27,17 +28,21 @@ const MockExamPage          = lazy(() => import('./pages/MockExamPage').then(m =
 const MockResultPage        = lazy(() => import('./pages/MockResultPage').then(m => ({ default: m.MockResultPage })));
 const PaymentHistoryPage    = lazy(() => import('./pages/PaymentHistoryPage').then(m => ({ default: m.PaymentHistoryPage })));
 const PaymentSettingsPage   = lazy(() => import('./pages/PaymentSettingsPage').then(m => ({ default: m.PaymentSettingsPage })));
+const QuestionImportPage    = lazy(() => import('./pages/QuestionImportPage').then(m => ({ default: m.QuestionImportPage })));
+const QuestionStatsPage     = lazy(() => import('./pages/QuestionStatsPage').then(m => ({ default: m.QuestionStatsPage })));
+const LiveMonitorPage       = lazy(() => import('./pages/LiveMonitorPage').then(m => ({ default: m.LiveMonitorPage })));
+const AnalyticsPage         = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
 
 /* ─── Page loading skeleton ──────────────────────────────────────────────── */
 const PageFallback = () => (
-  <div className="min-h-screen flex items-center justify-center bg-slate-50">
+  <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
     <div className="flex flex-col items-center gap-3">
-      <div className="w-10 h-10 rounded-2xl bg-indigo-100 animate-pulse" />
+      <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-950/40 animate-pulse" />
       <div className="flex gap-1.5">
         {[0, 1, 2].map(i => (
           <div
             key={i}
-            className="w-1.5 h-1.5 rounded-full bg-indigo-300 animate-bounce"
+            className="w-1.5 h-1.5 rounded-full bg-indigo-300 dark:bg-indigo-700 animate-bounce"
             style={{ animationDelay: `${i * 0.15}s` }}
           />
         ))}
@@ -57,49 +62,55 @@ const Layout = () => (
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-slate-50 flex flex-col">
-          <Suspense fallback={<PageFallback />}>
-            <Routes>
-              <Route path="/login"    element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+            <Suspense fallback={<PageFallback />}>
+              <Routes>
+                <Route path="/login"    element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
 
-              <Route element={<ProtectedRoute />}>
-                <Route element={<Layout />}>
-                  <Route path="/dashboard"                 element={<DashboardPage />} />
-                  <Route path="/exam"                      element={<ExamListPage />} />
-                  <Route path="/exam/:examId"              element={<ExamPage />} />
-                  <Route path="/exam/:examId/result"       element={<ResultPage />} />
-                  <Route path="/mock-exam"                 element={<MockExamSetupPage />} />
-                  <Route path="/mock-exam/:attemptId"      element={<MockExamPage />} />
-                  <Route path="/mock-exam/:attemptId/result" element={<MockResultPage />} />
-                  <Route path="/flashcard"                 element={<FlashcardListPage />} />
-                  <Route path="/flashcard/:examId"         element={<FlashcardPage />} />
-                  <Route path="/payments"                  element={<PaymentHistoryPage />} />
-                  <Route path="/teacher/payment-settings"  element={<PaymentSettingsPage />} />
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<Layout />}>
+                    <Route path="/dashboard"                 element={<DashboardPage />} />
+                    <Route path="/exam"                      element={<ExamListPage />} />
+                    <Route path="/exam/:examId"              element={<ExamPage />} />
+                    <Route path="/exam/:examId/result"       element={<ResultPage />} />
+                    <Route path="/mock-exam"                 element={<MockExamSetupPage />} />
+                    <Route path="/mock-exam/:attemptId"      element={<MockExamPage />} />
+                    <Route path="/mock-exam/:attemptId/result" element={<MockResultPage />} />
+                    <Route path="/flashcard"                 element={<FlashcardListPage />} />
+                    <Route path="/flashcard/:examId"         element={<FlashcardPage />} />
+                    <Route path="/payments"                  element={<PaymentHistoryPage />} />
+                    <Route path="/teacher/payment-settings"  element={<PaymentSettingsPage />} />
+                  </Route>
                 </Route>
-              </Route>
 
-              {/* Teacher Only Routes */}
-              <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
-                <Route element={<Layout />}>
-                  <Route path="/questions"                         element={<QuestionsPage />} />
-                  <Route path="/questions/new"                     element={<QuestionFormPage />} />
-                  <Route path="/questions/:id/edit"                element={<QuestionFormPage />} />
-                  <Route path="/teacher/exam-structure"            element={<ExamStructurePage />} />
-                  <Route path="/teacher/students"                  element={<StudentManagementPage />} />
-                  <Route path="/teacher/students/:studentId"       element={<StudentProgressPage />} />
+                {/* Teacher Only Routes */}
+                <Route element={<ProtectedRoute allowedRoles={['teacher']} />}>
+                  <Route element={<Layout />}>
+                    <Route path="/questions"                         element={<QuestionsPage />} />
+                    <Route path="/questions/new"                     element={<QuestionFormPage />} />
+                    <Route path="/questions/:id/edit"                element={<QuestionFormPage />} />
+                    <Route path="/questions/import"                  element={<QuestionImportPage />} />
+                    <Route path="/teacher/exam-structure"            element={<ExamStructurePage />} />
+                    <Route path="/teacher/students"                  element={<StudentManagementPage />} />
+                    <Route path="/teacher/students/:studentId"       element={<StudentProgressPage />} />
+                    <Route path="/teacher/question-stats"            element={<QuestionStatsPage />} />
+                    <Route path="/teacher/live-monitor"              element={<LiveMonitorPage />} />
+                    <Route path="/teacher/analytics"                 element={<AnalyticsPage />} />
+                  </Route>
                 </Route>
-              </Route>
 
-              <Route path="/"  element={<Navigate to="/dashboard" replace />} />
-              <Route path="*"  element={<Navigate to="/dashboard" replace />} />
-            </Routes>
-          </Suspense>
-        </div>
-      </Router>
-    </AuthProvider>
+                <Route path="/"  element={<Navigate to="/dashboard" replace />} />
+                <Route path="*"  element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </Suspense>
+          </div>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Flag } from 'lucide-react';
 
-export const QuestionNavigator = ({ questions, currentIndex, answers, flagged, onSelect, dark = false }) => {
+const QuestionNavigatorImpl = ({ questions, currentIndex, answers, flagged, onSelect, dark = false }) => {
   useEffect(() => {
     const el = document.getElementById(`nav-btn-${currentIndex}`);
     if (el) {
@@ -128,3 +128,5 @@ export const QuestionNavigator = ({ questions, currentIndex, answers, flagged, o
     </div>
   );
 };
+
+export const QuestionNavigator = React.memo(QuestionNavigatorImpl);

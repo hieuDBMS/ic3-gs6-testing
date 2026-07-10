@@ -1,17 +1,18 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
 import { Book, Clock, ChevronDown, ChevronRight, Monitor, Search, BookOpen, Zap, Lock, CheckCircle, ShoppingCart, Trash2, X, Loader2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PaymentModal } from '../components/shared/PaymentModal';
+import { useExamStructure } from '../hooks/useExamStructure';
 
 /* ── Version pill colors ── */
 const VERSION_STYLES = {
-  GS6: { from: 'from-primary-600', to: 'to-primary-400', ring: 'ring-primary-200', text: 'text-primary-700', bg: 'bg-primary-50', border: 'border-primary-200', activeBg: 'bg-gradient-to-r from-primary-600 to-primary-500' },
-  GS7: { from: 'from-violet-600', to: 'to-violet-400', ring: 'ring-violet-200', text: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200', activeBg: 'bg-gradient-to-r from-violet-600 to-violet-500' },
-  GS8: { from: 'from-accent-600', to: 'to-accent-400', ring: 'ring-accent-200', text: 'text-accent-700', bg: 'bg-accent-50', border: 'border-accent-200', activeBg: 'bg-gradient-to-r from-accent-600 to-accent-500' },
+  GS6: { from: 'from-primary-600', to: 'to-primary-400', ring: 'ring-primary-200', text: 'text-primary-700 dark:text-primary-300', bg: 'bg-primary-50 dark:bg-primary-950/30', border: 'border-primary-200 dark:border-primary-900/50', activeBg: 'bg-gradient-to-r from-primary-600 to-primary-500' },
+  GS7: { from: 'from-violet-600', to: 'to-violet-400', ring: 'ring-violet-200', text: 'text-violet-700 dark:text-violet-300', bg: 'bg-violet-50 dark:bg-violet-950/30', border: 'border-violet-200 dark:border-violet-900/50', activeBg: 'bg-gradient-to-r from-violet-600 to-violet-500' },
+  GS8: { from: 'from-accent-600', to: 'to-accent-400', ring: 'ring-accent-200', text: 'text-accent-700 dark:text-accent-300', bg: 'bg-accent-50 dark:bg-accent-900/30', border: 'border-accent-200 dark:border-accent-800/50', activeBg: 'bg-gradient-to-r from-accent-600 to-accent-500' },
 };
-const DEFAULT_STYLE = { from: 'from-gray-600', to: 'to-gray-400', ring: 'ring-gray-200', text: 'text-gray-700', bg: 'bg-gray-50', border: 'border-gray-200', activeBg: 'bg-gradient-to-r from-gray-600 to-gray-500' };
+const DEFAULT_STYLE = { from: 'from-gray-600', to: 'to-gray-400', ring: 'ring-gray-200', text: 'text-gray-700 dark:text-slate-300', bg: 'bg-gray-50 dark:bg-slate-800', border: 'border-gray-200 dark:border-slate-700', activeBg: 'bg-gradient-to-r from-gray-600 to-gray-500' };
 const getStyle = (v) => VERSION_STYLES[v] || DEFAULT_STYLE;
 
 /* ── Exam Type Badge ── */
@@ -51,36 +52,36 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
       style={{ background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl overflow-hidden"
+      <div className="bg-white dark:bg-slate-800 w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl overflow-hidden"
         style={{ boxShadow: '0 40px 80px rgba(0,0,0,.3)' }}>
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
+          <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-slate-600" />
         </div>
         <div className="px-6 pt-4 pb-6 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-gray-900 text-sm">Huỷ giao dịch?</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Thao tác này không thể hoàn tác</p>
+              <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">Huỷ giao dịch?</h3>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Thao tác này không thể hoàn tác</p>
             </div>
-            <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
-              <X className="w-3.5 h-3.5 text-gray-500" />
+            <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition">
+              <X className="w-3.5 h-3.5 text-gray-500 dark:text-slate-400" />
             </button>
           </div>
-          <div className="p-3.5 bg-gray-50 rounded-2xl text-sm text-gray-600 leading-relaxed">
-            Giao dịch <code className="font-mono text-[11px] bg-gray-200 px-1.5 py-0.5 rounded">{txCode}</code> sẽ bị xoá.
+          <div className="p-3.5 bg-gray-50 dark:bg-slate-700/50 rounded-2xl text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
+            Giao dịch <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{txCode}</code> sẽ bị xoá.
             Bạn có thể mua lại bất kỳ lúc nào.
           </div>
           {err && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl text-xs text-red-700">
+            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 rounded-xl text-xs text-red-700 dark:text-red-300">
               <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" /> {err}
             </div>
           )}
           <div className="flex gap-2.5">
             <button onClick={onClose}
-              className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition active:scale-[.98]">
+              className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 transition active:scale-[.98]">
               Giữ lại
             </button>
             <button onClick={confirm} disabled={busy}
@@ -97,60 +98,58 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
 export const ExamListPage = () => {
   const { isSelfRegistered, user } = useAuth();
   const navigate = useNavigate();
-  const [allLevels, setAllLevels] = useState([]);
-  const [availableVersions, setAvailableVersions] = useState([]);
+  const { levels, exams, loading } = useExamStructure();
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [expandedLevel, setExpandedLevel] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [purchases, setPurchases] = useState({}); // examId -> purchase
   const [purchasesLoaded, setPurchasesLoaded] = useState(false);
   const [paymentExam, setPaymentExam] = useState(null); // exam for PaymentModal
   const [cancelExam,  setCancelExam]  = useState(null); // { purchaseId, txCode }
 
-  useEffect(() => { fetchExams(); }, []);
+  /* Group flat levels/exams into the shape this page renders, with the
+     testing-before-gmetrix ordering the UI relies on. */
+  const allLevels = useMemo(() => (
+    [...levels]
+      .sort((a, b) => a.level_number - b.level_number)
+      .map(level => ({
+        ...level,
+        exams: exams
+          .filter(e => e.level_id === level.id)
+          .sort((a, b) => {
+            if (a.exam_type !== b.exam_type) return b.exam_type.localeCompare(a.exam_type);
+            return a.exam_number - b.exam_number;
+          }),
+      }))
+  ), [levels, exams]);
+
+  const availableVersions = useMemo(
+    () => [...new Set(allLevels.map(l => l.version))].sort(),
+    [allLevels]
+  );
+
+  // Seed selected version / expanded level from localStorage once data first arrives.
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (initializedRef.current || allLevels.length === 0) return;
+    initializedRef.current = true;
+
+    const saved = localStorage.getItem('ic3_preferred_version');
+    if (saved && availableVersions.includes(saved)) {
+      setSelectedVersion(saved);
+    } else if (availableVersions.length > 0) {
+      setSelectedVersion(availableVersions[0]);
+    }
+
+    const savedLevel = localStorage.getItem('ic3_expanded_level');
+    if (savedLevel) setExpandedLevel(isNaN(savedLevel) ? savedLevel : Number(savedLevel));
+  }, [allLevels, availableVersions]);
+
   // Re-fetch purchases when isSelfRegistered becomes true (after profile loads)
   useEffect(() => {
     if (isSelfRegistered && user && !purchasesLoaded) fetchPurchases();
     // Non-selfRegistered users don't need purchases at all
     if (!isSelfRegistered && user !== null) setPurchasesLoaded(true);
   }, [isSelfRegistered, user]);
-
-  const fetchExams = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('exam_levels')
-        .select('*, exams (*)')
-        .order('level_number');
-
-      if (error) throw error;
-
-      const sorted = data.map(level => ({
-        ...level,
-        exams: level.exams.sort((a, b) => {
-          if (a.exam_type !== b.exam_type) return b.exam_type.localeCompare(a.exam_type);
-          return a.exam_number - b.exam_number;
-        }),
-      }));
-
-      setAllLevels(sorted);
-      const versions = [...new Set(sorted.map(l => l.version))].sort();
-      setAvailableVersions(versions);
-      
-      const saved = localStorage.getItem('ic3_preferred_version');
-      if (saved && versions.includes(saved)) {
-        setSelectedVersion(saved);
-      } else if (versions.length > 0) {
-        setSelectedVersion(versions[0]);
-      }
-
-      const savedLevel = localStorage.getItem('ic3_expanded_level');
-      if (savedLevel) setExpandedLevel(isNaN(savedLevel) ? savedLevel : Number(savedLevel));
-    } catch (err) {
-      console.error('Error fetching exams:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchPurchases = useCallback(async () => {
     try {
@@ -192,7 +191,7 @@ export const ExamListPage = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
       {/* ── Page hero header ── */}
       <div className="relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #0f172a 0%, #182e89 60%, #0e7490 100%)' }}>
@@ -270,11 +269,11 @@ export const ExamListPage = () => {
 
         {!loading && !selectedVersion && (
           <div className="mt-4 flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-            <div className="w-20 h-20 rounded-3xl bg-primary-50 border-2 border-primary-100 flex items-center justify-center mb-5">
+            <div className="w-20 h-20 rounded-3xl bg-primary-50 dark:bg-primary-950/30 border-2 border-primary-100 dark:border-primary-900/40 flex items-center justify-center mb-5">
               <Monitor className="w-9 h-9 text-primary-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Chọn phiên bản để bắt đầu</h3>
-            <p className="text-gray-400 text-sm max-w-xs">
+            <h3 className="text-xl font-bold text-gray-800 dark:text-slate-200 mb-2">Chọn phiên bản để bắt đầu</h3>
+            <p className="text-gray-400 dark:text-slate-500 text-sm max-w-xs">
               Chọn một phiên bản IC3 (GS6, GS7, GS8) ở trên để xem danh sách cấp độ và bài thi.
             </p>
           </div>
@@ -283,7 +282,7 @@ export const ExamListPage = () => {
         {!loading && selectedVersion && (
           <div className="space-y-4 animate-fade-in">
             {filteredLevels.length === 0 && (
-              <p className="text-gray-400 text-sm italic py-8 text-center">Không có cấp độ nào.</p>
+              <p className="text-gray-400 dark:text-slate-500 text-sm italic py-8 text-center">Không có cấp độ nào.</p>
             )}
 
             {filteredLevels.map((level, idx) => {
@@ -294,14 +293,14 @@ export const ExamListPage = () => {
               return (
                 <div
                   key={level.id}
-                  className={`bg-white rounded-2xl border overflow-hidden transition-all duration-200
-                    ${isOpen ? 'border-primary-200 shadow-card-hover' : 'border-gray-100 shadow-card hover:border-primary-100 hover:shadow-card-hover'}`}
+                  className={`bg-white dark:bg-slate-800 rounded-2xl border overflow-hidden transition-all duration-200
+                    ${isOpen ? 'border-primary-200 dark:border-primary-800/60 shadow-card-hover' : 'border-gray-100 dark:border-slate-700 shadow-card hover:border-primary-100 dark:hover:border-primary-900/50 hover:shadow-card-hover'}`}
                   style={{ animationDelay: `${idx * 60}ms` }}
                 >
                   {/* Level header */}
                   <button
                     onClick={() => toggleLevel(level.id)}
-                    className="w-full flex items-center gap-4 px-5 py-4 sm:px-6 sm:py-5 text-left hover:bg-gray-50/70 transition-colors group"
+                    className="w-full flex items-center gap-4 px-5 py-4 sm:px-6 sm:py-5 text-left hover:bg-gray-50/70 dark:hover:bg-slate-700/40 transition-colors group"
                   >
                     {/* Level number badge */}
                     <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${style.from} ${style.to} flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-md`}>
@@ -310,22 +309,22 @@ export const ExamListPage = () => {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-base font-bold text-gray-900">
+                        <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">
                           {level.version} — {level.label}
                         </h2>
                       </div>
                       <div className="flex items-center gap-3 mt-1">
                         {testingCount > 0 && (
-                          <span className="text-xs text-blue-600 font-medium">📝 {testingCount} Testing</span>
+                          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">📝 {testingCount} Testing</span>
                         )}
                         {gmetrixCount > 0 && (
-                          <span className="text-xs text-purple-600 font-medium">🎯 {gmetrixCount} Gmetrix</span>
+                          <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">🎯 {gmetrixCount} Gmetrix</span>
                         )}
                       </div>
                     </div>
 
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0
-                      ${isOpen ? `${style.bg} ${style.text}` : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200'}`}>
+                      ${isOpen ? `${style.bg} ${style.text}` : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-500 dark:group-hover:bg-slate-600'}`}>
                       <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
@@ -345,32 +344,32 @@ export const ExamListPage = () => {
                           return (
                            <div
                             key={exam.id}
-                            className="bg-white rounded-xl border p-4 flex flex-col gap-3 hover:shadow-card transition-all duration-150 group"
-                            style={{ borderColor: isPending ? '#fbbf24' : '#f1f5f9' }}
+                            className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700 p-4 flex flex-col gap-3 hover:shadow-card transition-all duration-150 group"
+                            style={isPending ? { borderColor: '#fbbf24' } : undefined}
                            >
                             <div className="flex items-start justify-between gap-2">
-                              <h3 className="text-sm font-bold text-gray-900 leading-snug">{exam.title}</h3>
+                              <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 leading-snug">{exam.title}</h3>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
                                 <TypeBadge type={exam.exam_type} />
                                 {isSelfRegistered && !showSkeleton && (
                                   isPurchased
-                                    ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200"><CheckCircle className="w-3 h-3" /> Đã mua</span>
+                                    ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60"><CheckCircle className="w-3 h-3" /> Đã mua</span>
                                     : isPending
-                                      ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200"><Clock className="w-3 h-3" /> Chờ TT</span>
-                                      : <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold border border-gray-200"><Lock className="w-3 h-3" /> Chưa mua</span>
+                                      ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60"><Clock className="w-3 h-3" /> Chờ TT</span>
+                                      : <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold border border-gray-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600"><Lock className="w-3 h-3" /> Chưa mua</span>
                                 )}
-                                {showSkeleton && <div className="w-14 h-5 bg-gray-100 rounded-full animate-pulse" />}
+                                {showSkeleton && <div className="w-14 h-5 bg-gray-100 dark:bg-slate-700 rounded-full animate-pulse" />}
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                            <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500">
                               <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                               <span>{Math.floor(exam.duration_seconds / 60)} phút</span>
                             </div>
 
                             {/* Action button — render only after purchases confirmed */}
                             {showSkeleton ? (
-                              <div className="w-full h-9 bg-gray-100 rounded-xl animate-pulse mt-auto" />
+                              <div className="w-full h-9 bg-gray-100 dark:bg-slate-700 rounded-xl animate-pulse mt-auto" />
                             ) : isPurchased ? (
                               <Link
                                 to={`/exam/${exam.id}`}
@@ -411,7 +410,7 @@ export const ExamListPage = () => {
                          })}
 
                         {level.exams.length === 0 && (
-                          <div className="col-span-full py-6 text-center text-sm text-gray-400 italic">
+                          <div className="col-span-full py-6 text-center text-sm text-gray-400 dark:text-slate-500 italic">
                             Chưa có bài thi nào trong cấp độ này.
                           </div>
                         )}

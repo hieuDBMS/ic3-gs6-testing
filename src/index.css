@@ -20,6 +20,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  .dark body {
+    background-color: #0f172a;
+    color: #f1f5f9;
+  }
 }
 
 @layer components {
@@ -38,10 +43,19 @@
     border: 1px solid rgba(255, 255, 255, 0.9);
   }
 
+  .dark .glass-light {
+    background: rgba(30, 41, 59, 0.72);
+    border: 1px solid rgba(51, 65, 85, 0.9);
+  }
+
   /* ─── Page wrapper with gradient bg ─── */
   .page-bg {
     min-height: 100vh;
     background: linear-gradient(160deg, #f0f6ff 0%, #e8f0fe 40%, #f1f5fb 100%);
+  }
+
+  .dark .page-bg {
+    background: #0f172a;
   }
 
   /* ─── IC3 Button Variants ─── */
@@ -57,17 +71,19 @@
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl
            bg-white/0 text-gray-600 font-medium text-sm border border-gray-200
            hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98]
-           transition-all duration-150 focus:outline-none;
+           transition-all duration-150 focus:outline-none
+           dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-800 dark:hover:border-slate-500;
   }
 
   /* ─── Card ─── */
   .card {
-    @apply bg-white rounded-2xl shadow-card border border-gray-100/80 overflow-hidden;
+    @apply bg-white rounded-2xl shadow-card border border-gray-100/80 overflow-hidden
+           dark:bg-slate-800 dark:border-slate-700/80;
   }
 
   /* ─── Section heading ─── */
   .section-title {
-    @apply text-2xl font-bold text-gray-900 tracking-tight;
+    @apply text-2xl font-bold text-gray-900 tracking-tight dark:text-slate-100;
   }
 
   /* ─── Badge ─── */
@@ -94,6 +110,11 @@
   height: 100vh !important;
   background: #EEF2FF;
 }
+.dark :fullscreen,
+.dark :-webkit-full-screen,
+.dark :-moz-full-screen {
+  background: #0f172a;
+}
 
 @layer utilities {
   .text-balance {
@@ -110,6 +131,10 @@
     background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
+  }
+  .dark .shimmer {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 200% 100%;
   }
   @keyframes shimmer {
     0%   { background-position: 200% 0; }
@@ -150,5 +175,14 @@
   }
   .custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 0, 0, 0.3);
+  }
+
+  /* In dark mode, ".custom-scrollbar-light" sits on a dark surface too —
+     invert the thumb color to match, same behavior as "-dark" would give. */
+  .dark .custom-scrollbar-light::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .dark .custom-scrollbar-light::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 }

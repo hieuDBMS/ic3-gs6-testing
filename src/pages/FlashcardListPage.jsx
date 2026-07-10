@@ -3,24 +3,25 @@ import { supabase } from '../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
 import { Brain, Clock, ChevronRight, BookOpen, Zap, Layers, Hash, ChevronDown, Sparkles, Lock, CheckCircle, ShoppingCart, Trash2, X, Loader2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { PaymentModal } from '../components/shared/PaymentModal';
 
 /* ── Version config ── */
 const VERSION_CFG = {
-  GS6: { grad: 'linear-gradient(135deg,#7c3aed,#4f46e5)', heroBg: 'linear-gradient(135deg,#6d28d9,#4338ca,#1d4ed8)', badge: 'bg-violet-100 text-violet-700 border-violet-200', cardBorder: '#ddd6fe', cardBg: '#faf5ff', btn: 'linear-gradient(135deg,#7c3aed,#4f46e5)', name: 'Global Standard 6', emoji: '🟣' },
-  GS7: { grad: 'linear-gradient(135deg,#e11d48,#db2777)', heroBg: 'linear-gradient(135deg,#be123c,#9d174d,#86198f)', badge: 'bg-rose-100 text-rose-700 border-rose-200', cardBorder: '#fecdd3', cardBg: '#fff1f2', btn: 'linear-gradient(135deg,#e11d48,#db2777)', name: 'Global Standard 7', emoji: '🔴' },
-  GS8: { grad: 'linear-gradient(135deg,#0d9488,#059669)', heroBg: 'linear-gradient(135deg,#0f766e,#047857,#065f46)', badge: 'bg-teal-100 text-teal-700 border-teal-200', cardBorder: '#99f6e4', cardBg: '#f0fdfa', btn: 'linear-gradient(135deg,#0d9488,#059669)', name: 'Global Standard 8', emoji: '🟢' },
+  GS6: { grad: 'linear-gradient(135deg,#7c3aed,#4f46e5)', heroBg: 'linear-gradient(135deg,#6d28d9,#4338ca,#1d4ed8)', badge: 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800/60', cardBorder: '#ddd6fe', cardBg: '#faf5ff', darkCardBg: '#1e1b3a', btn: 'linear-gradient(135deg,#7c3aed,#4f46e5)', name: 'Global Standard 6', emoji: '🟣' },
+  GS7: { grad: 'linear-gradient(135deg,#e11d48,#db2777)', heroBg: 'linear-gradient(135deg,#be123c,#9d174d,#86198f)', badge: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60', cardBorder: '#fecdd3', cardBg: '#fff1f2', darkCardBg: '#301823', btn: 'linear-gradient(135deg,#e11d48,#db2777)', name: 'Global Standard 7', emoji: '🔴' },
+  GS8: { grad: 'linear-gradient(135deg,#0d9488,#059669)', heroBg: 'linear-gradient(135deg,#0f766e,#047857,#065f46)', badge: 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800/60', cardBorder: '#99f6e4', cardBg: '#f0fdfa', darkCardBg: '#0f2a26', btn: 'linear-gradient(135deg,#0d9488,#059669)', name: 'Global Standard 8', emoji: '🟢' },
 };
 const DEFAULT_CFG = {
   grad: 'linear-gradient(135deg,#64748b,#475569)', heroBg: 'linear-gradient(135deg,#475569,#334155)',
-  badge: 'bg-slate-100 text-slate-700 border-slate-200', cardBorder: '#e2e8f0', cardBg: '#f8fafc',
+  badge: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600', cardBorder: '#e2e8f0', cardBg: '#f8fafc', darkCardBg: '#1e293b',
   btn: 'linear-gradient(135deg,#64748b,#475569)', name: 'IC3', emoji: '⚫',
 };
 const getCfg = v => VERSION_CFG[v] || DEFAULT_CFG;
 
 const TYPE_BADGE = {
-  testing: 'bg-blue-50 text-blue-600 border-blue-200',
-  gmetrix: 'bg-purple-50 text-purple-600 border-purple-200',
+  testing: 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/60',
+  gmetrix: 'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800/60',
 };
 
 /* ─── Inline Cancel Sheet ──────────────────────────────────
@@ -43,36 +44,36 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
       style={{ background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl overflow-hidden"
+      <div className="bg-white dark:bg-slate-800 w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl overflow-hidden"
         style={{ boxShadow: '0 40px 80px rgba(0,0,0,.3)' }}>
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
+          <div className="w-10 h-1 rounded-full bg-gray-200 dark:bg-slate-600" />
         </div>
         <div className="px-6 pt-4 pb-6 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-gray-900 text-sm">Huỷ giao dịch?</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Thao tác này không thể hoàn tác</p>
+              <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">Huỷ giao dịch?</h3>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Thao tác này không thể hoàn tác</p>
             </div>
-            <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition">
-              <X className="w-3.5 h-3.5 text-gray-500" />
+            <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition">
+              <X className="w-3.5 h-3.5 text-gray-500 dark:text-slate-400" />
             </button>
           </div>
-          <div className="p-3.5 bg-gray-50 rounded-2xl text-sm text-gray-600 leading-relaxed">
-            Giao dịch <code className="font-mono text-[11px] bg-gray-200 px-1.5 py-0.5 rounded">{txCode}</code> sẽ bị xoá.
+          <div className="p-3.5 bg-gray-50 dark:bg-slate-700/50 rounded-2xl text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
+            Giao dịch <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{txCode}</code> sẽ bị xoá.
             Bạn có thể mua lại bất kỳ lúc nào.
           </div>
           {err && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 rounded-xl text-xs text-red-700">
+            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 rounded-xl text-xs text-red-700 dark:text-red-300">
               <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" /> {err}
             </div>
           )}
           <div className="flex gap-2.5">
             <button onClick={onClose}
-              className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition active:scale-[.98]">
+              className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 transition active:scale-[.98]">
               Giữ lại
             </button>
             <button onClick={confirm} disabled={busy}
@@ -88,6 +89,7 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
 
 export const FlashcardListPage = () => {
   const { isSelfRegistered, user } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
   const [allLevels,       setAllLevels]       = useState([]);
   const [versions,        setVersions]        = useState([]);
@@ -163,7 +165,7 @@ export const FlashcardListPage = () => {
   );
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg,#f0f6ff 0%,#e8f0fe 40%,#f1f5fb 100%)', fontFamily: 'Inter, sans-serif' }}>
+    <div className="min-h-screen dark:bg-slate-900" style={{ background: isDark ? undefined : 'linear-gradient(160deg,#f0f6ff 0%,#e8f0fe 40%,#f1f5fb 100%)', fontFamily: 'Inter, sans-serif' }}>
 
       {/* ── HERO ── */}
       <div className="relative overflow-hidden" style={{ background: cfg.heroBg }}>
@@ -238,7 +240,7 @@ export const FlashcardListPage = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {loading && (
           <div className="space-y-3">
-            {[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl animate-pulse bg-white shadow-sm" style={{ opacity: 1 - i*0.2 }} />)}
+            {[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl animate-pulse bg-white dark:bg-slate-800 shadow-sm" style={{ opacity: 1 - i*0.2 }} />)}
           </div>
         )}
 
@@ -249,9 +251,9 @@ export const FlashcardListPage = () => {
               const levelCards = level.exams.reduce((a,e) => a + (questionCounts[e.id]||0), 0);
               return (
                 <div key={level.id}
-                  className="rounded-2xl bg-white overflow-hidden transition-all duration-300"
+                  className="rounded-2xl bg-white dark:bg-slate-800 overflow-hidden transition-all duration-300"
                   style={{
-                    border: `1.5px solid ${isOpen ? cfg.cardBorder : '#e2e8f0'}`,
+                    border: `1.5px solid ${isOpen ? cfg.cardBorder : (isDark ? '#334155' : '#e2e8f0')}`,
                     boxShadow: isOpen ? '0 8px 32px rgba(15,23,42,0.1)' : '0 1px 4px rgba(15,23,42,0.05)',
                   }}>
 
@@ -261,15 +263,15 @@ export const FlashcardListPage = () => {
                       if (newVal) localStorage.setItem('ic3_expanded_level', newVal);
                       else localStorage.removeItem('ic3_expanded_level');
                     }}
-                    className="w-full flex items-center gap-4 px-5 py-4 sm:px-6 text-left group hover:bg-slate-50/50 transition-colors">
+                    className="w-full flex items-center gap-4 px-5 py-4 sm:px-6 text-left group hover:bg-slate-50/50 dark:hover:bg-slate-700/40 transition-colors">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-sm"
                       style={{ background: cfg.grad }}>
                       {level.level_number}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h2 className="text-[14px] font-semibold text-slate-800">{level.label}</h2>
+                      <h2 className="text-[14px] font-semibold text-slate-800 dark:text-slate-100">{level.label}</h2>
                       <div className="flex items-center gap-3 mt-0.5">
-                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                        <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
                           <Hash className="w-3 h-3" />{level.exams.filter(e => questionCounts[e.id] > 0).length} bài thi
                         </span>
                         {levelCards > 0 && (
@@ -280,14 +282,14 @@ export const FlashcardListPage = () => {
                       </div>
                     </div>
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0
-                      ${isOpen ? 'text-white shadow-sm' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200'}`}
+                      ${isOpen ? 'text-white shadow-sm' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-500 dark:group-hover:bg-slate-600'}`}
                       style={isOpen ? { background: cfg.grad } : {}}>
                       <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
 
                   {isOpen && (
-                    <div className="px-4 pb-4 sm:px-5" style={{ borderTop: `1.5px solid ${cfg.cardBorder}`, background: cfg.cardBg }}>
+                    <div className="px-4 pb-4 sm:px-5" style={{ borderTop: `1.5px solid ${cfg.cardBorder}`, background: isDark ? cfg.darkCardBg : cfg.cardBg }}>
                       <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                         {level.exams.map(exam => {
                           const count = questionCounts[exam.id] || 0;
@@ -299,31 +301,31 @@ export const FlashcardListPage = () => {
                           const showSkeleton = isSelfRegistered && !purchasesLoaded;
                           return (
                             <div key={exam.id}
-                              className="bg-white rounded-2xl p-4 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                              style={{ border: isPending ? '1.5px solid #fbbf24' : '1.5px solid #e2e8f0' }}>
+                              className="bg-white dark:bg-slate-800 rounded-2xl p-4 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                              style={{ border: isPending ? '1.5px solid #fbbf24' : `1.5px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
                               <div className="flex items-start gap-2">
-                                <h3 className="text-sm font-semibold text-slate-800 leading-snug flex-1 line-clamp-2">{exam.title}</h3>
+                                <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug flex-1 line-clamp-2">{exam.title}</h3>
                                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
                                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border ${TYPE_BADGE[exam.exam_type]}`}>
                                     {isGmetrix ? '🎯' : '📝'} {isGmetrix ? 'Gmetrix' : 'Testing'}
                                   </span>
                                   {isSelfRegistered && !showSkeleton && (
                                     isPurchased
-                                      ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200"><CheckCircle className="w-3 h-3" /> Đã mua</span>
+                                      ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60"><CheckCircle className="w-3 h-3" /> Đã mua</span>
                                       : isPending
-                                        ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200"><Clock className="w-3 h-3" /> Chờ TT</span>
-                                        : <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold border border-gray-200"><Lock className="w-3 h-3" /> Chưa mua</span>
+                                        ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60"><Clock className="w-3 h-3" /> Chờ TT</span>
+                                        : <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold border border-gray-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600"><Lock className="w-3 h-3" /> Chưa mua</span>
                                   )}
-                                  {showSkeleton && <div className="w-14 h-5 bg-gray-100 rounded-full animate-pulse" />}
+                                  {showSkeleton && <div className="w-14 h-5 bg-gray-100 dark:bg-slate-700 rounded-full animate-pulse" />}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-3 text-xs text-slate-400">
+                              <div className="flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
                                 <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" />{Math.floor(exam.duration_seconds/60)} phút</span>
-                                <span className="flex items-center gap-1.5 text-indigo-600 font-semibold"><Brain className="w-3 h-3" />{count} thẻ</span>
+                                <span className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-semibold"><Brain className="w-3 h-3" />{count} thẻ</span>
                               </div>
                               {/* Action button — show skeleton while purchases loading */}
                               {showSkeleton ? (
-                                <div className="w-full h-9 bg-gray-100 rounded-xl animate-pulse mt-auto" />
+                                <div className="w-full h-9 bg-gray-100 dark:bg-slate-700 rounded-xl animate-pulse mt-auto" />
                               ) : isPurchased ? (
                                 <Link to={`/flashcard/${exam.id}`}
                                   className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] transition-all mt-auto"
@@ -339,7 +341,7 @@ export const FlashcardListPage = () => {
                                   </button>
                                   <button
                                     onClick={() => setCancelExam({ examId: exam.id, purchaseId: purchase.id, txCode: purchase.transaction_code })}
-                                    className="flex items-center justify-center px-3 py-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 active:scale-[.97] transition-all border border-red-100"
+                                    className="flex items-center justify-center px-3 py-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/40 active:scale-[.97] transition-all border border-red-100 dark:border-red-900/40"
                                     title="Huỷ giao dịch">
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -355,8 +357,8 @@ export const FlashcardListPage = () => {
                           );
                         })}
                         {level.exams.every(e => !questionCounts[e.id]) && (
-                          <div className="col-span-full py-8 text-center text-sm text-slate-400">
-                            <BookOpen className="w-8 h-8 mx-auto mb-2 text-slate-200" />
+                          <div className="col-span-full py-8 text-center text-sm text-slate-400 dark:text-slate-500">
+                            <BookOpen className="w-8 h-8 mx-auto mb-2 text-slate-200 dark:text-slate-700" />
                             Chưa có câu hỏi nào trong cấp độ này.
                           </div>
                         )}

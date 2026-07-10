@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AttemptHistoryTable } from '../components/dashboard/AttemptHistoryTable';
 import { StudentOverviewTable } from '../components/dashboard/StudentOverviewTable';
 import { supabase } from '../lib/supabase';
+import { useExamAttempts } from '../hooks/useExamAttempts';
 import { BookOpen, TrendingUp, CheckCircle, PlayCircle, Users, ChevronRight } from 'lucide-react';
+import { getInitials } from '../utils/avatar';
+import { Skeleton } from '../components/shared/Skeleton';
 
 /* ─── Avatar ─── */
 const COLORS = [
@@ -18,75 +21,64 @@ const getColor = (s) => {
   for (const c of s || '') h = c.charCodeAt(0) + ((h << 5) - h);
   return COLORS[Math.abs(h) % COLORS.length];
 };
-const getInitials = (name) => {
-  if (!name) return '?';
-  const p = name.trim().split(' ');
-  return p.length >= 2 ? (p[0][0] + p[p.length - 1][0]).toUpperCase() : name[0].toUpperCase();
-};
 
 /* ─── Stat Card ─── */
 const StatCard = ({ icon, label, value, sub, color }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex items-center gap-4">
     <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 shadow-md`}>
       {icon}
     </div>
     <div className="min-w-0">
-      <p className="text-2xl font-extrabold text-gray-900 leading-none">{value}</p>
-      <p className="text-xs font-semibold text-gray-500 mt-0.5">{label}</p>
-      {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
+      <p className="text-2xl font-extrabold text-gray-900 dark:text-slate-100 leading-none">{value}</p>
+      <p className="text-xs font-semibold text-gray-500 dark:text-slate-400 mt-0.5">{label}</p>
+      {sub && <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">{sub}</p>}
     </div>
   </div>
 );
 
 /* ─── Stats fetcher ─── */
 const useStudentStats = (userId) => {
-  const [stats, setStats] = useState(null);
+  const { attempts, loading } = useExamAttempts(userId, {
+    excludeStatus: 'in_progress',
+    select: 'score, correct_count, total_questions, started_at, status',
+    enabled: !!userId,
+  });
 
-  useEffect(() => {
-    if (!userId) return;
-    const load = async () => {
-      const { data } = await supabase
-        .from('exam_attempts')
-        .select('score, correct_count, total_questions, started_at, status')
-        .eq('user_id', userId)
-        .neq('status', 'in_progress');
-
-      if (!data) return;
-      const total = data.length;
-      const avgScore = total > 0 ? data.reduce((a, b) => a + Number(b.score), 0) / total : 0;
-      const passed = data.filter(a => Number(a.score) >= 70).length;
-      const passRate = total > 0 ? (passed / total) * 100 : 0;
-      setStats({ total, avgScore: avgScore.toFixed(1), passRate: passRate.toFixed(0) });
-    };
-    load();
-  }, [userId]);
-
-  return stats;
+  if (loading || !userId) return null;
+  const total = attempts.length;
+  const avgScore = total > 0 ? attempts.reduce((a, b) => a + Number(b.score), 0) / total : 0;
+  const passed = attempts.filter(a => Number(a.score) >= 70).length;
+  const passRate = total > 0 ? (passed / total) * 100 : 0;
+  return { total, avgScore: avgScore.toFixed(1), passRate: passRate.toFixed(0) };
 };
 
 /* ─── Teacher stats ─── */
-const useTeacherStats = () => {
-  const [stats, setStats] = useState(null);
+const useTeacherStats = (enabled) => {
+  const [totalStudents, setTotalStudents] = useState(null);
+  const { attempts, loading: attemptsLoading } = useExamAttempts(null, {
+    excludeStatus: 'in_progress',
+    select: 'score',
+    enabled,
+  });
+
   useEffect(() => {
+    if (!enabled) return;
     const load = async () => {
-      const { data: students } = await supabase
+      const { count } = await supabase
         .from('profiles')
-        .select('id', { count: 'exact' })
+        .select('id', { count: 'exact', head: true })
         .eq('role', 'student');
-      const { data: attempts } = await supabase
-        .from('exam_attempts')
-        .select('score')
-        .neq('status', 'in_progress');
-      const totalStudents = students?.length || 0;
-      const totalAttempts = attempts?.length || 0;
-      const avgScore = totalAttempts > 0
-        ? (attempts.reduce((a, b) => a + Number(b.score), 0) / totalAttempts).toFixed(1)
-        : '0';
-      setStats({ totalStudents, totalAttempts, avgScore });
+      setTotalStudents(count || 0);
     };
     load();
-  }, []);
-  return stats;
+  }, [enabled]);
+
+  if (!enabled || attemptsLoading || totalStudents === null) return null;
+  const totalAttempts = attempts.length;
+  const avgScore = totalAttempts > 0
+    ? (attempts.reduce((a, b) => a + Number(b.score), 0) / totalAttempts).toFixed(1)
+    : '0';
+  return { totalStudents, totalAttempts, avgScore };
 };
 
 /* ─── Main DashboardPage ─── */
@@ -94,7 +86,7 @@ export const DashboardPage = () => {
   const { user, profile, isTeacher } = useAuth();
 
   const studentStats = useStudentStats(!isTeacher ? user?.id : null);
-  const teacherStats = useTeacherStats();
+  const teacherStats = useTeacherStats(isTeacher);
 
   if (!user || !profile) return null;
 
@@ -104,7 +96,7 @@ export const DashboardPage = () => {
   const roleColor = isTeacher ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         {/* ─── Hero greeting ─── */}
@@ -195,22 +187,22 @@ export const DashboardPage = () => {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-pulse">
-            {[1,2,3].map(i => <div key={i} className="h-24 bg-white rounded-2xl border border-gray-100" />)}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Skeleton variant="card" count={3} className="h-24 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700" />
           </div>
         )}
 
         {/* ─── Teacher: Student Overview ─── */}
         {isTeacher && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary-500" />
-                <h2 className="text-base font-bold text-gray-900">Tổng quan học sinh</h2>
+                <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Tổng quan học sinh</h2>
               </div>
               <Link
                 to="/teacher/students"
-                className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 transition-colors"
+                className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
               >
                 Quản lý <ChevronRight className="w-4 h-4" />
               </Link>
@@ -220,17 +212,17 @@ export const DashboardPage = () => {
         )}
 
         {/* ─── History ─── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
             <div className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-primary-500" />
-              <h2 className="text-base font-bold text-gray-900">
+              <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">
                 {isTeacher ? 'Lịch sử làm bài (Cá nhân)' : 'Lịch sử làm bài'}
               </h2>
             </div>
             <Link
               to="/exam"
-              className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 transition-colors"
+              className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
             >
               Làm bài mới <ChevronRight className="w-4 h-4" />
             </Link>
@@ -249,7 +241,7 @@ export const DashboardPage = () => {
           {isTeacher && (
             <Link
               to="/teacher/students"
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-white text-primary-600 font-bold text-sm rounded-2xl border-2 border-primary-100"
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 font-bold text-sm rounded-2xl border-2 border-primary-100 dark:border-primary-900/50"
             >
               <Users className="w-4 h-4" /> Học sinh
             </Link>

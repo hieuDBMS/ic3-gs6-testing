@@ -25,14 +25,14 @@ const AnswerOption = ({ ans, idx, selected, onSelect, type }) => {
         transition-all duration-200 select-none
         ${isSelected
           ? 'border-2 border-indigo-400 shadow-lg shadow-indigo-100/70'
-          : 'border-2 border-gray-100 bg-white hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-50'
+          : 'border-2 border-gray-100 bg-white hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-50 dark:border-slate-700/60 dark:bg-slate-800 dark:hover:border-indigo-800/60'
         }
       `}
     >
       {/* Letter / Check badge */}
       <div
         className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-extrabold flex-shrink-0 transition-all duration-200 ${
-          isSelected ? '' : 'bg-gray-100 text-gray-400 group-hover:bg-indigo-100 group-hover:text-indigo-600'
+          isSelected ? '' : 'bg-gray-100 text-gray-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 dark:bg-slate-700 dark:text-slate-500 dark:group-hover:bg-indigo-900/40 dark:group-hover:text-indigo-300'
         }`}
         style={isSelected
           ? { background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', boxShadow: '0 4px 12px rgba(99,102,241,0.35)' }
@@ -48,13 +48,13 @@ const AnswerOption = ({ ans, idx, selected, onSelect, type }) => {
           <ZoomableImage
             src={ans.image_url}
             alt=""
-            className="h-14 w-20 object-contain rounded-lg border border-gray-100 flex-shrink-0 bg-white"
+            className="h-14 w-20 object-contain rounded-lg border border-gray-100 flex-shrink-0 bg-white dark:border-slate-700/60 dark:bg-slate-800"
           />
         )}
         {/* Render HTML from RichTextEditor */}
         <div
           className={`text-sm leading-relaxed transition-colors ${
-            isSelected ? 'text-indigo-900 font-semibold' : 'text-gray-700'
+            isSelected ? 'text-indigo-900 font-semibold' : 'text-gray-700 dark:text-slate-300'
           }`}
           dangerouslySetInnerHTML={{ __html: ans.content }}
         />
@@ -102,12 +102,12 @@ const DragItemCard = ({ pair, dragging, onDragStart, onDragEnd, inZone = false, 
           : isSelected
             ? 'border-amber-400 bg-amber-50 shadow-md ring-2 ring-amber-300 ring-offset-1 scale-105'
             : inZone
-              ? 'border-indigo-300 bg-white shadow-sm hover:shadow-md hover:border-indigo-400 hover:-translate-y-0.5'
-              : 'border-blue-200 bg-white shadow-sm hover:shadow-md hover:border-blue-400 hover:-translate-y-0.5'
+              ? 'border-indigo-300 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md hover:border-indigo-400 hover:-translate-y-0.5'
+              : 'border-blue-200 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 hover:-translate-y-0.5'
       }`}
     >
       {hasImage && (
-        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-100 flex-shrink-0 shadow-sm w-full">
+        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-100 flex-shrink-0 shadow-sm w-full dark:bg-slate-800 dark:border-slate-700/60">
           <ZoomableImage 
             src={pair.drag_image_url} 
             alt="" 
@@ -118,7 +118,7 @@ const DragItemCard = ({ pair, dragging, onDragStart, onDragEnd, inZone = false, 
       )}
       {hasText && (
         <span className={`text-xs sm:text-sm font-bold text-center leading-snug break-words w-full ${
-          isSelected ? 'text-amber-800' : inZone ? 'text-indigo-700' : 'text-gray-700'
+          isSelected ? 'text-amber-800' : inZone ? 'text-indigo-700' : 'text-gray-700 dark:text-slate-300'
         }`}>
           {pair.drag_content}
         </span>
@@ -170,11 +170,11 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
   return (
     <div className="space-y-5">
       {/* Instruction */}
-      <div className="flex items-start gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl px-4 py-3">
+      <div className="flex items-start gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl px-4 py-3 dark:border-blue-800/60">
         <span className="text-lg mt-0.5 flex-shrink-0">🔀</span>
         <div>
-          <p className="text-sm font-semibold text-blue-800">Kéo &amp; Thả</p>
-          <p className="text-xs text-blue-600 mt-0.5">Kéo các thẻ vào ô tương ứng. Trên điện thoại: <strong>bấm chọn thẻ</strong> rồi <strong>bấm vào ô</strong>.</p>
+          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">Kéo &amp; Thả</p>
+          <p className="text-xs text-blue-600 mt-0.5 dark:text-blue-300">Kéo các thẻ vào ô tương ứng. Trên điện thoại: <strong>bấm chọn thẻ</strong> rồi <strong>bấm vào ô</strong>.</p>
         </div>
       </div>
 
@@ -186,20 +186,20 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
         onClick={() => setTouchSelected(null)}
         className={`rounded-2xl border-2 border-dashed p-4 transition-all duration-200 ${
           dragOverZone === 'pool'
-            ? 'border-blue-400 bg-blue-50 shadow-inner'
-            : 'border-blue-200 bg-gradient-to-br from-slate-50 to-blue-50/30'
+            ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/40 shadow-inner'
+            : 'border-blue-200 dark:border-blue-800/60 bg-gradient-to-br from-slate-50 to-blue-50/30'
         }`}
       >
         <div className="flex items-center gap-2 mb-3">
           <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
           <p className="text-[11px] font-bold text-blue-500 uppercase tracking-widest">Kho thẻ</p>
-          <span className="ml-auto text-[11px] text-gray-400 font-medium">{poolItems.length} thẻ còn lại</span>
+          <span className="ml-auto text-[11px] text-gray-400 font-medium dark:text-slate-500">{poolItems.length} thẻ còn lại</span>
         </div>
         <div className="flex flex-wrap gap-2.5 min-h-[60px]">
           {poolItems.length === 0 ? (
             <div className="w-full flex items-center justify-center gap-2 py-3">
               <span className="text-green-500">✅</span>
-              <p className="text-sm text-gray-400 font-medium">Tất cả đã được xếp vào ô!</p>
+              <p className="text-sm text-gray-400 font-medium dark:text-slate-500">Tất cả đã được xếp vào ô!</p>
             </div>
           ) : (
             poolItems.map(pair => (
@@ -234,18 +234,18 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
               className={`rounded-2xl border-2 overflow-hidden transition-all duration-200 cursor-pointer ${
                 isOver   ? `${color.ring} ${color.bg} shadow-lg scale-[1.02]`
                 : isTarget ? 'border-indigo-300 bg-indigo-50/30 shadow-md ring-2 ring-indigo-200 ring-offset-1'
-                : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'
               }`}
             >
-              <div className={`px-4 py-3 border-b flex items-center gap-2 transition-colors ${isOver ? color.header : 'border-gray-100 bg-gradient-to-r from-gray-50 to-white'}`}>
+              <div className={`px-4 py-3 border-b flex items-center gap-2 transition-colors ${isOver ? color.header : 'border-gray-100 bg-gradient-to-r from-gray-50 to-white dark:border-slate-700/60'}`}>
                 <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isOver ? color.dot : 'bg-gray-300'}`} />
                 {zone.image_url && <img src={zone.image_url} alt="" className="h-8 w-auto object-contain flex-shrink-0" />}
-                <span className={`text-sm font-bold leading-snug ${isOver ? '' : 'text-gray-800'}`}>{zone.label}</span>
-                <span className="ml-auto text-[11px] font-semibold text-gray-400">{zoneItems.length > 0 && `${zoneItems.length} thẻ`}</span>
+                <span className={`text-sm font-bold leading-snug ${isOver ? '' : 'text-gray-800 dark:text-slate-100'}`}>{zone.label}</span>
+                <span className="ml-auto text-[11px] font-semibold text-gray-400 dark:text-slate-500">{zoneItems.length > 0 && `${zoneItems.length} thẻ`}</span>
               </div>
               <div className="p-3 flex flex-wrap gap-2 min-h-[90px] items-start content-start">
                 {zoneItems.length === 0 ? (
-                  <div className="w-full flex flex-col items-center justify-center gap-1 py-4 text-gray-300">
+                  <div className="w-full flex flex-col items-center justify-center gap-1 py-4 text-gray-300 dark:text-slate-500">
                     <span className="text-2xl">{isOver ? '⬇️' : '📥'}</span>
                     <span className="text-xs font-medium">{isOver ? 'Thả vào đây!' : 'Kéo thẻ vào đây'}</span>
                   </div>
@@ -265,13 +265,13 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
       {/* Progress footer */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="h-2 rounded-full bg-gray-100 overflow-hidden" style={{ width: '120px' }}>
+          <div className="h-2 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden" style={{ width: '120px' }}>
             <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pairs.length > 0 ? (Object.keys(placed).length / pairs.length) * 100 : 0}%`, background: 'linear-gradient(90deg, #6366F1, #8B5CF6)' }} />
           </div>
-          <span className="text-xs text-gray-500 font-medium">{Object.keys(placed).length}/{pairs.length} thẻ</span>
+          <span className="text-xs text-gray-500 font-medium dark:text-slate-500">{Object.keys(placed).length}/{pairs.length} thẻ</span>
         </div>
         {Object.keys(placed).length > 0 && (
-          <button type="button" onClick={() => onChange(undefined)} className="text-xs text-red-400 hover:text-red-600 font-semibold flex items-center gap-1 hover:underline transition-colors">
+          <button type="button" onClick={() => onChange(undefined)} className="text-xs text-red-400 hover:text-red-600 font-semibold flex items-center gap-1 hover:underline transition-colors dark:hover:text-red-300">
             🔄 Làm lại
           </button>
         )}
@@ -300,21 +300,21 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)' }}>
             <span className="text-white text-[10px] font-black tracking-tight">T/F</span>
           </div>
-          <p className="text-sm font-semibold text-gray-700">
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
             Chọn <span className="text-emerald-600 font-bold">Đúng</span> hoặc <span className="text-red-500 font-bold">Sai</span> cho mỗi nhận định
           </p>
         </div>
         <span className={`text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 transition-all ${
           answeredCount === total && total > 0
-            ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300'
-            : 'bg-gray-100 text-gray-500'
+            ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800'
+            : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
         }`}>
           {answeredCount}/{total}
         </span>
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500 ease-out"
           style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #14b8a6, #10b981)' }}
@@ -322,14 +322,14 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
       </div>
 
       {/* Statements */}
-      <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+      <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
         {/* Column headers */}
-        <div className="flex items-center bg-gray-50 border-b border-gray-200 px-4 py-2.5 gap-3">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest w-5 text-center flex-shrink-0">#</span>
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex-1">Nhận định</span>
+        <div className="flex items-center bg-gray-50 border-b border-gray-200 px-4 py-2.5 gap-3 dark:bg-slate-700/40 dark:border-slate-700">
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest w-5 text-center flex-shrink-0 dark:text-slate-500">#</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex-1 dark:text-slate-500">Nhận định</span>
           <div className="flex gap-1.5 flex-shrink-0">
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest w-16 text-center">Đúng</span>
-            <span className="text-[10px] font-bold text-red-500  uppercase tracking-widest w-16 text-center">Sai</span>
+            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest w-16 text-center dark:text-emerald-400">Đúng</span>
+            <span className="text-[10px] font-bold text-red-500  uppercase tracking-widest w-16 text-center dark:text-red-400">Sai</span>
           </div>
         </div>
 
@@ -341,17 +341,17 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
           return (
             <div
               key={stmt.id}
-              className={`flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 last:border-b-0 transition-colors duration-200 ${
-                !answered ? 'bg-white hover:bg-gray-50/70'
-                : isTrue  ? 'bg-emerald-50/60'
-                : 'bg-red-50/60'
+              className={`flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-slate-700/60 last:border-b-0 transition-colors duration-200 ${
+                !answered ? 'bg-white hover:bg-gray-50/70 dark:bg-slate-800 dark:hover:bg-slate-700/40'
+                : isTrue  ? 'bg-emerald-50/60 dark:bg-emerald-950/20'
+                : 'bg-red-50/60 dark:bg-red-950/20'
               }`}
             >
               {/* Index badge */}
               <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold flex-shrink-0 transition-all ${
-                !answered ? 'bg-gray-100 text-gray-400'
-                : isTrue  ? 'bg-emerald-200 text-emerald-800'
-                : 'bg-red-200 text-red-800'
+                !answered ? 'bg-gray-100 text-gray-400 dark:bg-slate-700 dark:text-slate-500'
+                : isTrue  ? 'bg-emerald-200 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
+                : 'bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300'
               }`}>
                 {idx + 1}
               </span>
@@ -359,9 +359,9 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
               {/* Statement */}
               <div
                 className={`flex-1 text-sm leading-relaxed min-w-0 transition-colors ${
-                  !answered ? 'text-gray-700'
-                  : isTrue  ? 'text-emerald-900 font-medium'
-                  : 'text-red-900 font-medium'
+                  !answered ? 'text-gray-700 dark:text-slate-300'
+                  : isTrue  ? 'text-emerald-900 dark:text-emerald-300 font-medium'
+                  : 'text-red-900 dark:text-red-300 font-medium'
                 }`}
                 dangerouslySetInnerHTML={{ __html: stmt.content }}
               />
@@ -374,7 +374,7 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
                   className={`w-16 h-9 rounded-xl text-xs font-bold border-2 transition-all duration-200 ${
                     isTrue
                       ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-200 scale-105'
-                      : 'bg-white border-gray-200 text-gray-400 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50'
+                      : 'bg-white border-gray-200 text-gray-400 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500 dark:hover:border-emerald-600 dark:hover:text-emerald-400 dark:hover:bg-emerald-950/30'
                   }`}
                 >
                   {isTrue ? '✔ Đúng' : 'Đúng'}
@@ -385,7 +385,7 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
                   className={`w-16 h-9 rounded-xl text-xs font-bold border-2 transition-all duration-200 ${
                     isFalse
                       ? 'bg-red-500 border-red-500 text-white shadow-md shadow-red-200 scale-105'
-                      : 'bg-white border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 hover:bg-red-50'
+                      : 'bg-white border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 hover:bg-red-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500 dark:hover:border-red-600 dark:hover:text-red-400 dark:hover:bg-red-950/30'
                   }`}
                 >
                   {isFalse ? '✘ Sai' : 'Sai'}
@@ -398,9 +398,9 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
 
       {/* Completion banner */}
       {answeredCount === total && total > 0 && (
-        <div className="flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl">
+        <div className="flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl dark:from-emerald-950/30 dark:to-teal-950/30 dark:border-emerald-800/50">
           <span className="text-emerald-600 text-sm flex-shrink-0">✅</span>
-          <p className="text-sm font-semibold text-emerald-700">Đã hoàn thành tất cả {total} nhận định!</p>
+          <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Đã hoàn thành tất cả {total} nhận định!</p>
         </div>
       )}
     </div>
@@ -447,7 +447,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
           <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)' }}>
             <span className="text-white text-sm">🎯</span>
           </div>
-          <p className="text-sm font-semibold text-gray-700">
+          <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
             {isMulti
               ? <><span className="text-orange-600 font-bold">Click vào tất cả vùng đúng</span> trên ảnh</>
               : <><span className="text-orange-600 font-bold">Click vào vùng đúng</span> trên ảnh</>
@@ -457,7 +457,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
         {isMulti && (
           <span className={`text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 ${
             selectedCount >= correctCount && selectedCount > 0
-              ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
           }`}>
             {selectedCount}/{correctCount}
           </span>
@@ -465,7 +465,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
       </div>
 
       {/* Image with hotspot overlay */}
-      <div className="relative max-w-3xl mx-auto rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50 shadow-sm select-none">
+      <div className="relative max-w-3xl mx-auto rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50 shadow-sm select-none dark:border-slate-700 dark:bg-slate-800">
         {question.image_url ? (
           <>
             {/* IMPORTANT: img has w-full h-auto (no max-height, no object-fit).
@@ -533,20 +533,20 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
             )}
           </>
         ) : (
-          <div className="flex items-center justify-center h-48 text-gray-400">Ảnh chưa được tải</div>
+          <div className="flex items-center justify-center h-48 text-gray-400 dark:text-slate-500">Ảnh chưa được tải</div>
         )}
       </div>
 
       {selected.length > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-orange-50 border border-orange-200 rounded-xl">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-orange-50 border border-orange-200 rounded-xl dark:bg-orange-950/30 dark:border-orange-800/50">
           <span className="text-orange-500">🎯</span>
-          <p className="text-sm font-medium text-orange-700">
+          <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
             Đã chọn {selected.length} vùng{isMulti ? ` / cần ${correctCount}` : ''}
           </p>
           <button
             type="button"
             onClick={() => onChange(undefined)}
-            className="ml-auto text-xs text-orange-400 hover:text-orange-600 font-semibold flex items-center gap-1"
+            className="ml-auto text-xs text-orange-400 hover:text-orange-600 dark:text-orange-500 dark:hover:text-orange-300 font-semibold flex items-center gap-1"
           >
             🔄 Làm lại
           </button>
@@ -560,7 +560,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
 /* ══════════════════════════════════════════════════════════
    Main Renderer
 ══════════════════════════════════════════════════════════ */
-export const QuestionRenderer = ({ question, currentAnswer, onChange }) => {
+const QuestionRendererImpl = ({ question, currentAnswer, onChange }) => {
   if (!question) return null;
 
   const handleChoiceChange = (ansId)   => onChange([ansId]);
@@ -579,14 +579,14 @@ export const QuestionRenderer = ({ question, currentAnswer, onChange }) => {
         <div className="w-10 h-0.5 rounded-full" style={{ background: 'linear-gradient(90deg, #6366F1, #8B5CF6)' }} />
         {/* Render HTML content (supports bold, color, underline from RichTextEditor) */}
         <div
-          className="text-[1.05rem] font-semibold text-gray-900 leading-relaxed"
+          className="text-[1.05rem] font-semibold text-gray-900 dark:text-slate-100 leading-relaxed"
           dangerouslySetInnerHTML={{ __html: question.content }}
         />
         {question.image_url && question.question_type !== 'hotspot' && (
           <ZoomableImage
             src={question.image_url}
             alt="Question"
-            className="max-h-64 rounded-xl shadow-sm border border-gray-200 object-contain bg-gray-50"
+            className="max-h-64 rounded-xl shadow-sm border border-gray-200 object-contain bg-gray-50 dark:border-slate-700 dark:bg-slate-800"
           />
         )}
       </div>
@@ -611,7 +611,7 @@ export const QuestionRenderer = ({ question, currentAnswer, onChange }) => {
         {/* Multiple choice */}
         {question.question_type === 'multi' && (
           <>
-            <p className="text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2 inline-flex items-center gap-1.5">
+            <p className="text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2 inline-flex items-center gap-1.5 dark:text-violet-300 dark:bg-violet-950/30 dark:border-violet-800/50">
               ☑ Có thể chọn nhiều đáp án đúng
             </p>
             {sortedAnswers.map((ans, idx) => (
@@ -654,3 +654,5 @@ export const QuestionRenderer = ({ question, currentAnswer, onChange }) => {
     </div>
   );
 };
+
+export const QuestionRenderer = React.memo(QuestionRendererImpl);

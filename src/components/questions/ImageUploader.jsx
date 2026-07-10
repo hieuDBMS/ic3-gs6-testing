@@ -62,14 +62,14 @@ export const ImageUploader = ({ bucket, value, onChange, label = 'Ảnh minh ho�
 
   return (
     <div className="space-y-2">
-      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{label}</span>
 
       {value ? (
         <div className="relative inline-block group">
           <img
             src={value}
             alt="Preview"
-            className="h-32 w-auto rounded-lg border border-gray-200 object-contain bg-gray-50"
+            className="h-32 w-auto rounded-lg border border-gray-200 dark:border-slate-600 object-contain bg-gray-50 dark:bg-slate-700/50"
           />
           <button
             type="button"
@@ -84,21 +84,21 @@ export const ImageUploader = ({ bucket, value, onChange, label = 'Ảnh minh ho�
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           onClick={() => !uploading && inputRef.current?.click()}
-          className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition-colors min-h-[80px]"
+          className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg p-4 cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-colors min-h-[80px]"
         >
           {uploading ? (
             <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
           ) : (
             <>
-              <ImageIcon className="w-8 h-8 text-gray-300 mb-1" />
-              <p className="text-xs text-gray-500">Kéo thả hoặc <span className="text-indigo-600 font-medium">chọn ảnh</span></p>
-              <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, GIF, WebP · tối đa {MAX_SIZE_MB}MB</p>
+              <ImageIcon className="w-8 h-8 text-gray-300 dark:text-slate-600 mb-1" />
+              <p className="text-xs text-gray-500 dark:text-slate-500">Kéo thả hoặc <span className="text-indigo-600 dark:text-indigo-400 font-medium">chọn ảnh</span></p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">JPG, PNG, GIF, WebP · tối đa {MAX_SIZE_MB}MB</p>
             </>
           )}
         </div>
       )}
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
 
       <input
         ref={inputRef}

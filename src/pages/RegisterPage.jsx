@@ -126,52 +126,52 @@ export const RegisterPage = () => {
       </div>
 
       {/* ── RIGHT: Register Form ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-gradient-to-br from-slate-50 via-violet-50/30 to-slate-50">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-gradient-to-br from-slate-50 via-violet-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
 
         {/* Mobile logo */}
         <div className="lg:hidden flex flex-col items-center mb-10">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg mb-3">
             <Sword className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-900">IC3-Fighter</h1>
-          <p className="text-sm text-gray-500 mt-1">Tạo tài khoản mới</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-slate-100">IC3-Fighter</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Tạo tài khoản mới</p>
         </div>
 
         <div className="w-full max-w-[400px]">
           <div className="mb-8">
-            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Đăng ký</h2>
-            <p className="mt-2 text-gray-500 text-sm">Tạo tài khoản để bắt đầu luyện thi</p>
+            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Đăng ký</h2>
+            <p className="mt-2 text-gray-500 dark:text-slate-400 text-sm">Tạo tài khoản để bắt đầu luyện thi</p>
           </div>
 
           {/* Success state */}
           {success && (
-            <div className="mb-5 flex items-center gap-3 px-4 py-4 rounded-xl bg-emerald-50 border border-emerald-200">
+            <div className="mb-5 flex items-center gap-3 px-4 py-4 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/60">
               <BadgeCheck className="w-6 h-6 text-emerald-500 flex-shrink-0" />
               <div>
-                <p className="text-sm font-bold text-emerald-700">Đăng ký thành công!</p>
-                <p className="text-xs text-emerald-600 mt-0.5">Đang chuyển đến trang đăng nhập...</p>
+                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">Đăng ký thành công!</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">Đang chuyển đến trang đăng nhập...</p>
               </div>
             </div>
           )}
 
           {/* Error */}
           {error && (
-            <div className="mb-5 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-red-50 border border-red-200">
+            <div className="mb-5 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-red-50 border border-red-200 dark:bg-red-950/40 dark:border-red-800/60">
               <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
-              <p className="text-sm text-red-700 font-medium">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Full name */}
             <div>
-              <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
                 Họ và tên *
               </label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <input
                   id="fullName"
                   type="text"
@@ -180,19 +180,20 @@ export const RegisterPage = () => {
                   onChange={e => setFullName(e.target.value)}
                   placeholder="Nguyễn Văn A"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
+                             dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
-                             transition-all duration-150 shadow-sm hover:border-gray-300"
+                             transition-all duration-150 shadow-sm hover:border-gray-300 dark:hover:border-slate-500"
                 />
               </div>
             </div>
 
             {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="username" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
                 Tên đăng nhập *
               </label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-mono">@</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-sm font-mono">@</span>
                 <input
                   id="username"
                   type="text"
@@ -201,20 +202,21 @@ export const RegisterPage = () => {
                   onChange={e => setUsername(e.target.value.toLowerCase())}
                   placeholder="vidu_123"
                   className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
+                             dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
-                             transition-all duration-150 shadow-sm hover:border-gray-300 font-mono"
+                             transition-all duration-150 shadow-sm hover:border-gray-300 dark:hover:border-slate-500 font-mono"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-400">Chỉ chữ cái, số và dấu gạch dưới. Tối thiểu 4 ký tự.</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Chỉ chữ cái, số và dấu gạch dưới. Tối thiểu 4 ký tự.</p>
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="reg-password" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="reg-password" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
                 Mật khẩu *
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <input
                   id="reg-password"
                   type={showPassword ? 'text' : 'password'}
@@ -223,11 +225,12 @@ export const RegisterPage = () => {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Tối thiểu 6 ký tự"
                   className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
+                             dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
-                             transition-all duration-150 shadow-sm hover:border-gray-300"
+                             transition-all duration-150 shadow-sm hover:border-gray-300 dark:hover:border-slate-500"
                 />
                 <button type="button" tabIndex={-1} onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-violet-500 transition-colors">
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-violet-500 dark:text-slate-500 dark:hover:text-violet-400 transition-colors">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -235,11 +238,11 @@ export const RegisterPage = () => {
 
             {/* Confirm password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
                 Nhập lại mật khẩu *
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <input
                   id="confirmPassword"
                   type={showPassword ? 'text' : 'password'}
@@ -248,13 +251,14 @@ export const RegisterPage = () => {
                   onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="Nhập lại mật khẩu"
                   className={`w-full pl-10 pr-4 py-3 rounded-xl border bg-white text-gray-900 text-sm placeholder-gray-400
+                             dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
                              transition-all duration-150 shadow-sm
-                             ${confirmPassword && confirmPassword !== password ? 'border-red-300 bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
+                             ${confirmPassword && confirmPassword !== password ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'}`}
                 />
               </div>
               {confirmPassword && confirmPassword !== password && (
-                <p className="mt-1 text-xs text-red-500">Mật khẩu không khớp</p>
+                <p className="mt-1 text-xs text-red-500 dark:text-red-400">Mật khẩu không khớp</p>
               )}
             </div>
 
@@ -287,7 +291,7 @@ export const RegisterPage = () => {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-gray-500 dark:text-slate-400">
             Đã có tài khoản?{' '}
             <Link to="/login" className="text-violet-600 font-semibold hover:text-violet-700 transition-colors">
               Đăng nhập ngay

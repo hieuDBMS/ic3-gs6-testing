@@ -30,4 +30,7 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@supabase/supabase-js', 'lucide-react'],
   },
+  test: {
+    environment: 'node',
+  },
 });

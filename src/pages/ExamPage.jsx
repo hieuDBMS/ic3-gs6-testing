@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Timer } from '../components/exam/Timer';
 import { QuestionNavigator } from '../components/exam/QuestionNavigator';
 import { QuestionRenderer } from '../components/exam/QuestionRenderer';
@@ -56,16 +57,16 @@ const ExamSkeleton = () => (
     <div className="flex-shrink-0 bg-slate-800 flex items-center px-4 h-14 md:h-full md:w-[280px] md:flex-col md:px-0" />
     
     {/* Main Content Skeleton */}
-    <div className="flex-1 flex flex-col bg-[#EEF2FF]">
-      <div className="h-[3px] bg-slate-200" />
-      <div className="h-16 bg-white border-b border-gray-100 flex-shrink-0" />
+    <div className="flex-1 flex flex-col bg-[#EEF2FF] dark:bg-slate-900">
+      <div className="h-[3px] bg-slate-200 dark:bg-slate-700" />
+      <div className="h-16 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 flex-shrink-0" />
       <div className="flex-1 p-5 md:p-8 space-y-5">
-        <div className="h-6 bg-gray-200 rounded-xl w-2/3" />
+        <div className="h-6 bg-gray-200 dark:bg-slate-700 rounded-xl w-2/3" />
         {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-14 bg-white rounded-2xl border-2 border-gray-100" />
+          <div key={i} className="h-14 bg-white dark:bg-slate-800 rounded-2xl border-2 border-gray-100 dark:border-slate-700" />
         ))}
       </div>
-      <div className="h-16 bg-white border-t border-gray-100 flex-shrink-0" />
+      <div className="h-16 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 flex-shrink-0" />
     </div>
   </div>
 );
@@ -77,7 +78,7 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={onCancel} />
     <div
-      className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+      className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
       style={{ animation: 'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
     >
       {/* Top accent */}
@@ -89,20 +90,20 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => (
       <div className="p-7 space-y-5">
         {/* Icon + title */}
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${unansweredCount > 0 ? 'bg-amber-50' : 'bg-emerald-50'}`}>
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${unansweredCount > 0 ? 'bg-amber-50 dark:bg-amber-950/40' : 'bg-emerald-50 dark:bg-emerald-950/40'}`}>
             {unansweredCount > 0
               ? <AlertTriangle className="w-8 h-8 text-amber-500" />
               : <CheckCircle2 className="w-8 h-8 text-emerald-500" />
             }
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Xác nhận nộp bài</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Xác nhận nộp bài</h2>
             {unansweredCount > 0 ? (
-              <p className="text-sm text-gray-500 mt-1">
-                Còn <span className="font-bold text-amber-600">{unansweredCount} câu chưa trả lời</span>. Bạn vẫn muốn nộp?
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+                Còn <span className="font-bold text-amber-600 dark:text-amber-400">{unansweredCount} câu chưa trả lời</span>. Bạn vẫn muốn nộp?
               </p>
             ) : (
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                 Bạn đã trả lời tất cả câu hỏi. Xác nhận nộp bài?
               </p>
             )}
@@ -113,7 +114,7 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => (
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm"
+            className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors text-sm"
           >
             Kiểm tra lại
           </button>
@@ -136,29 +137,31 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => (
 /* ─────────────────────────────────────────────────────────
    Refresh Warning Modal (preserved from original)
 ───────────────────────────────────────────────────────── */
-const RefreshWarningModal = ({ onStay, onLeave }) => (
+const RefreshWarningModal = ({ onStay, onLeave }) => {
+  const { isDark } = useTheme();
+  return (
   <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
     <div
-      className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+      className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
       style={{ animation: 'refreshModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
     >
       <div className="h-1.5 w-full bg-gradient-to-r from-orange-400 via-red-500 to-rose-500" />
       <div className="p-7 space-y-5">
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#fff7ed,#fee2e2)' }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: isDark ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#fff7ed,#fee2e2)' }}>
             <ShieldAlert className="w-8 h-8 text-rose-500" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">Tải lại trang?</h2>
+            <h2 className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Tải lại trang?</h2>
             <p className="text-xs font-semibold uppercase tracking-widest text-rose-400">Cảnh báo quan trọng</p>
           </div>
         </div>
-        <div className="rounded-2xl p-4 space-y-2 text-sm" style={{ background: 'linear-gradient(135deg,#fff7ed,#fef2f2)' }}>
-          <p className="font-semibold text-orange-700 flex items-center gap-2">
+        <div className="rounded-2xl p-4 space-y-2 text-sm" style={{ background: isDark ? 'rgba(239,68,68,0.1)' : 'linear-gradient(135deg,#fff7ed,#fef2f2)' }}>
+          <p className="font-semibold text-orange-700 dark:text-orange-400 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" /> Bài làm sẽ bị mất toàn bộ!
           </p>
-          <ul className="text-gray-600 space-y-1 pl-6 list-disc leading-relaxed">
+          <ul className="text-gray-600 dark:text-slate-400 space-y-1 pl-6 list-disc leading-relaxed">
             <li>Tất cả câu trả lời đã chọn sẽ biến mất</li>
             <li>Thời gian đang chạy không được lưu lại</li>
             <li>Bạn phải bắt đầu lại từ đầu</li>
@@ -167,7 +170,7 @@ const RefreshWarningModal = ({ onStay, onLeave }) => (
         <div className="flex gap-3">
           <button
             onClick={onLeave}
-            className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all"
+            className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:border-slate-500 transition-all"
           >
             Vẫn tải lại
           </button>
@@ -182,7 +185,8 @@ const RefreshWarningModal = ({ onStay, onLeave }) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 /* ─────────────────────────────────────────────────────────
    Mobile Navigator Bottom Sheet
@@ -191,19 +195,19 @@ const MobileNavSheet = ({ questions, currentIndex, answers, flagged, onSelect, o
   <div className="fixed inset-0 z-50 flex flex-col justify-end">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
     <div
-      className="relative bg-white rounded-t-3xl shadow-2xl max-h-[65vh] flex flex-col"
+      className="relative bg-white dark:bg-slate-800 rounded-t-3xl shadow-2xl max-h-[65vh] flex flex-col"
       style={{ animation: 'slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1) both' }}
     >
       {/* Handle */}
       <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-        <div className="w-10 h-1 rounded-full bg-gray-300" />
+        <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 flex-shrink-0">
-        <h3 className="font-bold text-gray-900 text-sm">Danh sách câu hỏi</h3>
-        <button onClick={onClose} className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
-          <X className="w-4 h-4 text-gray-600" />
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-slate-700 flex-shrink-0">
+        <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">Danh sách câu hỏi</h3>
+        <button onClick={onClose} className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+          <X className="w-4 h-4 text-gray-600 dark:text-slate-300" />
         </button>
       </div>
 
@@ -228,6 +232,7 @@ export const ExamPage = () => {
   const { examId }  = useParams();
   const navigate    = useNavigate();
   const { user, isSelfRegistered }    = useAuth();
+  const { isDark } = useTheme();
 
   const [exam,              setExam]              = useState(null);
   const [questions,         setQuestions]         = useState([]);
@@ -240,12 +245,17 @@ export const ExamPage = () => {
   const [showConfirm,       setShowConfirm]       = useState(false);
   const [showRefreshWarn,   setShowRefreshWarn]   = useState(false);
   const [showMobileNav,     setShowMobileNav]     = useState(false);
+  const [cheatToast,        setCheatToast]        = useState(null);
 
   const pendingReloadRef  = useRef(false);
   const isSubmittingRef   = useRef(false);
   const timerRef          = useRef(null);
   const startTimeRef      = useRef(Date.now());
   const containerRef      = useRef(null);
+  const lastPingRef       = useRef(0);
+  const lastCheatLogRef   = useRef(0);
+  const wasFullscreenRef  = useRef(false);
+  const manualExitRef     = useRef(false);
   const { isFullscreen, toggle: toggleFullscreen } = useExamFullscreen(containerRef);
 
   /* ── Access check for self-registered users ── */
@@ -307,6 +317,67 @@ export const ExamPage = () => {
     };
   }, [questions.length, showConfirm, showRefreshWarn]);
 
+  /* ── Live progress ping (feature: teacher realtime monitor) ──
+     Throttled to at most once every 4s so navigating quickly through
+     questions doesn't spam exam_attempts with writes. Aborts the in-flight
+     request on unmount / re-fire so a stale response can't land after the
+     student has already left the page. */
+  useEffect(() => {
+    if (!attemptId) return;
+    const now = Date.now();
+    if (now - lastPingRef.current < 4000) return;
+    lastPingRef.current = now;
+    const controller = new AbortController();
+    supabase
+      .from('exam_attempts')
+      .update({ current_question_index: currentIndex, last_activity_at: new Date().toISOString() })
+      .eq('id', attemptId)
+      .abortSignal(controller.signal)
+      .then(() => {})
+      .catch(() => {});
+    return () => controller.abort();
+  }, [currentIndex, attemptId]);
+
+  /* ── Light anti-cheat: log + warn on tab-switch / fullscreen-exit ──
+     Testing exams only (this file). MockExamPage is untouched. Passive
+     logging + an immediate toast, per product decision — never blocks
+     or auto-submits the exam. */
+  const logCheatEvent = useCallback((eventType) => {
+    if (!attemptId || isSubmittingRef.current) return;
+    const now = Date.now();
+    if (now - lastCheatLogRef.current < 2000) return; // de-dupe rapid double-fires
+    lastCheatLogRef.current = now;
+
+    supabase.from('exam_cheat_events').insert({
+      attempt_id: attemptId,
+      user_id: user.id,
+      event_type: eventType,
+    }).then(() => {});
+
+    setCheatToast('Đã phát hiện bạn rời khỏi bài thi — hành vi này được ghi lại.');
+    setTimeout(() => setCheatToast(null), 4000);
+  }, [attemptId, user]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) logCheatEvent('tab_switch');
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [logCheatEvent]);
+
+  useEffect(() => {
+    // Only fires on the *exit* transition — mount starts non-fullscreen,
+    // so this correctly ignores the initial state. Skips logging when the
+    // student used the exam's own Minimize button (manualExitRef) — only
+    // unexpected exits (Esc key, window manager, etc.) count as a flag.
+    if (wasFullscreenRef.current && !isFullscreen) {
+      if (manualExitRef.current) manualExitRef.current = false;
+      else logCheatEvent('fullscreen_exit');
+    }
+    wasFullscreenRef.current = isFullscreen;
+  }, [isFullscreen, logCheatEvent]);
+
   const initExam = async () => {
     try {
       const [examResult, qResult] = await Promise.all([
@@ -354,20 +425,20 @@ export const ExamPage = () => {
     }
   };
 
-  const handleAnswerChange = (val) => {
-    const currentQ = questions[currentIndex];
+  const handleAnswerChange = useCallback((val) => {
+    const q = questions[currentIndex];
     setAnswers(prev => {
       const next = { ...prev };
-      if (val === undefined) delete next[currentQ.id];
-      else next[currentQ.id] = val;
+      if (val === undefined) delete next[q.id];
+      else next[q.id] = val;
       return next;
     });
-  };
+  }, [questions, currentIndex]);
 
-  const toggleFlag = () => {
+  const toggleFlag = useCallback(() => {
     const id = questions[currentIndex].id;
     setFlagged(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  };
+  }, [questions, currentIndex]);
 
   const doSubmit = useCallback(async (isAutoSubmit = false) => {
     if (isSubmittingRef.current) return;
@@ -422,26 +493,30 @@ export const ExamPage = () => {
     }
   }, [answers, attemptId, questions, navigate, exam]);
 
+  /* ── Computed (memoized — must run before any early return, per Rules of Hooks) ── */
+  const currentQ = useMemo(() => questions[currentIndex], [questions, currentIndex]);
+  const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
+  const unanswered = useMemo(() => questions.length - answeredCount, [questions.length, answeredCount]);
+  const progressPct = useMemo(
+    () => (questions.length > 0 ? (answeredCount / questions.length) * 100 : 0),
+    [questions.length, answeredCount]
+  );
+
   /* ── Guards ── */
   if (loading) return <ExamSkeleton />;
 
   if (!exam || questions.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="text-center space-y-3 p-8">
-          <BookOpen className="w-12 h-12 text-gray-300 mx-auto" />
-          <p className="text-gray-500 font-medium">Bài thi này chưa có câu hỏi.</p>
+          <BookOpen className="w-12 h-12 text-gray-300 dark:text-slate-700 mx-auto" />
+          <p className="text-gray-500 dark:text-slate-400 font-medium">Bài thi này chưa có câu hỏi.</p>
         </div>
       </div>
     );
   }
 
-  /* ── Computed ── */
-  const currentQ     = questions[currentIndex];
-  const isFlagged    = flagged.includes(currentQ.id);
-  const answeredCount = Object.keys(answers).length;
-  const unanswered   = questions.length - answeredCount;
-  const progressPct  = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0;
+  const isFlagged = flagged.includes(currentQ.id);
 
   const examLabel = exam.exam_levels?.label
     ? `${exam.exam_levels.label} · ${exam.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} ${exam.exam_number}`
@@ -466,14 +541,22 @@ export const ExamPage = () => {
   return (
     <div
       ref={containerRef}
-      className="flex flex-col md:flex-row overflow-hidden"
+      className="flex flex-col md:flex-row overflow-hidden dark:bg-slate-900"
       style={{
-        background: '#EEF2FF',
+        background: isDark ? undefined : '#EEF2FF',
         height: 'calc(100vh - 64px)',
         transform: 'translateZ(0)',
         willChange: 'contents',
       }}
     >
+
+      {/* ═══ Anti-cheat warning toast ═══ */}
+      {cheatToast && (
+        <div className="fixed top-4 right-4 z-[60] flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold bg-amber-500 text-white max-w-sm">
+          <ShieldAlert className="w-5 h-5 flex-shrink-0" />
+          {cheatToast}
+        </div>
+      )}
 
       {/* ═══ MODALS ═══ */}
       {showRefreshWarn && (
@@ -595,7 +678,7 @@ export const ExamPage = () => {
         </div>
 
         {/* ── Question header bar ── */}
-        <div className="flex-shrink-0 flex items-center gap-3 px-5 md:px-7 h-[73px] bg-white border-b border-gray-100 shadow-sm">
+        <div className="flex-shrink-0 flex items-center gap-3 px-5 md:px-7 h-[73px] bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 shadow-sm">
           {/* Number + counter */}
           <div className="flex items-center gap-2.5">
             <span
@@ -604,11 +687,11 @@ export const ExamPage = () => {
             >
               {currentIndex + 1}
             </span>
-            <span className="text-sm text-gray-400 font-medium hidden sm:inline">/ {questions.length}</span>
+            <span className="text-sm text-gray-400 dark:text-slate-500 font-medium hidden sm:inline">/ {questions.length}</span>
           </div>
 
           {/* Type badge */}
-          <span className={`hidden sm:inline text-xs px-2.5 py-1 rounded-full font-semibold border ${TYPE_COLOR[currentQ.question_type] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
+          <span className={`hidden sm:inline text-xs px-2.5 py-1 rounded-full font-semibold border ${TYPE_COLOR[currentQ.question_type] || 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600'}`}>
             {TYPE_LABEL[currentQ.question_type] || ''}
           </span>
 
@@ -617,8 +700,8 @@ export const ExamPage = () => {
             onClick={toggleFlag}
             className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
               isFlagged
-                ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm'
-                : 'bg-white border-gray-200 text-gray-400 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50'
+                ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm dark:bg-amber-950/40 dark:border-amber-700 dark:text-amber-300'
+                : 'bg-white border-gray-200 text-gray-400 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500 dark:hover:border-amber-600 dark:hover:text-amber-400 dark:hover:bg-amber-950/30'
             }`}
           >
             <Flag className={`w-3.5 h-3.5 ${isFlagged ? 'fill-amber-400' : ''}`} />
@@ -627,12 +710,12 @@ export const ExamPage = () => {
 
           {/* Fullscreen toggle */}
           <button
-            onClick={toggleFullscreen}
+            onClick={() => { if (isFullscreen) manualExitRef.current = true; toggleFullscreen(); }}
             title={isFullscreen ? 'Thoát toàn màn hình (F11)' : 'Toàn màn hình'}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
               isFullscreen
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm'
-                : 'bg-white border-gray-200 text-gray-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50'
+                ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm dark:bg-indigo-950/40 dark:border-indigo-700 dark:text-indigo-300'
+                : 'bg-white border-gray-200 text-gray-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500 dark:hover:border-indigo-600 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/30'
             }`}
           >
             {isFullscreen
@@ -655,14 +738,14 @@ export const ExamPage = () => {
         </div>
 
         {/* ── Navigation footer ── */}
-        <div className="flex-shrink-0 flex items-center justify-between px-5 md:px-7 py-3.5 bg-white border-t border-gray-100 gap-3">
+        <div className="flex-shrink-0 flex items-center justify-between px-5 md:px-7 py-3.5 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 gap-3">
 
           {/* Prev */}
           <button
             onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
             disabled={currentIndex === 0}
             title="Câu trước (←)"
-            className="flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 bg-white hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 bg-white hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/50 dark:border-slate-600 dark:text-slate-300 dark:bg-slate-800 dark:hover:border-indigo-500 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Trước</span>
@@ -672,7 +755,7 @@ export const ExamPage = () => {
           <div className="flex items-center gap-2 md:hidden">
             <button
               onClick={() => setShowMobileNav(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 transition-colors"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               {currentIndex + 1}/{questions.length}
@@ -689,10 +772,10 @@ export const ExamPage = () => {
           </div>
 
           {/* Desktop centre: keyboard hints */}
-          <div className="hidden md:flex items-center gap-1.5 text-[11px] text-gray-400 select-none">
-            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 border border-gray-200">←</kbd>
-            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 border border-gray-200">→</kbd>
-            <span className="text-gray-300">để chuyển câu</span>
+          <div className="hidden md:flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-slate-500 select-none">
+            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 border border-gray-200 dark:bg-slate-700 dark:border-slate-600">←</kbd>
+            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 border border-gray-200 dark:bg-slate-700 dark:border-slate-600">→</kbd>
+            <span className="text-gray-300 dark:text-slate-600">để chuyển câu</span>
           </div>
 
           {/* Next */}
@@ -702,7 +785,7 @@ export const ExamPage = () => {
             title="Câu tiếp theo (→)"
             className="flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             style={currentIndex === questions.length - 1
-              ? { background: '#E5E7EB', color: '#9CA3AF' }
+              ? { background: isDark ? '#334155' : '#E5E7EB', color: isDark ? '#64748B' : '#9CA3AF' }
               : { background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }
             }
           >

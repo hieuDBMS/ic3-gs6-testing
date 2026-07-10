@@ -175,32 +175,32 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
       onClick={e => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="bg-white w-full sm:max-w-[380px] sm:rounded-3xl rounded-t-3xl flex flex-col relative overflow-hidden"
+        className="bg-white dark:bg-slate-800 w-full sm:max-w-[380px] sm:rounded-3xl rounded-t-3xl flex flex-col relative overflow-hidden"
         style={{ maxHeight: '95dvh', boxShadow: '0 40px 100px rgba(0,0,0,.35)' }}
       >
         {/* close */}
         <button onClick={onClose}
-          className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-black/[.06] hover:bg-black/10 flex items-center justify-center transition-colors">
-          <X className="w-4 h-4 text-gray-500" />
+          className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-black/[.06] hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center transition-colors">
+          <X className="w-4 h-4 text-gray-500 dark:text-slate-300" />
         </button>
 
         {/* ══ INIT ══ */}
         {phase === 'init' && (
           <div className="flex flex-col items-center justify-center gap-3 py-20 px-8">
             <Loader2 className="w-7 h-7 text-indigo-400 animate-spin" />
-            <p className="text-sm text-gray-400">Đang chuẩn bị...</p>
+            <p className="text-sm text-gray-400 dark:text-slate-500">Đang chuẩn bị...</p>
           </div>
         )}
 
         {/* ══ ERROR ══ */}
         {phase === 'error' && (
           <div className="flex flex-col items-center justify-center gap-4 py-16 px-8 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center">
               <AlertCircle className="w-6 h-6 text-red-400" />
             </div>
             <div>
-              <p className="font-semibold text-gray-800">Đã xảy ra lỗi</p>
-              <p className="text-xs text-gray-400 mt-1">{errMsg}</p>
+              <p className="font-semibold text-gray-800 dark:text-slate-200">Đã xảy ra lỗi</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{errMsg}</p>
             </div>
             <button onClick={init}
               className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition active:scale-95">
@@ -214,16 +214,16 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
           <div className="flex flex-col items-center py-12 px-8 gap-4 text-center">
             <AnimatedCheck />
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Thanh toán thành công!</h2>
-              <p className="text-sm text-gray-400 mt-1 leading-relaxed max-w-[240px] mx-auto">
-                <strong className="text-gray-700">{exam?.title}</strong> đã được mở khoá cho bạn.
+              <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Thanh toán thành công!</h2>
+              <p className="text-sm text-gray-400 dark:text-slate-500 mt-1 leading-relaxed max-w-[240px] mx-auto">
+                <strong className="text-gray-700 dark:text-slate-300">{exam?.title}</strong> đã được mở khoá cho bạn.
               </p>
             </div>
             <div className="w-full space-y-2 mt-2">
               {['Bài thi đã mở khoá', 'Flashcard đã mở khoá'].map(item => (
-                <div key={item} className="flex items-center gap-2.5 px-4 py-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <div key={item} className="flex items-center gap-2.5 px-4 py-3 bg-emerald-50 rounded-2xl border border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800/60">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                  <span className="text-sm font-medium text-emerald-800">{item}</span>
+                  <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300">{item}</span>
                 </div>
               ))}
             </div>
@@ -240,20 +240,20 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
           <>
             {/* Header */}
             <div className="px-5 pt-5 pb-4 pr-12">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[.12em]">Thanh toán</p>
-              <h2 className="text-[15px] font-bold text-gray-900 mt-0.5 leading-snug line-clamp-2">{exam?.title}</h2>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-[.12em]">Thanh toán</p>
+              <h2 className="text-[15px] font-bold text-gray-900 dark:text-slate-100 mt-0.5 leading-snug line-clamp-2">{exam?.title}</h2>
 
               {/* PARTIAL progress */}
               {purchase?.status === 'PARTIAL' && (
-                <div className="mt-3 p-3 rounded-2xl bg-orange-50 border border-orange-100">
-                  <div className="flex justify-between text-[11px] text-orange-700 mb-1.5">
+                <div className="mt-3 p-3 rounded-2xl bg-orange-50 border border-orange-100 dark:bg-orange-950/30 dark:border-orange-800/50">
+                  <div className="flex justify-between text-[11px] text-orange-700 dark:text-orange-300 mb-1.5">
                     <span>Đã chuyển {fmt(paid)}</span>
                     <span className="font-bold">{pct}%</span>
                   </div>
-                  <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-orange-100 dark:bg-orange-900/40 rounded-full overflow-hidden">
                     <div className="h-full bg-orange-400 rounded-full" style={{ width: `${pct}%`, transition: 'width .6s ease' }} />
                   </div>
-                  <p className="text-[11px] text-orange-600 mt-1.5">Còn cần chuyển thêm <strong>{fmt(due)}</strong></p>
+                  <p className="text-[11px] text-orange-600 dark:text-orange-400 mt-1.5">Còn cần chuyển thêm <strong>{fmt(due)}</strong></p>
                 </div>
               )}
             </div>
@@ -263,11 +263,11 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
 
               {/* Bank not configured */}
               {!hasBnk && (
-                <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+                <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl dark:bg-amber-950/30 dark:border-amber-800/50">
                   <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold text-amber-800">Chưa cấu hình thanh toán</p>
-                    <p className="text-xs text-amber-600 mt-0.5">Liên hệ giáo viên để được hỗ trợ.</p>
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Chưa cấu hình thanh toán</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Liên hệ giáo viên để được hỗ trợ.</p>
                   </div>
                 </div>
               )}
@@ -276,11 +276,11 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
                 <>
                   {/* Amount + QR */}
                   <div className="flex flex-col items-center gap-3">
-                    <div className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
-                      <span className="text-2xl font-extrabold text-gray-900 tracking-tight">{fmt(amount)}</span>
+                    <div className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 dark:from-indigo-950/40 dark:to-violet-950/40 dark:border-indigo-800/50">
+                      <span className="text-2xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{fmt(amount)}</span>
                     </div>
 
-                    {/* QR */}
+                    {/* QR — kept white regardless of theme so the code stays scannable */}
                     <div className="p-2 rounded-3xl bg-white border-2 border-gray-100 shadow"
                       style={{ boxShadow: '0 4px 24px rgba(0,0,0,.08)' }}>
                       {!imgOk && (
@@ -292,39 +292,39 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
                         onError={e => { e.currentTarget.style.display = 'none'; setImgOk(true); }}
                       />
                     </div>
-                    <p className="text-[11px] text-gray-400">Quét bằng app ngân hàng bất kỳ</p>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-500">Quét bằng app ngân hàng bất kỳ</p>
                   </div>
 
                   {/* Bank info */}
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-2xl">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-slate-700/50 rounded-2xl">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-gray-900 truncate">{acctNm}</p>
-                      <p className="text-xs text-gray-500 font-mono">{bankId} · {acctNo}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate">{acctNm}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 font-mono">{bankId} · {acctNo}</p>
                     </div>
                   </div>
 
                   {/* Transfer content / copy */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-xs font-semibold text-gray-500">Nội dung chuyển khoản</p>
-                      <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">Bắt buộc</span>
+                      <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">Nội dung chuyển khoản</p>
+                      <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 dark:bg-red-950/40 dark:border-red-800/60 dark:text-red-400">Bắt buộc</span>
                     </div>
 
                     <button onClick={copy}
                       className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 border-dashed text-left select-none transition-all duration-200 active:scale-[.98]
                         ${copied
-                          ? 'border-emerald-400 bg-emerald-50'
-                          : 'border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/40'
+                          ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-950/30'
+                          : 'border-gray-200 bg-gray-50 hover:border-indigo-300 hover:bg-indigo-50/40 dark:border-slate-600 dark:bg-slate-700/40 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/20'
                         }`}>
-                      <code className={`flex-1 text-sm font-mono font-bold break-all leading-snug ${copied ? 'text-emerald-700' : 'text-gray-800'}`}>
+                      <code className={`flex-1 text-sm font-mono font-bold break-all leading-snug ${copied ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-800 dark:text-slate-200'}`}>
                         {code}
                       </code>
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all
-                        ${copied ? 'bg-emerald-500 scale-105' : 'bg-gray-200 hover:bg-gray-300'}`}>
-                        {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-gray-500" />}
+                        ${copied ? 'bg-emerald-500 scale-105' : 'bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500'}`}>
+                        {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-gray-500 dark:text-slate-300" />}
                       </div>
                     </button>
-                    <p className="mt-1.5 text-center text-[11px] text-gray-400">
+                    <p className="mt-1.5 text-center text-[11px] text-gray-400 dark:text-slate-500">
                       {copied ? '✓ Đã sao chép' : 'Nhấn để sao chép'}
                     </p>
                   </div>
@@ -334,13 +334,13 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
 
             {/* Footer */}
             <div className="px-5 pb-6 pt-3 space-y-2">
-              <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-100">
+              <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800/60">
                 <LiveDot />
-                <p className="text-xs font-medium text-emerald-700 flex-1">Tự động mở khoá khi nhận được tiền</p>
+                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 flex-1">Tự động mở khoá khi nhận được tiền</p>
                 <Zap className="w-3.5 h-3.5 text-emerald-500" />
               </div>
               <button onClick={onClose}
-                className="w-full py-3 rounded-2xl text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all active:scale-[.98]">
+                className="w-full py-3 rounded-2xl text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700 transition-all active:scale-[.98]">
                 Đóng
               </button>
             </div>

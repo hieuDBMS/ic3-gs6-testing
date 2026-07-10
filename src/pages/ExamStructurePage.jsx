@@ -1,19 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import {
   Plus, Trash2, Edit2, ChevronDown, ChevronUp,
   Layers, BookOpen, Clock, X, Save, Loader2, AlertTriangle
 } from 'lucide-react';
+import { useExamStructure } from '../hooks/useExamStructure';
+import { Toast, useToast } from '../components/shared/Toast';
+import { ConfirmDialog } from '../components/shared/ConfirmDialog';
+import { EmptyState } from '../components/shared/EmptyState';
 
 const EXAM_TYPE_LABELS = { testing: 'Testing', gmetrix: 'Gmetrix' };
-
-const Toast = ({ toast }) =>
-  toast ? (
-    <div className={`fixed top-4 right-4 z-[100] flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-2xl text-sm font-medium transition-all
-      ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'}`}>
-      {toast.type === 'error' ? '❌' : '✅'} {toast.msg}
-    </div>
-  ) : null;
 
 /* ─── Add Version Modal ─── */
 const AddVersionModal = ({ open, onClose, onSaved, existingVersions }) => {
@@ -39,19 +35,19 @@ const AddVersionModal = ({ open, onClose, onSaved, existingVersions }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Thêm phiên bản IC3 mới</h3>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Tên phiên bản <span className="text-red-500">*</span></label>
+      <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-4">Thêm phiên bản IC3 mới</h3>
+        <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Tên phiên bản <span className="text-red-500 dark:text-red-400">*</span></label>
         <input
           value={name} onChange={e => setName(e.target.value)}
           placeholder="VD: GS8, GS9..."
           onKeyDown={e => e.key === 'Enter' && handleSave()}
-          className={`w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase ${err ? 'border-red-400' : 'border-gray-200'}`}
+          className={`w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${err ? 'border-red-400 dark:border-red-600' : 'border-gray-200 dark:border-slate-600'}`}
         />
-        {err && <p className="text-xs text-red-500 mt-1">{err}</p>}
-        <p className="text-xs text-gray-400 mt-2">Level 1 sẽ được tạo tự động. Bạn có thể thêm Level 2, 3... sau.</p>
+        {err && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{err}</p>}
+        <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">Level 1 sẽ được tạo tự động. Bạn có thể thêm Level 2, 3... sau.</p>
         <div className="flex justify-end gap-2 mt-5">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Huỷ</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg">Huỷ</button>
           <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg disabled:opacity-60">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Tạo phiên bản
@@ -86,19 +82,19 @@ const AddLevelModal = ({ open, onClose, onSaved, version, existingLevels }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
-        <h3 className="text-lg font-bold text-gray-900 mb-1">Thêm Level mới</h3>
-        <p className="text-sm text-gray-500 mb-4">Phiên bản: <span className="font-semibold text-indigo-600">{version}</span></p>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Số Level <span className="text-red-500">*</span></label>
+      <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-1">Thêm Level mới</h3>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">Phiên bản: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{version}</span></p>
+        <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Số Level <span className="text-red-500 dark:text-red-400">*</span></label>
         <input
           type="number" min={1} value={levelNum} onChange={e => setLevelNum(e.target.value)}
           placeholder="VD: 4"
           onKeyDown={e => e.key === 'Enter' && handleSave()}
-          className={`w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${err ? 'border-red-400' : 'border-gray-200'}`}
+          className={`w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${err ? 'border-red-400 dark:border-red-600' : 'border-gray-200 dark:border-slate-600'}`}
         />
-        {err && <p className="text-xs text-red-500 mt-1">{err}</p>}
+        {err && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{err}</p>}
         <div className="flex justify-end gap-2 mt-5">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Huỷ</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg">Huỷ</button>
           <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg disabled:opacity-60">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Thêm Level
@@ -155,23 +151,23 @@ const ExamModal = ({ open, onClose, onSaved, levelId, levelLabel, editExam }) =>
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md">
+      <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">{editExam ? 'Sửa bài thi' : 'Thêm bài thi mới'}</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Thuộc: <span className="font-semibold text-indigo-600">{levelLabel}</span></p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100">{editExam ? 'Sửa bài thi' : 'Thêm bài thi mới'}</h3>
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Thuộc: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{levelLabel}</span></p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-4 h-4" /></button>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-slate-500"><X className="w-4 h-4" /></button>
         </div>
 
         {/* Exam type toggle */}
         <div className="mb-4">
-          <label className="block text-xs font-medium text-gray-600 mb-1">Loại bài</label>
+          <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Loại bài</label>
           <div className="flex gap-2">
             {['testing', 'gmetrix'].map(t => (
               <button key={t} type="button" onClick={() => set('exam_type', t)}
                 className={`flex-1 py-2 text-sm rounded-xl border font-medium capitalize transition-colors
-                  ${form.exam_type === t ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                  ${form.exam_type === t ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300' : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700/40'}`}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </button>
             ))}
@@ -180,29 +176,29 @@ const ExamModal = ({ open, onClose, onSaved, levelId, levelLabel, editExam }) =>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Số thứ tự <span className="text-red-500">*</span></label>
+            <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Số thứ tự <span className="text-red-500 dark:text-red-400">*</span></label>
             <input type="number" min={1} value={form.exam_number} onChange={e => set('exam_number', e.target.value)}
               placeholder="1, 2, 3..."
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Thời gian (giây)</label>
+            <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Thời gian (giây)</label>
             <input type="number" min={60} value={form.duration_seconds} onChange={e => set('duration_seconds', e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
         </div>
 
         <div className="mb-4">
-          <label className="block text-xs font-medium text-gray-600 mb-1">Tên bài thi <span className="text-red-500">*</span></label>
+          <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">Tên bài thi <span className="text-red-500 dark:text-red-400">*</span></label>
           <input value={form.title} onChange={e => set('title', e.target.value)}
             placeholder={`VD: ${form.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} ${form.exam_number || 1}`}
-            className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            className="w-full text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
 
-        {err && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3">{err}</p>}
+        {err && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl px-3 py-2 mb-3">{err}</p>}
 
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Huỷ</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg">Huỷ</button>
           <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg disabled:opacity-60">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {editExam ? 'Cập nhật' : 'Thêm bài thi'}
@@ -213,57 +209,25 @@ const ExamModal = ({ open, onClose, onSaved, levelId, levelLabel, editExam }) =>
   );
 };
 
-/* ─── Confirm Dialog ─── */
-const ConfirmDialog = ({ open, title, message, onConfirm, onCancel, loading }) => {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
-        <div className="flex items-start gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-            <Trash2 className="w-5 h-5 text-red-600" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-900">{title}</h3>
-            <p className="text-sm text-gray-500 mt-1">{message}</p>
-          </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <button onClick={onCancel} disabled={loading}
-            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            Huỷ
-          </button>
-          <button onClick={onConfirm} disabled={loading}
-            className="flex items-center gap-2 px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            {loading ? 'Đang xoá...' : 'Xoá'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 /* ─── Exam Row ─── */
 
 const ExamRow = ({ exam, onEdit, onDelete }) => (
-  <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-xl transition-colors group">
+  <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-700/40 rounded-xl transition-colors group">
     <div className="flex items-center gap-3">
       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold
-        ${exam.exam_type === 'testing' ? 'bg-blue-100 text-blue-700' : 'bg-violet-100 text-violet-700'}`}>
+        ${exam.exam_type === 'testing' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300'}`}>
         {EXAM_TYPE_LABELS[exam.exam_type]} {exam.exam_number}
       </span>
-      <span className="text-sm text-gray-700 font-medium">{exam.title}</span>
+      <span className="text-sm text-gray-700 dark:text-slate-300 font-medium">{exam.title}</span>
     </div>
     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      <span className="text-xs text-gray-400 flex items-center gap-1 mr-2">
+      <span className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1 mr-2">
         <Clock className="w-3 h-3" /> {Math.floor(exam.duration_seconds / 60)} phút
       </span>
-      <button onClick={() => onEdit(exam)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Sửa">
+      <button onClick={() => onEdit(exam)} className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors" title="Sửa">
         <Edit2 className="w-3.5 h-3.5" />
       </button>
-      <button onClick={() => onDelete(exam)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Xoá">
+      <button onClick={() => onDelete(exam)} className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors" title="Xoá">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -342,24 +306,24 @@ const LevelSection = ({ level, exams, onRefresh, showToast }) => {
   };
 
   return (
-    <div className="border border-gray-200 rounded-2xl overflow-hidden">
+    <div className="border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden">
       {/* Level header */}
-      <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-gray-50 to-white">
+      <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-gray-50 to-white dark:from-slate-700/50 dark:to-slate-800">
         <button onClick={() => setExpanded(v => !v)} className="flex items-center gap-3 flex-1 text-left">
-          <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+          <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm">
             {level.level_number}
           </div>
-          <span className="font-semibold text-gray-800">{level.label}</span>
-          <span className="text-xs text-gray-400">{exams.length} bài thi</span>
-          {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+          <span className="font-semibold text-gray-800 dark:text-slate-100">{level.label}</span>
+          <span className="text-xs text-gray-400 dark:text-slate-500">{exams.length} bài thi</span>
+          {expanded ? <ChevronUp className="w-4 h-4 text-gray-400 dark:text-slate-500" /> : <ChevronDown className="w-4 h-4 text-gray-400 dark:text-slate-500" />}
         </button>
         <div className="flex items-center gap-1">
           <button onClick={() => setExamModal({ open: true, edit: null })}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors">
             <Plus className="w-3.5 h-3.5" /> Thêm bài thi
           </button>
           <button onClick={handleDeleteLevelClick}
-            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Xoá level">
+            className="p-1.5 text-gray-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors" title="Xoá level">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -367,17 +331,17 @@ const LevelSection = ({ level, exams, onRefresh, showToast }) => {
 
       {/* Exam list */}
       {expanded && (
-        <div className="px-4 py-3 border-t border-gray-100 bg-white">
+        <div className="px-4 py-3 border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800">
           {exams.length === 0 ? (
-            <div className="text-center py-6 text-sm text-gray-400">
-              <BookOpen className="w-8 h-8 mx-auto mb-2 text-gray-200" />
+            <div className="text-center py-6 text-sm text-gray-400 dark:text-slate-500">
+              <BookOpen className="w-8 h-8 mx-auto mb-2 text-gray-200 dark:text-slate-600" />
               Chưa có bài thi nào. Bấm "Thêm bài thi" để bắt đầu.
             </div>
           ) : (
             <div className="space-y-1">
               {testingExams.length > 0 && (
                 <div className="mb-2">
-                  <p className="text-xs font-bold text-blue-500 uppercase tracking-wide mb-1 px-1">Testing</p>
+                  <p className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide mb-1 px-1">Testing</p>
                   {testingExams.map(e => (
                     <ExamRow key={e.id} exam={e}
                       onEdit={ex => setExamModal({ open: true, edit: ex })}
@@ -387,7 +351,7 @@ const LevelSection = ({ level, exams, onRefresh, showToast }) => {
               )}
               {gmetrixExams.length > 0 && (
                 <div>
-                  <p className="text-xs font-bold text-violet-500 uppercase tracking-wide mb-1 px-1">Gmetrix</p>
+                  <p className="text-xs font-bold text-violet-500 dark:text-violet-400 uppercase tracking-wide mb-1 px-1">Gmetrix</p>
                   {gmetrixExams.map(e => (
                     <ExamRow key={e.id} exam={e}
                       onEdit={ex => setExamModal({ open: true, edit: ex })}
@@ -432,29 +396,11 @@ const LevelSection = ({ level, exams, onRefresh, showToast }) => {
 
 /* ─── Main Page ─── */
 export const ExamStructurePage = () => {
-  const [levels, setLevels] = useState([]);
-  const [exams, setExams] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { levels, exams, loading, refetch: fetchData } = useExamStructure();
   const [activeVersion, setActiveVersion] = useState(null);
   const [addVersionOpen, setAddVersionOpen] = useState(false);
   const [addLevelOpen, setAddLevelOpen] = useState(false);
-  const [toast, setToast] = useState(null);
-
-  const showToast = (msg, type = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
-  };
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    const [{ data: lvls }, { data: exs }] = await Promise.all([
-      supabase.from('exam_levels').select('*').order('version').order('level_number'),
-      supabase.from('exams').select('*').order('exam_type').order('exam_number'),
-    ]);
-    setLevels(lvls || []);
-    setExams(exs || []);
-    setLoading(false);
-  }, []);
+  const { toasts, showToast, dismissToast } = useToast();
 
   // Set initial active version ONLY once when data first loads
   useEffect(() => {
@@ -463,7 +409,9 @@ export const ExamStructurePage = () => {
     }
   }, [levels]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  // This page manages the structure directly, so always start from a fresh
+  // fetch rather than the shared cache other pages read from.
+  useEffect(() => { fetchData(); }, []);
 
   // Group by version
   const versions = [...new Set(levels.map(l => l.version))].sort();
@@ -473,23 +421,23 @@ export const ExamStructurePage = () => {
   const getExamsForLevel = (levelId) => exams.filter(e => e.level_id === levelId);
 
   if (loading) return (
-    <div className="max-w-5xl mx-auto px-6 py-12 flex items-center justify-center gap-3 text-gray-400">
+    <div className="max-w-5xl mx-auto px-6 py-12 flex items-center justify-center gap-3 text-gray-400 dark:text-slate-500">
       <Loader2 className="w-5 h-5 animate-spin" /> Đang tải cấu trúc...
     </div>
   );
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Toast toast={toast} />
+      <Toast toasts={toasts} onDismiss={dismissToast} />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Layers className="w-8 h-8 text-indigo-600" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-3">
+            <Layers className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             Cấu trúc bài thi IC3
           </h1>
-          <p className="mt-1.5 text-sm text-gray-500">Quản lý phiên bản, level và danh sách bài thi</p>
+          <p className="mt-1.5 text-sm text-gray-500 dark:text-slate-400">Quản lý phiên bản, level và danh sách bài thi</p>
         </div>
         <button onClick={() => setAddVersionOpen(true)}
           className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors">
@@ -504,12 +452,12 @@ export const ExamStructurePage = () => {
             className={`px-5 py-2.5 rounded-xl text-sm font-bold border-2 transition-all
               ${activeVersion === v
                 ? 'border-indigo-500 bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                : 'border-gray-200 text-gray-600 hover:border-indigo-300 hover:bg-indigo-50'}`}>
+                : 'border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'}`}>
             {v}
           </button>
         ))}
         {versions.length === 0 && (
-          <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+          <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl px-4 py-2.5">
             <AlertTriangle className="w-4 h-4" />
             Chưa có phiên bản nào. Bấm "Thêm phiên bản" để bắt đầu.
           </div>
@@ -518,25 +466,21 @@ export const ExamStructurePage = () => {
 
       {/* Content area */}
       {activeVersion && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
           {/* Version header */}
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">IC3 {activeVersion}</h2>
-              <p className="text-sm text-gray-500">{activeLevels.length} level · {exams.filter(e => activeLevels.find(l => l.id === e.level_id)).length} bài thi</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">IC3 {activeVersion}</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-400">{activeLevels.length} level · {exams.filter(e => activeLevels.find(l => l.id === e.level_id)).length} bài thi</p>
             </div>
             <button onClick={() => setAddLevelOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 border border-indigo-200 rounded-xl transition-colors">
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 rounded-xl transition-colors">
               <Plus className="w-4 h-4" /> Thêm Level
             </button>
           </div>
 
           {activeLevels.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <Layers className="w-12 h-12 mx-auto mb-3 text-gray-200" />
-              <p className="text-sm font-medium">Chưa có Level nào</p>
-              <p className="text-xs mt-1">Bấm "Thêm Level" để thêm Level 1, 2, 3...</p>
-            </div>
+            <EmptyState icon={Layers} title="Chưa có Level nào" description={'Bấm "Thêm Level" để thêm Level 1, 2, 3...'} />
           ) : (
             <div className="space-y-3">
               {activeLevels.map(level => (

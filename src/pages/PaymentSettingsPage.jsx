@@ -6,6 +6,7 @@ import {
   CheckCircle, AlertTriangle, Loader2, ExternalLink,
   DollarSign, ChevronDown, Info, X,
 } from 'lucide-react';
+import { EmptyState } from '../components/shared/EmptyState';
 
 // Vietnamese banks for VietQR
 const BANKS = [
@@ -35,11 +36,11 @@ const QRPreview = ({ bankId, accountNo, accountName, amount }) => {
   const url = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount || 0}&addInfo=IC3Fighter&accountName=${encodeURIComponent(accountName)}`;
   return (
     <div className="flex flex-col items-center">
-      <div className="bg-white p-3 rounded-2xl border-2 border-gray-100 shadow-sm">
+      <div className="bg-white p-3 rounded-2xl border-2 border-gray-100 dark:border-slate-700 shadow-sm">
         <img src={url} alt="QR Preview" className="w-48 h-48 object-contain rounded-xl"
           onError={e => { e.currentTarget.style.display = 'none'; }} />
       </div>
-      <p className="text-xs text-gray-400 mt-2 text-center">Preview QR · {bankId} · {accountNo}</p>
+      <p className="text-xs text-gray-400 dark:text-slate-500 mt-2 text-center">Preview QR · {bankId} · {accountNo}</p>
     </div>
   );
 };
@@ -163,8 +164,8 @@ export const PaymentSettingsPage = () => {
 
   if (!isTeacher) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-400 font-semibold">Chỉ giáo viên mới có quyền truy cập.</p>
+      <div className="min-h-screen flex items-center justify-center dark:bg-slate-900">
+        <p className="text-gray-400 dark:text-slate-500 font-semibold">Chỉ giáo viên mới có quyền truy cập.</p>
       </div>
     );
   }
@@ -175,7 +176,7 @@ export const PaymentSettingsPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/20 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/20 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
 
       {/* ── Header ── */}
       <div className="relative overflow-hidden"
@@ -212,14 +213,14 @@ export const PaymentSettingsPage = () => {
         {/* ─────────────────────────────────────────────
             SECTION 1: Global bank info
         ───────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-5 h-5 text-violet-600" />
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900">Thông tin tài khoản ngân hàng</h2>
-              <p className="text-xs text-gray-500 mt-0.5">Áp dụng cho tất cả bài thi. Thay đổi ở đây sẽ cập nhật QR toàn hệ thống.</p>
+              <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Thông tin tài khoản ngân hàng</h2>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Áp dụng cho tất cả bài thi. Thay đổi ở đây sẽ cập nhật QR toàn hệ thống.</p>
             </div>
           </div>
 
@@ -229,61 +230,61 @@ export const PaymentSettingsPage = () => {
               <div className="space-y-4">
 
                 {/* Info banner */}
-                <div className="flex items-start gap-2.5 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
+                <div className="flex items-start gap-2.5 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700 dark:bg-blue-950/40 dark:border-blue-800/60 dark:text-blue-300">
                   <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>Thông tin ngân hàng này sẽ được dùng để tạo mã QR thanh toán cho <strong>tất cả bài thi</strong>.</span>
                 </div>
 
                 {/* Bank */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-gray-400" /> Ngân hàng
+                  <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" /> Ngân hàng
                   </label>
                   <div className="relative">
                     <select
                       value={bankId}
                       onChange={e => setBankId(e.target.value)}
-                      className="w-full appearance-none px-4 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition bg-white"
+                      className="w-full appearance-none px-4 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
                     >
                       {BANKS.map(b => (
                         <option key={b.id} value={b.id}>{b.name}</option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500 pointer-events-none" />
                   </div>
                 </div>
 
                 {/* Account No */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-1.5">
-                    <Hash className="w-3.5 h-3.5 text-gray-400" /> Số tài khoản
+                  <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    <Hash className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" /> Số tài khoản
                   </label>
                   <input
                     type="text"
                     value={accountNo}
                     onChange={e => setAccountNo(e.target.value.replace(/\D/g, ''))}
                     placeholder="VD: 0123456789"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                   />
                 </div>
 
                 {/* Account Name */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 mb-1.5">
-                    <User className="w-3.5 h-3.5 text-gray-400" /> Tên chủ tài khoản
+                  <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
+                    <User className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" /> Tên chủ tài khoản
                   </label>
                   <input
                     type="text"
                     value={accountName}
                     onChange={e => setAccountName(e.target.value.toUpperCase())}
                     placeholder="VD: NGUYEN VAN A"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm uppercase font-medium tracking-wide focus:outline-none focus:ring-2 focus:ring-violet-400 transition"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm uppercase font-medium tracking-wide focus:outline-none focus:ring-2 focus:ring-violet-400 transition dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Nhập đúng tên trên tài khoản ngân hàng (IN HOA)</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Nhập đúng tên trên tài khoản ngân hàng (IN HOA)</p>
                 </div>
 
                 {globalError && (
-                  <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                  <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 dark:bg-red-950/40 dark:border-red-800/60 dark:text-red-300">
                     <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {globalError}
                   </div>
                 )}
@@ -305,7 +306,7 @@ export const PaymentSettingsPage = () => {
                   </button>
                   <button
                     onClick={() => setShowQR(!showQR)}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:border-violet-300 hover:text-violet-700 transition"
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:border-violet-300 hover:text-violet-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-violet-500 dark:hover:text-violet-400 transition"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     {showQR ? 'Ẩn QR' : 'Xem QR'}
@@ -314,16 +315,16 @@ export const PaymentSettingsPage = () => {
               </div>
 
               {/* QR preview */}
-              <div className="flex items-center justify-center bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl p-6 border border-violet-100 min-h-[220px]">
+              <div className="flex items-center justify-center bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-slate-700/50 dark:to-slate-700/30 rounded-2xl p-6 border border-violet-100 dark:border-slate-700 min-h-[220px]">
                 {showQR && accountNo && accountName ? (
                   <QRPreview bankId={bankId} accountNo={accountNo} accountName={accountName} amount={100000} />
                 ) : (
                   <div className="text-center text-gray-400">
-                    <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center mx-auto mb-3">
-                      <CreditCard className="w-8 h-8 text-violet-300" />
+                    <div className="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center mx-auto mb-3">
+                      <CreditCard className="w-8 h-8 text-violet-300 dark:text-violet-500" />
                     </div>
-                    <p className="text-sm font-semibold text-gray-500">Preview QR</p>
-                    <p className="text-xs text-gray-400 mt-1">Nhập thông tin và<br />nhấn "Xem QR"</p>
+                    <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Preview QR</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Nhập thông tin và<br />nhấn "Xem QR"</p>
                   </div>
                 )}
               </div>
@@ -334,33 +335,33 @@ export const PaymentSettingsPage = () => {
         {/* ─────────────────────────────────────────────
             SECTION 2: Per-exam amounts — grouped by level
         ───────────────────────────────────────────── */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
 
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-4 flex-wrap">
+          <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                <DollarSign className="w-5 h-5 text-emerald-600" />
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-gray-900">Số tiền theo từng bài thi</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Mỗi bài có thể có giá khác nhau. Nhấn <strong>Lưu</strong> để áp dụng.</p>
+                <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Số tiền theo từng bài thi</h2>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Mỗi bài có thể có giá khác nhau. Nhấn <strong>Lưu</strong> để áp dụng.</p>
               </div>
             </div>
 
             {/* Search */}
-            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-56">
-              <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-56 dark:bg-slate-700/50 dark:border-slate-600">
+              <svg className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 type="text" value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Tìm bài thi..."
-                className="bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400 flex-1"
+                className="bg-transparent outline-none text-sm text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 flex-1"
               />
               {search && (
-                <button onClick={() => setSearch('')} className="text-gray-400 hover:text-gray-600">
+                <button onClick={() => setSearch('')} className="text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -368,7 +369,7 @@ export const PaymentSettingsPage = () => {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-16 text-gray-400">
+            <div className="flex items-center justify-center py-16 text-gray-400 dark:text-slate-500">
               <Loader2 className="w-7 h-7 animate-spin mr-2 text-emerald-400" />
               <span className="text-sm">Đang tải...</span>
             </div>
@@ -398,22 +399,22 @@ export const PaymentSettingsPage = () => {
                     ).length, 0);
 
                   const versionStyle = {
-                    GS6:         { bg: 'bg-blue-600',   light: 'bg-blue-50 border-blue-200',   badge: 'bg-blue-100 text-blue-800' },
-                    GS7:         { bg: 'bg-violet-600', light: 'bg-violet-50 border-violet-200', badge: 'bg-violet-100 text-violet-800' },
-                    GS8:         { bg: 'bg-teal-600',   light: 'bg-teal-50 border-teal-200',   badge: 'bg-teal-100 text-teal-800' },
-                    'IC3 GS6-SPARK': { bg: 'bg-orange-500', light: 'bg-orange-50 border-orange-200', badge: 'bg-orange-100 text-orange-800' },
-                  }[version] || { bg: 'bg-gray-600', light: 'bg-gray-50 border-gray-200', badge: 'bg-gray-100 text-gray-700' };
+                    GS6:         { bg: 'bg-blue-600',   light: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/50',   badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300' },
+                    GS7:         { bg: 'bg-violet-600', light: 'bg-violet-50 border-violet-200 dark:bg-violet-950/30 dark:border-violet-800/50', badge: 'bg-violet-100 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300' },
+                    GS8:         { bg: 'bg-teal-600',   light: 'bg-teal-50 border-teal-200 dark:bg-teal-950/30 dark:border-teal-800/50',   badge: 'bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300' },
+                    'IC3 GS6-SPARK': { bg: 'bg-orange-500', light: 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800/50', badge: 'bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300' },
+                  }[version] || { bg: 'bg-gray-600', light: 'bg-gray-50 border-gray-200 dark:bg-slate-700/40 dark:border-slate-600', badge: 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300' };
 
                   const vTotalExams = vLevels.reduce((sum, lv) =>
                     sum + exams.filter(e => e.level_id === lv.id).length, 0);
 
                   return (
-                    <div key={version} className="border-b border-gray-100 last:border-b-0">
+                    <div key={version} className="border-b border-gray-100 dark:border-slate-700 last:border-b-0">
 
                       {/* ══ VERSION HEADER ══ */}
                       <button
                         className={`w-full flex items-center justify-between px-6 py-4 text-left transition-colors ${
-                          isVersionOpen ? 'bg-gray-50' : 'hover:bg-gray-50/60'
+                          isVersionOpen ? 'bg-gray-50 dark:bg-slate-700/40' : 'hover:bg-gray-50/60 dark:hover:bg-slate-700/30'
                         }`}
                         onClick={() => {
                           const next = new Set(openVersions);
@@ -427,27 +428,27 @@ export const PaymentSettingsPage = () => {
                             {version}
                           </div>
                           <div>
-                            <span className="text-sm font-bold text-gray-800">
+                            <span className="text-sm font-bold text-gray-800 dark:text-slate-200">
                               {vLevels.length} level · {vTotalExams} bài thi
                             </span>
                           </div>
                           {totalPending > 0 && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-0.5 rounded-full dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800/60">
                               ● {totalPending} chưa lưu
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400 hidden sm:block">
+                          <span className="text-xs text-gray-400 dark:text-slate-500 hidden sm:block">
                             {isVersionOpen ? 'Thu gọn' : 'Mở rộng'}
                           </span>
-                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isVersionOpen ? 'rotate-180' : ''}`} />
+                          <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-slate-500 transition-transform duration-200 ${isVersionOpen ? 'rotate-180' : ''}`} />
                         </div>
                       </button>
 
                       {/* ══ LEVELS inside this version ══ */}
                       {isVersionOpen && (
-                        <div className="border-t border-gray-100">
+                        <div className="border-t border-gray-100 dark:border-slate-700">
                           {vLevels.map((lv, lvIdx) => {
                             const lvExams = exams.filter(e =>
                               e.level_id === lv.id &&
@@ -464,11 +465,11 @@ export const PaymentSettingsPage = () => {
                             ).length;
 
                             return (
-                              <div key={lv.id} className={`${lvIdx > 0 ? 'border-t border-gray-100' : ''}`}>
+                              <div key={lv.id} className={`${lvIdx > 0 ? 'border-t border-gray-100 dark:border-slate-700' : ''}`}>
 
                                 {/* ── Level sub-header ── */}
                                 <button
-                                  className="w-full flex items-center justify-between pl-12 pr-6 py-3 text-left hover:bg-gray-50/80 transition-colors"
+                                  className="w-full flex items-center justify-between pl-12 pr-6 py-3 text-left hover:bg-gray-50/80 dark:hover:bg-slate-700/30 transition-colors"
                                   onClick={() => {
                                     const next = new Set(openLevels);
                                     next.has(lv.id) ? next.delete(lv.id) : next.add(lv.id);
@@ -478,30 +479,30 @@ export const PaymentSettingsPage = () => {
                                   <div className="flex items-center gap-3">
                                     {/* Level number bubble */}
                                     <div className={`w-6 h-6 rounded-full ${versionStyle.bg} bg-opacity-15 flex items-center justify-center flex-shrink-0`}>
-                                      <span className="text-[10px] font-bold text-gray-600">{lv.level_number || lvIdx + 1}</span>
+                                      <span className="text-[10px] font-bold text-gray-600 dark:text-slate-300">{lv.level_number || lvIdx + 1}</span>
                                     </div>
                                     <div>
-                                      <span className="text-sm font-semibold text-gray-800">{lv.label}</span>
-                                      <span className="ml-2 text-xs text-gray-400">{lvExams.length} bài</span>
+                                      <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">{lv.label}</span>
+                                      <span className="ml-2 text-xs text-gray-400 dark:text-slate-500">{lvExams.length} bài</span>
                                     </div>
                                     {lvPending > 0 && (
-                                      <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                      <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800/60">
                                         {lvPending} chưa lưu
                                       </span>
                                     )}
                                   </div>
-                                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isLvOpen ? 'rotate-180' : ''}`} />
+                                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 dark:text-slate-500 transition-transform duration-200 ${isLvOpen ? 'rotate-180' : ''}`} />
                                 </button>
 
                                 {/* ── Exam rows ── */}
                                 {isLvOpen && (
-                                  <div className="bg-white border-t border-gray-50">
+                                  <div className="bg-white dark:bg-slate-800 border-t border-gray-50 dark:border-slate-700">
                                     {/* Column labels */}
-                                    <div className="grid grid-cols-[auto_1fr_140px_180px_90px] items-center gap-3 pl-16 pr-6 py-2 bg-gray-50/60">
+                                    <div className="grid grid-cols-[auto_1fr_140px_180px_90px] items-center gap-3 pl-16 pr-6 py-2 bg-gray-50/60 dark:bg-slate-700/30">
                                       <span />
-                                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Bài</span>
-                                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Loại</span>
-                                      <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Số tiền (VND)</span>
+                                      <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Bài</span>
+                                      <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Loại</span>
+                                      <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Số tiền (VND)</span>
                                       <span />
                                     </div>
 
@@ -511,8 +512,8 @@ export const PaymentSettingsPage = () => {
                                       return (
                                         <div
                                           key={exam.id}
-                                          className={`grid grid-cols-[auto_1fr_140px_180px_90px] items-center gap-3 pl-16 pr-6 py-3 border-t border-gray-50 transition-colors ${
-                                            dirty ? 'bg-amber-50/40' : 'hover:bg-gray-50/40'
+                                          className={`grid grid-cols-[auto_1fr_140px_180px_90px] items-center gap-3 pl-16 pr-6 py-3 border-t border-gray-50 dark:border-slate-700 transition-colors ${
+                                            dirty ? 'bg-amber-50/40 dark:bg-amber-950/20' : 'hover:bg-gray-50/40 dark:hover:bg-slate-700/30'
                                           }`}
                                         >
                                           {/* Dot indicator */}
@@ -520,16 +521,16 @@ export const PaymentSettingsPage = () => {
 
                                           {/* Name */}
                                           <div>
-                                            <p className="text-sm font-semibold text-gray-900">
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
                                               {isTest ? 'Testing' : 'Gmetrix'} {exam.exam_number}
                                             </p>
-                                            {dirty && <p className="text-[11px] text-amber-500 font-medium mt-0.5">● Chưa lưu</p>}
+                                            {dirty && <p className="text-[11px] text-amber-500 dark:text-amber-400 font-medium mt-0.5">● Chưa lưu</p>}
                                           </div>
 
                                           {/* Type badge */}
                                           <div>
                                             <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg inline-block ${
-                                              isTest ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                                              isTest ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300'
                                             }`}>
                                               {isTest ? '📝 Testing' : '🎯 Gmetrix'}
                                             </span>
@@ -545,22 +546,22 @@ export const PaymentSettingsPage = () => {
                                               onChange={e => setAmounts(prev => ({ ...prev, [exam.id]: e.target.value }))}
                                               className={`w-full px-3 py-2 border rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400 transition ${
                                                 dirty
-                                                  ? 'border-amber-300 bg-amber-50 text-amber-900'
-                                                  : 'border-gray-200 bg-white text-gray-800'
+                                                  ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200'
+                                                  : 'border-gray-200 bg-white text-gray-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
                                               }`}
                                             />
-                                            <p className="text-[11px] text-gray-400 mt-0.5 pl-0.5">
+                                            <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-0.5 pl-0.5">
                                               {formatVND(parseInt(amounts[exam.id] || '0', 10) || 0)}
                                             </p>
                                             {examError[exam.id] && (
-                                              <p className="text-[11px] text-red-500 mt-0.5">{examError[exam.id]}</p>
+                                              <p className="text-[11px] text-red-500 dark:text-red-400 mt-0.5">{examError[exam.id]}</p>
                                             )}
                                           </div>
 
                                           {/* Save button */}
                                           <div className="flex justify-end">
                                             {savedExam[exam.id] ? (
-                                              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1.5 rounded-xl">
+                                              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1.5 rounded-xl dark:text-emerald-400 dark:bg-emerald-950/40">
                                                 <CheckCircle className="w-3.5 h-3.5" /> Đã lưu
                                               </span>
                                             ) : (
@@ -570,7 +571,7 @@ export const PaymentSettingsPage = () => {
                                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
                                                   dirty
                                                     ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm shadow-emerald-200'
-                                                    : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                                                    : 'bg-gray-100 text-gray-300 cursor-not-allowed dark:bg-slate-700 dark:text-slate-600'
                                                 }`}
                                               >
                                                 {savingExam[exam.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
@@ -583,7 +584,7 @@ export const PaymentSettingsPage = () => {
                                     })}
 
                                     {lvExams.length === 0 && (
-                                      <p className="pl-16 pr-6 py-4 text-sm text-gray-400 border-t border-gray-50">
+                                      <p className="pl-16 pr-6 py-4 text-sm text-gray-400 dark:text-slate-500 border-t border-gray-50 dark:border-slate-700">
                                         Không có bài thi nào
                                       </p>
                                     )}
@@ -599,16 +600,13 @@ export const PaymentSettingsPage = () => {
                 })}
 
                 {exams.length === 0 && (
-                  <div className="flex flex-col items-center py-16 text-gray-400">
-                    <DollarSign className="w-10 h-10 mb-2 text-gray-200" />
-                    <p className="text-sm font-medium">Chưa có bài thi nào</p>
-                  </div>
+                  <EmptyState icon={DollarSign} title="Chưa có bài thi nào" />
                 )}
               </div>
             );
           })()}
 
-          <div className="px-6 py-3 border-t border-gray-100 text-xs text-gray-400 flex items-center justify-between">
+          <div className="px-6 py-3 border-t border-gray-100 dark:border-slate-700 text-xs text-gray-400 dark:text-slate-500 flex items-center justify-between">
             <span>{exams.length} bài thi · {levels.length} level</span>
             <span>Click tên version/level để mở-đóng</span>
           </div>

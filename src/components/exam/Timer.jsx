@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle, memo } from 'react';
 
 /**
  * Timer — ONE instance, TWO responsive layouts via CSS:
@@ -7,7 +7,7 @@ import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } f
  *
  * Exposes getTimeLeft() via ref so parent can read elapsed time on submit.
  */
-export const Timer = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = true }, ref) {
+const TimerImpl = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = true }, ref) {
   const [timeLeft, setTimeLeft] = useState(durationSeconds);
   const firedRef    = useRef(false);
   const onTimeUpRef = useRef(onTimeUp);
@@ -148,3 +148,5 @@ export const Timer = forwardRef(function Timer({ durationSeconds, onTimeUp, dark
     </>
   );
 });
+
+export const Timer = memo(TimerImpl);

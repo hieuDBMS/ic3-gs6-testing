@@ -52,24 +52,24 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
     <div className="space-y-3">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium text-gray-700 flex items-center flex-wrap gap-1.5">
+        <p className="text-sm font-medium text-gray-700 dark:text-slate-300 flex items-center flex-wrap gap-1.5">
           Đáp án
           {multiSelect
-            ? <span className="text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">☑ Chọn nhiều đáp án đúng</span>
-            : <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">🔘 Chọn một đáp án đúng</span>
+            ? <span className="text-xs text-indigo-600 bg-indigo-50 border border-indigo-100 dark:text-indigo-300 dark:bg-indigo-950/40 dark:border-indigo-800/60 px-2 py-0.5 rounded-full">☑ Chọn nhiều đáp án đúng</span>
+            : <span className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800/60 px-2 py-0.5 rounded-full">🔘 Chọn một đáp án đúng</span>
           }
         </p>
         <button
           type="button"
           onClick={addAnswer}
-          className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-semibold gap-1 whitespace-nowrap flex-shrink-0 px-3 py-1.5 border border-indigo-200 hover:border-indigo-400 rounded-xl transition-all"
+          className="flex items-center text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold gap-1 whitespace-nowrap flex-shrink-0 px-3 py-1.5 border border-indigo-200 dark:border-indigo-800/60 hover:border-indigo-400 dark:hover:border-indigo-500 rounded-xl transition-all"
         >
           <Plus className="w-4 h-4" /> Thêm đáp án
         </button>
       </div>
 
       {answers.length === 0 && (
-        <p className="text-xs text-gray-400 italic text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">
+        <p className="text-xs text-gray-400 dark:text-slate-500 italic text-center py-6 border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl">
           Chưa có đáp án nào. Bấm "Thêm đáp án" để bắt đầu.
         </p>
       )}
@@ -80,21 +80,21 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
             key={answer.id}
             className={`relative rounded-2xl border-2 overflow-hidden transition-all ${
               answer.is_correct
-                ? 'border-emerald-400 shadow-sm shadow-emerald-100'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-emerald-400 dark:border-emerald-600 shadow-sm shadow-emerald-100'
+                : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
             }`}
           >
             {/* ── Card header: letter badge + correct toggle + delete ── */}
             <div className={`flex items-center gap-3 px-3 py-2.5 border-b ${
-              answer.is_correct ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200'
+              answer.is_correct ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/60' : 'bg-gray-50 border-gray-200 dark:bg-slate-700/50 dark:border-slate-600'
             }`}>
-              <GripVertical className="w-4 h-4 text-gray-300 cursor-grab flex-shrink-0" />
+              <GripVertical className="w-4 h-4 text-gray-300 dark:text-slate-600 cursor-grab flex-shrink-0" />
 
               {/* Letter badge */}
               <span className={`w-7 h-7 rounded-xl text-sm font-extrabold flex items-center justify-center flex-shrink-0 ${
                 answer.is_correct
                   ? 'bg-emerald-500 text-white'
-                  : 'bg-gray-200 text-gray-500'
+                  : 'bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
               }`}>
                 {LETTERS[index] ?? index + 1}
               </span>
@@ -112,7 +112,7 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
                   }
                   className="w-4 h-4 accent-emerald-500 flex-shrink-0"
                 />
-                <span className={`text-xs font-semibold ${answer.is_correct ? 'text-emerald-700' : 'text-gray-400'}`}>
+                <span className={`text-xs font-semibold ${answer.is_correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-400 dark:text-slate-500'}`}>
                   {answer.is_correct ? '✔ Đáp án đúng' : 'Đánh dấu là đúng'}
                 </span>
               </label>
@@ -121,7 +121,7 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
               <button
                 type="button"
                 onClick={() => removeAnswer(index)}
-                className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0"
+                className="text-gray-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 transition-colors flex-shrink-0"
                 title="Xóa đáp án"
               >
                 <Trash2 className="w-4 h-4" />
@@ -129,7 +129,7 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
             </div>
 
             {/* ── Card body: rich text editor ── */}
-            <div className="p-3 space-y-2 bg-white">
+            <div className="p-3 space-y-2 bg-white dark:bg-slate-800">
               <RichTextEditor
                 value={answer.content}
                 onChange={(html) => update(index, 'content', html)}

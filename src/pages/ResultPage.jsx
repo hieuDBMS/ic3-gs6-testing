@@ -1,27 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import {
   CheckCircle, XCircle, Clock, Calendar, ArrowLeft,
   RotateCcw, LayoutDashboard, Minus, ChevronDown, ChevronUp,
-  Trophy, Target, Timer
+  Trophy, Target, Timer, Download
 } from 'lucide-react';
 import { ZoomableImage } from '../components/shared/ImageLightbox';
-
-/* ─── Helpers ─── */
-const formatTime = (secs) => {
-  if (!secs && secs !== 0) return '--';
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return `${m}m ${s}s`;
-};
+import { formatDurationLabel } from '../utils/format';
+import { isPassed as checkPassed } from '../utils/scoreUtils';
+import { generateCertificatePdf } from '../utils/certificate';
+import { EmptyState } from '../components/shared/EmptyState';
+import { Skeleton } from '../components/shared/Skeleton';
 
 /* ─── Loading Skeleton ─── */
 const ResultSkeleton = () => (
-  <div className="min-h-screen bg-slate-50 animate-pulse">
-    <div className="h-64 bg-gray-200" />
+  <div className="min-h-screen bg-slate-50 dark:bg-slate-900 animate-pulse">
+    <div className="h-64 bg-gray-200 dark:bg-slate-700" />
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
-      {[1, 2, 3].map(i => <div key={i} className="h-32 bg-gray-100 rounded-2xl" />)}
+      <Skeleton variant="card" count={3} className="h-32 bg-gray-100 dark:bg-slate-700" />
     </div>
   </div>
 );
@@ -31,7 +29,7 @@ const ScoreRing = ({ score }) => {
   const r = 52;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - score / 100);
-  const isPassed = score >= 70;
+  const isPassed = checkPassed(score);
   return (
     <svg width="140" height="140" className="-rotate-90">
       <circle cx="70" cy="70" r={r} strokeWidth="10" fill="none" stroke="rgba(255,255,255,0.2)" />
@@ -63,43 +61,43 @@ const QuestionCard = ({ detail, index }) => {
   const ddResponse = detail.dragdrop_response || {};
 
   const statusBadge = isSkipped
-    ? { label: 'Bỏ qua', icon: <Minus className="w-3.5 h-3.5" />, cls: 'bg-gray-100 text-gray-500' }
+    ? { label: 'Bỏ qua', icon: <Minus className="w-3.5 h-3.5" />, cls: 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400' }
     : isCorrect
-      ? { label: 'Đúng', icon: <CheckCircle className="w-3.5 h-3.5" />, cls: 'bg-emerald-100 text-emerald-700' }
-      : { label: 'Sai', icon: <XCircle className="w-3.5 h-3.5" />, cls: 'bg-red-100 text-red-700' };
+      ? { label: 'Đúng', icon: <CheckCircle className="w-3.5 h-3.5" />, cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }
+      : { label: 'Sai', icon: <XCircle className="w-3.5 h-3.5" />, cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' };
 
-  const borderCls = isCorrect ? 'border-emerald-200' : isSkipped ? 'border-gray-200' : 'border-red-200';
+  const borderCls = isCorrect ? 'border-emerald-200 dark:border-emerald-800/60' : isSkipped ? 'border-gray-200 dark:border-slate-700' : 'border-red-200 dark:border-red-800/60';
 
   return (
-    <div className={`bg-white rounded-2xl border-2 ${borderCls} overflow-hidden shadow-sm`}>
+    <div className={`bg-white dark:bg-slate-800 rounded-2xl border-2 ${borderCls} overflow-hidden shadow-sm`}>
       {/* Header — always visible */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-start gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+        className="w-full flex items-start gap-4 px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors"
       >
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 mt-0.5 ${statusBadge.cls}`}>
           {statusBadge.icon} {statusBadge.label}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          <p className="text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">
             Câu {index + 1} · {q.question_type === 'choice' ? 'Chọn một' : q.question_type === 'multi' ? 'Chọn nhiều' : q.question_type === 'truefalse' ? 'Đúng / Sai' : 'Kéo thả'}
           </p>
           <div
-            className="text-sm font-medium text-gray-900 leading-relaxed"
+            className="text-sm font-medium text-gray-900 dark:text-slate-100 leading-relaxed"
             dangerouslySetInnerHTML={{ __html: q.content }}
           />
         </div>
-        <span className="flex-shrink-0 mt-1 text-gray-400">
+        <span className="flex-shrink-0 mt-1 text-gray-400 dark:text-slate-500">
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </span>
       </button>
 
       {/* Detail — collapsible */}
       {open && (
-        <div className="px-5 pb-5 space-y-3 border-t border-gray-100">
+        <div className="px-5 pb-5 space-y-3 border-t border-gray-100 dark:border-slate-700/60">
           {/* Question image */}
           {q.image_url && (
-            <ZoomableImage src={q.image_url} alt="" className="max-h-48 rounded-xl border border-gray-100 object-contain bg-gray-50 mt-3" />
+            <ZoomableImage src={q.image_url} alt="" className="max-h-48 rounded-xl border border-gray-100 dark:border-slate-700/60 object-contain bg-gray-50 dark:bg-slate-700/50 mt-3" />
           )}
 
           {/* Choice / Multi answers */}
@@ -109,21 +107,21 @@ const QuestionCard = ({ detail, index }) => {
                 const wasSelected = selectedIds.includes(ans.id);
                 const isAnsCorrect = ans.is_correct;
 
-                let style = 'border-gray-100 bg-gray-50 text-gray-500';
-                if (wasSelected && isAnsCorrect) style = 'border-emerald-400 bg-emerald-50 text-emerald-800';
-                else if (wasSelected && !isAnsCorrect) style = 'border-red-400 bg-red-50 text-red-800';
-                else if (!wasSelected && isAnsCorrect) style = 'border-emerald-200 bg-emerald-50/60 text-emerald-700';
+                let style = 'border-gray-100 bg-gray-50 text-gray-500 dark:border-slate-700/60 dark:bg-slate-700/50 dark:text-slate-500';
+                if (wasSelected && isAnsCorrect) style = 'border-emerald-400 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300';
+                else if (wasSelected && !isAnsCorrect) style = 'border-red-400 bg-red-50 text-red-800 dark:border-red-700 dark:bg-red-950/40 dark:text-red-300';
+                else if (!wasSelected && isAnsCorrect) style = 'border-emerald-200 bg-emerald-50/60 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300';
 
                 return (
                   <div key={ans.id} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 text-sm ${style}`}>
                     <span className="flex-shrink-0 w-5 flex justify-center">
-                      {wasSelected && isAnsCorrect && <CheckCircle className="w-4 h-4 text-emerald-600" />}
-                      {wasSelected && !isAnsCorrect && <XCircle className="w-4 h-4 text-red-500" />}
-                      {!wasSelected && isAnsCorrect && <CheckCircle className="w-4 h-4 text-emerald-400" />}
-                      {!wasSelected && !isAnsCorrect && <div className="w-4 h-4 rounded-full border-2 border-gray-200" />}
+                      {wasSelected && isAnsCorrect && <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                      {wasSelected && !isAnsCorrect && <XCircle className="w-4 h-4 text-red-500 dark:text-red-400" />}
+                      {!wasSelected && isAnsCorrect && <CheckCircle className="w-4 h-4 text-emerald-400 dark:text-emerald-500" />}
+                      {!wasSelected && !isAnsCorrect && <div className="w-4 h-4 rounded-full border-2 border-gray-200 dark:border-slate-600" />}
                     </span>
                     {ans.image_url && (
-                      <ZoomableImage src={ans.image_url} alt="" className="h-10 w-14 object-contain rounded-lg bg-white border border-gray-100 flex-shrink-0" />
+                      <ZoomableImage src={ans.image_url} alt="" className="h-10 w-14 object-contain rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700/60 flex-shrink-0" />
                     )}
                     <span
                       className="flex-1 leading-relaxed"
@@ -131,10 +129,10 @@ const QuestionCard = ({ detail, index }) => {
                     />
                     <div className="flex gap-1.5 flex-shrink-0">
                       {wasSelected && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-white/70 border font-medium">Bạn chọn</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-white/70 dark:bg-slate-800/70 border font-medium">Bạn chọn</span>
                       )}
                       {isAnsCorrect && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium">Đáp án đúng</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800/60 font-medium">Đáp án đúng</span>
                       )}
                     </div>
                   </div>
@@ -145,35 +143,35 @@ const QuestionCard = ({ detail, index }) => {
 
           {q.question_type === 'dragdrop' && (
             <div className="space-y-2 mt-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Kết quả xếp nhóm</p>
+              <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Kết quả xếp nhóm</p>
               {sortedPairs.map(pair => {
                 const userZone = ddResponse[pair.id];
                 const correctZone = pair.drop_content;
                 const ok = userZone === correctZone;
                 return (
-                  <div key={pair.id} className={`rounded-xl border-2 overflow-hidden ${ok ? 'border-emerald-200' : 'border-red-200'}`}>
+                  <div key={pair.id} className={`rounded-xl border-2 overflow-hidden ${ok ? 'border-emerald-200 dark:border-emerald-800/60' : 'border-red-200 dark:border-red-800/60'}`}>
                     {/* Drag item - full width header */}
-                    <div className={`px-3 py-2 flex items-center gap-2 ${ok ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                    <div className={`px-3 py-2 flex items-center gap-2 ${ok ? 'bg-emerald-50 dark:bg-emerald-950/40' : 'bg-red-50 dark:bg-red-950/40'}`}>
                       {pair.drag_image_url && (
                         <img src={pair.drag_image_url} alt="" className="w-8 h-8 object-contain rounded flex-shrink-0" />
                       )}
-                      <span className="text-sm font-medium text-gray-800 leading-snug flex-1 min-w-0">
+                      <span className="text-sm font-medium text-gray-800 dark:text-slate-100 leading-snug flex-1 min-w-0">
                         {pair.drag_content}
                       </span>
                       <span className="flex-shrink-0">
-                        {ok ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-400" />}
+                        {ok ? <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> : <XCircle className="w-4 h-4 text-red-400 dark:text-red-400" />}
                       </span>
                     </div>
                     {/* Answer zones */}
-                    <div className="px-3 py-2 bg-white flex flex-wrap gap-2 items-center">
-                      <span className="text-[11px] text-gray-400 whitespace-nowrap">Bạn chọn:</span>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ok ? 'bg-emerald-100 border-emerald-200 text-emerald-800' : 'bg-red-100 border-red-200 text-red-700'}`}>
+                    <div className="px-3 py-2 bg-white dark:bg-slate-800 flex flex-wrap gap-2 items-center">
+                      <span className="text-[11px] text-gray-400 dark:text-slate-500 whitespace-nowrap">Bạn chọn:</span>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ok ? 'bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-900/40 dark:border-emerald-800/60 dark:text-emerald-300' : 'bg-red-100 border-red-200 text-red-700 dark:bg-red-900/40 dark:border-red-800/60 dark:text-red-300'}`}>
                         {userZone || <em className="opacity-50 font-normal">Bỏ trống</em>}
                       </span>
                       {!ok && (
                         <>
-                          <span className="text-[11px] text-gray-400 whitespace-nowrap">→ Đáp án đúng:</span>
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full border bg-emerald-100 border-emerald-200 text-emerald-800">
+                          <span className="text-[11px] text-gray-400 dark:text-slate-500 whitespace-nowrap">→ Đáp án đúng:</span>
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full border bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-900/40 dark:border-emerald-800/60 dark:text-emerald-300">
                             {pair.drop_image_url && <img src={pair.drop_image_url} alt="" className="h-4 w-auto inline mr-1 object-contain" />}
                             {correctZone}
                           </span>
@@ -192,7 +190,7 @@ const QuestionCard = ({ detail, index }) => {
             const tfResponse = detail.dragdrop_response || {};
             return (
               <div className="space-y-2 mt-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Kết quả từng nhận định</p>
+                <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Kết quả từng nhận định</p>
                 {sortedStmts.map((stmt, si) => {
                   const userAnswer = tfResponse[stmt.id]; // true | false | undefined
                   const correctAnswer = stmt.is_true;
@@ -200,35 +198,35 @@ const QuestionCard = ({ detail, index }) => {
                   const ok = answered && userAnswer === correctAnswer;
                   return (
                     <div key={stmt.id} className={`rounded-xl border-2 px-4 py-3 ${
-                      !answered ? 'border-gray-200 bg-gray-50'
-                      : ok ? 'border-emerald-300 bg-emerald-50'
-                      : 'border-red-300 bg-red-50'
+                      !answered ? 'border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-700/50'
+                      : ok ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/40'
+                      : 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/40'
                     }`}>
                       <div className="flex items-start gap-3">
                         <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          !answered ? 'bg-gray-200 text-gray-500'
-                          : ok ? 'bg-emerald-200 text-emerald-800'
-                          : 'bg-red-200 text-red-800'
+                          !answered ? 'bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
+                          : ok ? 'bg-emerald-200 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                          : 'bg-red-200 text-red-800 dark:bg-red-900/40 dark:text-red-300'
                         }`}>{si + 1}</span>
                         <div
-                          className="text-sm text-gray-800 flex-1 leading-relaxed"
+                          className="text-sm text-gray-800 dark:text-slate-100 flex-1 leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: stmt.content }}
                         />
-                        {ok ? <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                          : answered ? <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                          : <Minus className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />}
+                        {ok ? <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+                          : answered ? <XCircle className="w-4 h-4 text-red-400 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                          : <Minus className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0 mt-0.5" />}
                       </div>
                       <div className="mt-2 ml-9 flex flex-wrap gap-2 items-center">
-                        <span className="text-[11px] text-gray-400">Bạn chọn:</span>
+                        <span className="text-[11px] text-gray-400 dark:text-slate-500">Bạn chọn:</span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
-                          !answered ? 'bg-gray-100 border-gray-200 text-gray-400'
-                          : userAnswer ? 'bg-emerald-100 border-emerald-200 text-emerald-700' : 'bg-red-100 border-red-200 text-red-700'
+                          !answered ? 'bg-gray-100 border-gray-200 text-gray-400 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-500'
+                          : userAnswer ? 'bg-emerald-100 border-emerald-200 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-800/60 dark:text-emerald-300' : 'bg-red-100 border-red-200 text-red-700 dark:bg-red-900/40 dark:border-red-800/60 dark:text-red-300'
                         }`}>
                           {!answered ? 'Chưa trả lời' : userAnswer ? 'Đúng' : 'Sai'}
                         </span>
-                        <span className="text-[11px] text-gray-400">· Đáp án đúng:</span>
+                        <span className="text-[11px] text-gray-400 dark:text-slate-500">· Đáp án đúng:</span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
-                          correctAnswer ? 'bg-emerald-100 border-emerald-200 text-emerald-700' : 'bg-red-100 border-red-200 text-red-700'
+                          correctAnswer ? 'bg-emerald-100 border-emerald-200 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-800/60 dark:text-emerald-300' : 'bg-red-100 border-red-200 text-red-700 dark:bg-red-900/40 dark:border-red-800/60 dark:text-red-300'
                         }`}>
                           {correctAnswer ? 'Đúng' : 'Sai'}
                         </span>
@@ -247,10 +245,10 @@ const QuestionCard = ({ detail, index }) => {
             const correctIds = sortedRegions.filter(r => r.is_correct).map(r => r.id);
             return (
               <div className="mt-3 space-y-2">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Kết quả vùng chọn</p>
+                <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Kết quả vùng chọn</p>
                 {/* Image with colored overlays */}
                 {q.image_url && (
-                  <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                  <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/50">
                     <img src={q.image_url} alt="Hotspot" className="w-full h-auto block" draggable={false} />
                     {sortedRegions.map((r, ri) => {
                       const userChose = userSelected.includes(r.id);
@@ -299,6 +297,7 @@ const QuestionCard = ({ detail, index }) => {
 export const ResultPage = () => {
   const { examId } = useParams(); // actually attemptId
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [attempt, setAttempt] = useState(null);
   const [details, setDetails] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -342,14 +341,14 @@ export const ResultPage = () => {
   if (loading) return <ResultSkeleton />;
   if (!attempt) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-500">
+      <div className="min-h-screen flex items-center justify-center text-red-500 dark:text-red-400 dark:bg-slate-900">
         Không tìm thấy kết quả bài thi.
       </div>
     );
   }
 
   const score = Number(attempt.score) || 0;
-  const isPassed = score >= 70;
+  const isPassed = checkPassed(score);
 
   const correctCount = details.filter(d => d.is_correct).length;
   const wrongCount = details.filter(d => !d.is_correct && (d.selected_answer_ids?.length > 0 || d.dragdrop_response)).length;
@@ -374,7 +373,7 @@ export const ResultPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
 
       {/* ─── Hero Score Banner ─── */}
       <div className={`relative overflow-hidden ${isPassed
@@ -428,7 +427,7 @@ export const ResultPage = () => {
                 </div>
                 <div className="flex items-center gap-2 bg-white/15 backdrop-blur rounded-xl px-3 py-2">
                   <Timer className="w-4 h-4 text-white/70" />
-                  <span className="text-sm font-bold text-white">{formatTime(attempt.time_spent_seconds)}</span>
+                  <span className="text-sm font-bold text-white">{formatDurationLabel(attempt.time_spent_seconds)}</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/15 backdrop-blur rounded-xl px-3 py-2">
                   <Calendar className="w-4 h-4 text-white/70 flex-shrink-0" />
@@ -484,7 +483,7 @@ export const ResultPage = () => {
               onClick={() => setFilter(f.key)}
               className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${filter === f.key
                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:border-indigo-500'
                 }`}
             >
               {f.label}
@@ -495,9 +494,7 @@ export const ResultPage = () => {
         {/* Question cards */}
         <div className="space-y-4">
           {filteredDetails.length === 0 ? (
-            <div className="text-center py-12 text-gray-400 font-medium">
-              Không có câu hỏi nào phù hợp.
-            </div>
+            <EmptyState title="Không có câu hỏi nào phù hợp." />
           ) : (
             filteredDetails.map((detail, idx) => {
               const globalIdx = details.indexOf(detail);
@@ -507,10 +504,10 @@ export const ResultPage = () => {
         </div>
 
         {/* Bottom actions */}
-        <div className="flex gap-4 justify-center pt-4 border-t border-gray-200">
+        <div className="flex flex-wrap gap-4 justify-center pt-4 border-t border-gray-200 dark:border-slate-700">
           <Link
             to="/dashboard"
-            className="flex items-center gap-2 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-2xl text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 transition-colors"
+            className="flex items-center gap-2 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-2xl text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 transition-colors dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:border-slate-600"
           >
             <LayoutDashboard className="w-4 h-4" /> Về Dashboard
           </Link>
@@ -520,6 +517,20 @@ export const ResultPage = () => {
           >
             <RotateCcw className="w-4 h-4" /> Làm lại bài này
           </button>
+          {isPassed && (
+            <button
+              onClick={() => generateCertificatePdf({
+                studentName: profile?.full_name,
+                examLabel: examTitle,
+                scorePct: score,
+                submittedAtISO: attempt.submitted_at,
+                attemptId: attempt.id,
+              })}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-emerald-200"
+            >
+              <Download className="w-4 h-4" /> Tải chứng chỉ
+            </button>
+          )}
         </div>
       </div>
     </div>

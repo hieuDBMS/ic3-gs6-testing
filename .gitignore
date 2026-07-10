@@ -1,4 +1,4 @@
-# Logs
+﻿# Logs
 logs
 *.log
 npm-debug.log*
@@ -6,7 +6,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+.dev-server.log
 
+# Node & Build
 node_modules
 dist
 dist-ssr
@@ -23,11 +25,20 @@ dist-ssr
 *.sln
 *.sw?
 
-# Project specifics
+# Environment Variables
 .env
 .env.*
 !.env.example
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+supabase/dump/
+
+# AI Agents & IDE temp files
 .agents/
+.claude/
+.gemini/
 tempdata/
 artifacts/
 scratch/
@@ -35,3 +46,8 @@ walkthrough.md
 implementation_plan.md
 task.md
 
+# Cache
+.eslintcache
+.stylelintcache
+.npm
+.yarn

@@ -5,6 +5,7 @@ import { ImageUploader } from './ImageUploader';
 import { AnswerEditor } from './AnswerEditor';
 import { HotspotEditor } from './HotspotEditor';
 import { RichTextEditor } from './RichTextEditor';
+import { stripHtml } from '../../utils/text';
 
 const DEFAULT_ANSWER = (order = 0) => ({
   id: crypto.randomUUID(),
@@ -133,9 +134,6 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
   };
 
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
-
-  // Strip HTML tags to get plain text for validation
-  const stripHtml = (html) => html?.replace(/<[^>]*>/g, '').trim() ?? '';
 
   const validate = () => {
     const e = {};

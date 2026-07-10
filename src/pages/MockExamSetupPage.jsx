@@ -123,7 +123,7 @@ export const MockExamSetupPage = () => {
   const style = getStyle(selectedVersion);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50/20 to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50/20 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
       <div className="relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #450a0a 0%, #7f1d1d 60%, #991b1b 100%)' }}>
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-red-400/20 blur-[80px] pointer-events-none" />
@@ -184,8 +184,8 @@ export const MockExamSetupPage = () => {
         ) : (
           <div className="space-y-4">
             {filteredLevels.length === 0 && (
-              <div className="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm">
-                <p className="text-slate-500">Chưa có bài thi nào cho phiên bản này.</p>
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center border border-slate-100 dark:border-slate-700 shadow-sm">
+                <p className="text-slate-500 dark:text-slate-400">Chưa có bài thi nào cho phiên bản này.</p>
               </div>
             )}
             {filteredLevels.map((level, idx) => {
@@ -204,7 +204,7 @@ export const MockExamSetupPage = () => {
               return (
               <div
                 key={level.id}
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
                 style={{ animationDelay: `${idx * 60}ms` }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4">
@@ -214,24 +214,24 @@ export const MockExamSetupPage = () => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-slate-900">
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                           {level.version} — {level.label}
                         </h2>
                         {!isFullyPaid && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide">Dùng thử</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide dark:bg-amber-950/40 dark:text-amber-300">Dùng thử</span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500 mt-1">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                         {isFullyPaid ? '45 Câu hỏi' : '10 Câu hỏi (Dùng thử)'} • 50 Phút • Mức đạt: 700/1000
                       </p>
                       {!isFullyPaid && !isGmetrixMissing && (
-                        <div className="mt-2 text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 flex items-start sm:items-center gap-1.5 max-w-sm">
+                        <div className="mt-2 text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800/60 flex items-start sm:items-center gap-1.5 max-w-sm">
                           <Lock className="w-3.5 h-3.5 mt-0.5 sm:mt-0 flex-shrink-0" />
                           <span>Thanh toán toàn bộ bài tập của Level này để thi thử đầy đủ 45 câu.</span>
                         </div>
                       )}
                       {isGmetrixMissing && (
-                        <div className="mt-2 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                        <div className="mt-2 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 dark:text-slate-400 dark:bg-slate-700/50 dark:border-slate-600">
                           Chưa có bài thi GMetrix cho Level này, tạm thời không thể thi thử.
                         </div>
                       )}
