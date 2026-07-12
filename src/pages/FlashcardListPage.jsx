@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from '../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Brain, Clock, ChevronRight, BookOpen, Zap, Layers, Hash, ChevronDown, Sparkles, Lock, CheckCircle, ShoppingCart, Trash2, X, Loader2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -28,6 +29,7 @@ const TYPE_BADGE = {
    Appears as a bottom sheet overlay – no navigation needed
 ──────────────────────────────────────────────────────────── */
 const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [err,  setErr]  = useState('');
   const confirm = async () => {
@@ -55,16 +57,15 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">Huỷ giao dịch?</h3>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Thao tác này không thể hoàn tác</p>
+              <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">{t('flashcardList.cancelSheet.title')}</h3>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{t('flashcardList.cancelSheet.subtitle')}</p>
             </div>
             <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition">
               <X className="w-3.5 h-3.5 text-gray-500 dark:text-slate-400" />
             </button>
           </div>
           <div className="p-3.5 bg-gray-50 dark:bg-slate-700/50 rounded-2xl text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-            Giao dịch <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{txCode}</code> sẽ bị xoá.
-            Bạn có thể mua lại bất kỳ lúc nào.
+            {t('flashcardList.cancelSheet.messagePrefix')} <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{txCode}</code> {t('flashcardList.cancelSheet.messageSuffix')}
           </div>
           {err && (
             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 rounded-xl text-xs text-red-700 dark:text-red-300">
@@ -74,11 +75,11 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
           <div className="flex gap-2.5">
             <button onClick={onClose}
               className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 transition active:scale-[.98]">
-              Giữ lại
+              {t('flashcardList.cancelSheet.keepButton')}
             </button>
             <button onClick={confirm} disabled={busy}
               className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[.98]">
-              {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang huỷ...</> : <><Trash2 className="w-4 h-4" /> Xác nhận huỷ</>}
+              {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('flashcardList.cancelSheet.cancelling')}</> : <><Trash2 className="w-4 h-4" /> {t('flashcardList.cancelSheet.confirmCancelButton')}</>}
             </button>
           </div>
         </div>
@@ -88,6 +89,7 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
 };
 
 export const FlashcardListPage = () => {
+  const { t } = useTranslation();
   const { isSelfRegistered, user } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
@@ -150,7 +152,7 @@ export const FlashcardListPage = () => {
         data.purchases.forEach(p => { map[p.exam_id] = p; });
         setPurchases(map);
       }
-    } catch {}
+    } catch { /* non-critical: flashcard list still renders without purchase status */ }
     finally { setPurchasesLoaded(true); }
   }, []);
 
@@ -178,28 +180,28 @@ export const FlashcardListPage = () => {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/25 mb-5">
             <Brain className="w-3.5 h-3.5 text-white/90" />
-            <span className="text-white/90 text-[11px] font-semibold tracking-widest uppercase">Flashcard · IC3</span>
+            <span className="text-white/90 text-[11px] font-semibold tracking-widest uppercase">{t('flashcardList.hero.badge')}</span>
           </div>
 
           <div className="flex items-end justify-between gap-8 flex-wrap">
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight tracking-tight">
-                Ôn tập <span className="text-white/60 font-light">thông minh</span>
+                {t('flashcardList.hero.titlePart1')} <span className="text-white/60 font-light">{t('flashcardList.hero.titlePart2')}</span>
               </h1>
               <p className="mt-2 text-white/55 text-sm max-w-xs leading-relaxed">
-                Luyện tập tương tác — chọn đáp án, xem kết quả ngay, ôn lại câu sai tự động.
+                {t('flashcardList.hero.subtitle')}
               </p>
               {selectedVersion && !loading && (
                 <div className="mt-5 flex items-center gap-2.5 flex-wrap">
                   <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur-sm">
                     <Sparkles className="w-3.5 h-3.5 text-white/80" />
                     <span className="text-white font-semibold text-sm">{totalCards.toLocaleString()}</span>
-                    <span className="text-white/45 text-xs">thẻ</span>
+                    <span className="text-white/45 text-xs">{t('flashcardList.hero.cardsUnit')}</span>
                   </div>
                   <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur-sm">
                     <Layers className="w-3.5 h-3.5 text-white/80" />
                     <span className="text-white font-semibold text-sm">{filteredLevels.length}</span>
-                    <span className="text-white/45 text-xs">cấp độ</span>
+                    <span className="text-white/45 text-xs">{t('flashcardList.hero.levelsUnit')}</span>
                   </div>
                 </div>
               )}
@@ -207,7 +209,7 @@ export const FlashcardListPage = () => {
 
             {/* Version selector */}
             <div className="flex flex-col gap-2">
-              <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest">Phiên bản</p>
+              <p className="text-white/35 text-[10px] font-semibold uppercase tracking-widest">{t('flashcardList.hero.versionLabel')}</p>
               {versions.map(v => {
                 const vc = getCfg(v);
                 const active = selectedVersion === v;
@@ -272,11 +274,11 @@ export const FlashcardListPage = () => {
                       <h2 className="text-[14px] font-semibold text-slate-800 dark:text-slate-100">{level.label}</h2>
                       <div className="flex items-center gap-3 mt-0.5">
                         <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                          <Hash className="w-3 h-3" />{level.exams.filter(e => questionCounts[e.id] > 0).length} bài thi
+                          <Hash className="w-3 h-3" />{level.exams.filter(e => questionCounts[e.id] > 0).length} {t('flashcardList.level.examCountSuffix')}
                         </span>
                         {levelCards > 0 && (
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cfg.badge}`}>
-                            🃏 {levelCards} thẻ
+                            🃏 {levelCards} {t('flashcardList.hero.cardsUnit')}
                           </span>
                         )}
                       </div>
@@ -307,21 +309,21 @@ export const FlashcardListPage = () => {
                                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug flex-1 line-clamp-2">{exam.title}</h3>
                                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
                                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border ${TYPE_BADGE[exam.exam_type]}`}>
-                                    {isGmetrix ? '🎯' : '📝'} {isGmetrix ? 'Gmetrix' : 'Testing'}
+                                    {isGmetrix ? '🎯' : '📝'} {isGmetrix ? t('flashcardList.examCard.gmetrixLabel') : t('flashcardList.examCard.testingLabel')}
                                   </span>
                                   {isSelfRegistered && !showSkeleton && (
                                     isPurchased
-                                      ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60"><CheckCircle className="w-3 h-3" /> Đã mua</span>
+                                      ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60"><CheckCircle className="w-3 h-3" /> {t('flashcardList.examCard.purchased')}</span>
                                       : isPending
-                                        ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60"><Clock className="w-3 h-3" /> Chờ TT</span>
-                                        : <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold border border-gray-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600"><Lock className="w-3 h-3" /> Chưa mua</span>
+                                        ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60"><Clock className="w-3 h-3" /> {t('flashcardList.examCard.pending')}</span>
+                                        : <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold border border-gray-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600"><Lock className="w-3 h-3" /> {t('flashcardList.examCard.notPurchased')}</span>
                                   )}
                                   {showSkeleton && <div className="w-14 h-5 bg-gray-100 dark:bg-slate-700 rounded-full animate-pulse" />}
                                 </div>
                               </div>
                               <div className="flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
-                                <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" />{Math.floor(exam.duration_seconds/60)} phút</span>
-                                <span className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-semibold"><Brain className="w-3 h-3" />{count} thẻ</span>
+                                <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" />{Math.floor(exam.duration_seconds/60)} {t('flashcardList.examCard.durationUnit')}</span>
+                                <span className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-semibold"><Brain className="w-3 h-3" />{count} {t('flashcardList.hero.cardsUnit')}</span>
                               </div>
                               {/* Action button — show skeleton while purchases loading */}
                               {showSkeleton ? (
@@ -330,19 +332,19 @@ export const FlashcardListPage = () => {
                                 <Link to={`/flashcard/${exam.id}`}
                                   className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] transition-all mt-auto"
                                   style={{ background: cfg.btn }}>
-                                  <Zap className="w-3.5 h-3.5" /> Ôn tập ngay <ChevronRight className="w-3.5 h-3.5 opacity-70" />
+                                  <Zap className="w-3.5 h-3.5" /> {t('flashcardList.examCard.studyNow')} <ChevronRight className="w-3.5 h-3.5 opacity-70" />
                                 </Link>
                               ) : isPending ? (
                                 /* ── Pending: resume + cancel ── */
                                 <div className="flex gap-2 mt-auto">
                                   <button onClick={() => setPaymentExam(exam)}
                                     className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-400 hover:opacity-90 active:scale-[.97] transition-all shadow-sm">
-                                    <Clock className="w-3.5 h-3.5" /> Tiếp tục TT
+                                    <Clock className="w-3.5 h-3.5" /> {t('flashcardList.examCard.continuePayment')}
                                   </button>
                                   <button
                                     onClick={() => setCancelExam({ examId: exam.id, purchaseId: purchase.id, txCode: purchase.transaction_code })}
                                     className="flex items-center justify-center px-3 py-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/40 active:scale-[.97] transition-all border border-red-100 dark:border-red-900/40"
-                                    title="Huỷ giao dịch">
+                                    title={t('flashcardList.examCard.cancelTransactionTitle')}>
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
@@ -350,7 +352,7 @@ export const FlashcardListPage = () => {
                                 /* ── Not purchased: buy ── */
                                 <button onClick={() => setPaymentExam(exam)}
                                   className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold text-white shadow-sm hover:shadow-md active:scale-[0.97] transition-all mt-auto bg-gradient-to-r from-indigo-600 to-violet-600">
-                                  <ShoppingCart className="w-3.5 h-3.5" /> Mua ngay &mdash; {new Intl.NumberFormat('vi-VN').format(exam.required_amount || 100000)}đ
+                                  <ShoppingCart className="w-3.5 h-3.5" /> {t('flashcardList.examCard.buyNow')} &mdash; {new Intl.NumberFormat('vi-VN').format(exam.required_amount || 100000)}đ
                                 </button>
                               )}
                             </div>
@@ -359,7 +361,7 @@ export const FlashcardListPage = () => {
                         {level.exams.every(e => !questionCounts[e.id]) && (
                           <div className="col-span-full py-8 text-center text-sm text-slate-400 dark:text-slate-500">
                             <BookOpen className="w-8 h-8 mx-auto mb-2 text-slate-200 dark:text-slate-700" />
-                            Chưa có câu hỏi nào trong cấp độ này.
+                            {t('flashcardList.level.emptyLevel')}
                           </div>
                         )}
                       </div>

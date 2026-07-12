@@ -137,12 +137,13 @@ Dùng tại: `QuestionStatsPage`, `LiveMonitorPage`, `AnalyticsPage`
 // All use animate-pulse, dark mode support
 ```
 
-### Navbar (`Navbar.jsx`) — 357 lines
+### Navbar (`Navbar.jsx`) — 358 lines
 - Desktop: NavLink (active indicator), TeacherDropdown
 - Mobile: hamburger → slide-in
 - Dark mode toggle button
 - Avatar: initials hash-color từ `full_name`
 - **Lưu ý**: KHÔNG render trong fullscreen exam (Navbar là sibling của exam container)
+- **`data-nav-guard="true"`** trên cả 2 nút Đăng xuất (desktop + mobile drawer): đánh dấu để ExamPage/MockExamPage's navigate-away guard bắt được click, vì nút này là `<button onClick={handleLogout}>` chứ không phải `<a href>` — click-intercept theo href sẽ bỏ sót nếu không có marker này. Xem "Navigate-away guard" trong ROUTES_AND_PAGES.md → ExamPage.
 
 ### ProtectedRoute (`ProtectedRoute.jsx`)
 ```jsx
@@ -158,8 +159,14 @@ Dùng tại: `QuestionStatsPage`, `LiveMonitorPage`, `AnalyticsPage`
 ```
 
 ### PaymentModal (`PaymentModal.jsx`)
-- Hiển thị QR code VietQR để mua bài thi
-- Fetch payment settings từ `payment_settings` table
+```jsx
+<PaymentModal exam={{ id, title, required_amount }} onClose={fn} onSuccess={fn} />
+```
+- Hiển thị QR code VietQR (`img.vietqr.io`) để mua bài thi, hỗ trợ thanh toán một phần (PARTIAL)
+- Bank info fetch từ bảng `payment_config` (singleton id=1) — **cached ở module-level** (`_configCache`), chỉ fetch 1 lần/session, dedupe concurrent calls qua `_configFetching`
+- Vòng đời `purchase` (bảng `purchases`) hoàn toàn qua Edge Function `manage-purchase`: `status` (check đã có purchase chưa) → `create` (nếu chưa) → hiển thị QR (phase `ready`)
+- **Realtime**: subscribe `postgres_changes` UPDATE trên `purchases` filter theo `id=eq.${purchase.id}` → tự chuyển phase `success` khi `status` đổi thành `SUCCESS` (không cần polling)
+- Phases: `init` → `ready` (hoặc `success` nếu đã thanh toán trước đó) → `error` (retry)
 
 ---
 

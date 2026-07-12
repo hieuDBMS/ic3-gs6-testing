@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from "react";
 import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, UserPlus, Sword, User, Lock, BadgeCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export const RegisterPage = () => {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -20,24 +22,32 @@ export const RegisterPage = () => {
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
 
+  const featureTexts = t('auth.register.features', { returnObjects: true });
+  const featureIcons = [
+    <BadgeCheck className="w-5 h-5" />,
+    <Sword className="w-5 h-5" />,
+    <User className="w-5 h-5" />,
+  ];
+  const features = featureTexts.map((text, i) => ({ icon: featureIcons[i], text }));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Mật khẩu nhập lại không khớp.');
+      setError(t('auth.register.errorMismatch'));
       return;
     }
     if (password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự.');
+      setError(t('auth.register.errorPasswordLength'));
       return;
     }
     if (username.length < 4) {
-      setError('Tên đăng nhập phải có ít nhất 4 ký tự.');
+      setError(t('auth.register.errorUsernameLength'));
       return;
     }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setError('Tên đăng nhập chỉ được chứa chữ cái, số và dấu gạch dưới.');
+      setError(t('auth.register.errorUsernameFormat'));
       return;
     }
 
@@ -52,7 +62,7 @@ export const RegisterPage = () => {
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2500);
     } catch (err) {
-      setError(err.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+      setError(err.message || t('auth.register.errorGeneric'));
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +92,7 @@ export const RegisterPage = () => {
           </div>
           <div>
             <p className="text-white font-extrabold text-xl tracking-tight leading-none">IC3-Fighter</p>
-            <p className="text-white/50 text-xs font-medium tracking-wider uppercase mt-0.5">Luyện thi IC3</p>
+            <p className="text-white/50 text-xs font-medium tracking-wider uppercase mt-0.5">{t('auth.register.tagline')}</p>
           </div>
         </div>
 
@@ -91,25 +101,21 @@ export const RegisterPage = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-400/20 border border-violet-400/30 mb-5">
               <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-              <span className="text-violet-300 text-xs font-semibold tracking-wide uppercase">Tạo tài khoản miễn phí</span>
+              <span className="text-violet-300 text-xs font-semibold tracking-wide uppercase">{t('auth.register.badge')}</span>
             </div>
             <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight">
-              Bắt đầu hành trình<br />
+              {t('auth.register.heroLine1')}<br />
               <span className="bg-gradient-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent">
-                chinh phục IC3
+                {t('auth.register.heroLine2')}
               </span>
             </h1>
             <p className="mt-4 text-white/55 text-base leading-relaxed max-w-sm">
-              Đăng ký để tiếp cận hệ thống luyện thi IC3 GS6 / GS7 / GS8 chuẩn quốc tế.
+              {t('auth.register.heroSubtitle')}
             </p>
           </div>
 
           <ul className="space-y-3">
-            {[
-              { icon: <BadgeCheck className="w-5 h-5" />, text: 'Đăng ký nhanh, không cần email xác nhận' },
-              { icon: <Sword className="w-5 h-5" />, text: 'Luyện tập với hàng trăm câu hỏi thực tế' },
-              { icon: <User className="w-5 h-5" />, text: 'Theo dõi tiến độ học tập cá nhân' },
-            ].map((f, i) => (
+            {features.map((f, i) => (
               <li key={i} className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-violet-300 flex-shrink-0">
                   {f.icon}
@@ -121,7 +127,7 @@ export const RegisterPage = () => {
         </div>
 
         <div className="relative z-10">
-          <p className="text-white/25 text-xs">© {new Date().getFullYear()} IC3-Fighter · Bản quyền bảo lưu</p>
+          <p className="text-white/25 text-xs">{t('auth.register.copyright', { year: new Date().getFullYear() })}</p>
         </div>
       </div>
 
@@ -134,13 +140,13 @@ export const RegisterPage = () => {
             <Sword className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-slate-100">IC3-Fighter</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Tạo tài khoản mới</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{t('auth.register.mobileSubtitle')}</p>
         </div>
 
         <div className="w-full max-w-[400px]">
           <div className="mb-8">
-            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Đăng ký</h2>
-            <p className="mt-2 text-gray-500 dark:text-slate-400 text-sm">Tạo tài khoản để bắt đầu luyện thi</p>
+            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('auth.register.title')}</h2>
+            <p className="mt-2 text-gray-500 dark:text-slate-400 text-sm">{t('auth.register.subtitle')}</p>
           </div>
 
           {/* Success state */}
@@ -148,8 +154,8 @@ export const RegisterPage = () => {
             <div className="mb-5 flex items-center gap-3 px-4 py-4 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/60">
               <BadgeCheck className="w-6 h-6 text-emerald-500 flex-shrink-0" />
               <div>
-                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">Đăng ký thành công!</p>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">Đang chuyển đến trang đăng nhập...</p>
+                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{t('auth.register.successTitle')}</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">{t('auth.register.successSubtitle')}</p>
               </div>
             </div>
           )}
@@ -168,7 +174,7 @@ export const RegisterPage = () => {
             {/* Full name */}
             <div>
               <label htmlFor="fullName" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                Họ và tên *
+                {t('auth.register.fullNameLabel')}
               </label>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
@@ -178,7 +184,7 @@ export const RegisterPage = () => {
                   required
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
-                  placeholder="Nguyễn Văn A"
+                  placeholder={t('auth.register.fullNamePlaceholder')}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
@@ -190,7 +196,7 @@ export const RegisterPage = () => {
             {/* Username */}
             <div>
               <label htmlFor="username" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                Tên đăng nhập *
+                {t('auth.register.usernameLabel')}
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-sm font-mono">@</span>
@@ -200,20 +206,20 @@ export const RegisterPage = () => {
                   required
                   value={username}
                   onChange={e => setUsername(e.target.value.toLowerCase())}
-                  placeholder="vidu_123"
+                  placeholder={t('auth.register.usernamePlaceholder')}
                   className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
                              transition-all duration-150 shadow-sm hover:border-gray-300 dark:hover:border-slate-500 font-mono"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">Chỉ chữ cái, số và dấu gạch dưới. Tối thiểu 4 ký tự.</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">{t('auth.register.usernameHint')}</p>
             </div>
 
             {/* Password */}
             <div>
               <label htmlFor="reg-password" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                Mật khẩu *
+                {t('auth.register.passwordLabel')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
@@ -223,7 +229,7 @@ export const RegisterPage = () => {
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="Tối thiểu 6 ký tự"
+                  placeholder={t('auth.register.passwordPlaceholder')}
                   className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
@@ -239,7 +245,7 @@ export const RegisterPage = () => {
             {/* Confirm password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                Nhập lại mật khẩu *
+                {t('auth.register.confirmPasswordLabel')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
@@ -249,7 +255,7 @@ export const RegisterPage = () => {
                   required
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="Nhập lại mật khẩu"
+                  placeholder={t('auth.register.confirmPasswordPlaceholder')}
                   className={`w-full pl-10 pr-4 py-3 rounded-xl border bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
@@ -258,7 +264,7 @@ export const RegisterPage = () => {
                 />
               </div>
               {confirmPassword && confirmPassword !== password && (
-                <p className="mt-1 text-xs text-red-500 dark:text-red-400">Mật khẩu không khớp</p>
+                <p className="mt-1 text-xs text-red-500 dark:text-red-400">{t('auth.register.passwordMismatchHint')}</p>
               )}
             </div>
 
@@ -280,21 +286,21 @@ export const RegisterPage = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Đang đăng ký...
+                  {t('auth.register.submitting')}
                 </>
               ) : (
                 <>
                   <UserPlus className="w-4 h-4" />
-                  Tạo tài khoản
+                  {t('auth.register.submit')}
                 </>
               )}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-slate-400">
-            Đã có tài khoản?{' '}
+            {t('auth.register.haveAccount')}{' '}
             <Link to="/login" className="text-violet-600 font-semibold hover:text-violet-700 transition-colors">
-              Đăng nhập ngay
+              {t('auth.register.loginNow')}
             </Link>
           </p>
         </div>

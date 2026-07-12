@@ -17,11 +17,12 @@ Nền tảng thi trực tuyến IC3 (Internet and Computing Core Certification) 
 | Backend / DB | Supabase (PostgreSQL) |
 | Auth | Supabase Auth (email/password) |
 | Storage | Supabase Storage (`question-images`, `answer-images`) |
-| State | React Context API (AuthContext, ThemeContext) |
+| State | React Context API (AuthContext, ThemeContext, LanguageContext) |
 | Routing | React Router v7 |
 | Icons | Lucide React |
 | PDF | jsPDF (certificate) |
 | Excel | ExcelJS (import câu hỏi) |
+| i18n | react-i18next — toàn bộ app, VI/EN (xem PATTERNS_AND_CONVENTIONS.md → i18n Pattern) |
 
 ## Cấu trúc thư mục chính
 
@@ -45,6 +46,11 @@ src/
     ├── avatar.js, certificate.js, format.js, scoreUtils.js, text.js
     └── questionImport.js    # Parse CSV/XLSX bulk import
 docs/                        # Tài liệu source code (thư mục này)
+supabase/
+├── sql/                      # Migration SQL chạy tay qua Supabase Studio (không có supabase/migrations/ chuẩn CLI)
+└── functions/                # Source của tất cả 6 edge functions đang deploy (kéo về 2026-07-10,
+                               # trước đó chỉ analyze-exam-stats có source local — 5 function còn lại
+                               # deploy trực tiếp qua Dashboard/MCP không version-control)
 ```
 
 ## User Roles
@@ -86,19 +92,32 @@ File `.env` — KHÔNG commit lên Git.
 
 ## Supabase RPC functions
 
-| RPC | Params | Mô tả |
-|---|---|---|
-| `submit_exam_attempt` | p_attempt_id, p_time_spent, p_answers, p_tf_answers, p_dd_answers, p_is_auto | Chấm điểm + lưu kết quả |
-| `user_can_access_exam` | p_user_id, p_exam_id | Check quyền truy cập exam |
-| `get_question_wrong_stats` | p_min_attempts, p_level_id, p_exam_type, p_question_type | Thống kê câu hay sai |
+9 RPC functions (`SECURITY DEFINER` trừ `reorder_questions_in_exam`, `is_teacher`) — chi tiết đầy đủ chữ ký ở [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md#rpc-functions-public-schema):
+
+| RPC | Mô tả |
+|---|---|
+| `submit_exam_attempt` | Chấm điểm + lưu kết quả bài thi thường (thang 0-100) |
+| `submit_mock_exam_attempt` | Chấm điểm bài thi thử, tính thêm `score_1000` (thang IC3 1000) |
+| `create_mock_exam_attempt` | Random 45 (hoặc 10 dùng thử) câu trong 1 Level, tạo attempt mock |
+| `user_can_access_exam` | Check quyền truy cập exam (self-registered) |
+| `get_question_wrong_stats` | Thống kê câu hay sai (teacher-only) |
+| `get_exam_score_distribution` | Histogram phân bố điểm (teacher-only) |
+| `get_exam_group_breakdown` | Breakdown điểm TB theo lớp/trường/level (teacher-only) |
+| `reorder_questions_in_exam` | Chuẩn hoá lại `order_index` sau CRUD câu hỏi |
+| `is_teacher` | Helper nội bộ cho RLS policies |
 
 ## Edge Functions
 
-| Function | Action | Mô tả |
-|---|---|---|
-| `manage-student` | create / delete / reset-password | Teacher quản lý student |
-| `manage-purchase` | cancel | Hủy giao dịch thanh toán |
-| `register-user` | — | Self-register tài khoản |
+Nguồn cả 6 function nằm ở `supabase/functions/<slug>/index.ts` (kéo về từ Supabase 2026-07-10 — trước đó chỉ `analyze-exam-stats` có source local).
+
+| Function | verify_jwt | Action | Mô tả |
+|---|---|---|---|
+| `manage-student` | true | create / update / toggle-active / delete / reset-password | Teacher quản lý student (bảng `profiles`), cascade xoá `exam_attempts`/`purchases`/`payment_history` khi delete |
+| `manage-school` | true | list / create / update / delete | Teacher quản lý danh sách trường (bảng `schools`). `update`/`delete` cascade rename/clear `profiles.school` (free-text match theo tên, không phải FK) |
+| `manage-purchase` | true | create / cancel / teacher-create / list-mine / list-all / confirm / status / history | Vòng đời mua bài thi (bảng `purchases`) — client KHÔNG ghi trực tiếp, trừ đường tự động `sepay-webhook` |
+| `register-user` | false | — | Self-register tài khoản. Dùng `admin.auth.admin.createUser` (bypass rate-limit signup mặc định của Supabase Auth) — không có CAPTCHA, cân nhắc thêm nếu bị bot spam tài khoản |
+| `analyze-exam-stats` | true | — | Teacher-only, gọi Gemini API (`gemini-2.5-flash`) sinh nhận xét tiếng Việt cho AnalyticsPage. Cần secret `GEMINI_API_KEY` |
+| `sepay-webhook` | false | — | Nhận webhook từ SePay khi phát hiện chuyển khoản ngân hàng, tự động khớp `transaction_code` trong nội dung chuyển khoản → cập nhật `purchases.status`/`paid_amount`. **Bắt buộc** secret `SEPAY_WEBHOOK_SECRET` (fail-closed — từ chối mọi request nếu thiếu secret, xem header `Authorization`/`x-sepay-signature`). Không có route gọi từ `src/` — chỉ SePay gọi vào |
 
 ## Storage Buckets
 
@@ -121,4 +140,5 @@ createClient(url, anonKey, {
 
 ## Ngưỡng Pass/Fail
 
-Score >= 70% → PASS (xem `src/utils/scoreUtils.js`: `isPassed(score)`)
+- Bài thi thường (`exam_attempts.score`, thang 0-100): Score >= 70% → PASS (xem `src/utils/scoreUtils.js`: `isPassed(score)`)
+- Mock exam (`exam_attempts.score_1000`, thang IC3 0-1000): Score >= 700 → PASS (hard-coded trong `MockResultPage.jsx`, **không** dùng `isPassed()`)

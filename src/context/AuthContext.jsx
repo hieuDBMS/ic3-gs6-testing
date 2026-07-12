@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
@@ -106,6 +106,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook is intentionally co-located with AuthProvider
 export const useAuth = () => {
   return useContext(AuthContext);
 };

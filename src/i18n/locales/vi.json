@@ -1,0 +1,166 @@
+{
+  "common": {
+    "loading": "Đang tải..."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "practice": "Ôn tập",
+    "mockExam": "Thi thử",
+    "flashcard": "Flashcard",
+    "payments": "Thanh toán",
+    "manage": "Quản lý",
+    "logout": "Đăng xuất",
+    "openMenu": "Mở menu",
+    "themeToLight": "Chế độ sáng",
+    "themeToDark": "Chế độ tối",
+    "language": "Ngôn ngữ",
+    "roleTeacher": "Giáo viên",
+    "roleStudentFull": "Học sinh (Full)",
+    "roleStudent": "Học sinh",
+    "teacherToolsHeader": "Công cụ Giáo viên",
+    "teacherMenuMobile": "Quản lý Giáo viên",
+    "teacher": {
+      "questions": { "label": "Câu hỏi", "desc": "Quản lý ngân hàng câu hỏi" },
+      "examStructure": { "label": "Cấu trúc thi", "desc": "Thiết lập bài thi & cấp độ" },
+      "students": { "label": "Học sinh", "desc": "Theo dõi tiến độ học viên" },
+      "paymentSettings": { "label": "Cài đặt TT", "desc": "Quản lý thanh toán" },
+      "questionStats": { "label": "Câu hỏi hay sai", "desc": "Thống kê toàn hệ thống" },
+      "liveMonitor": { "label": "Giám sát trực tiếp", "desc": "Theo dõi lớp đang thi" },
+      "analytics": { "label": "Phân tích nâng cao", "desc": "Biểu đồ & AI phân tích" }
+    }
+  },
+  "auth": {
+    "login": {
+      "badge": "Internet & Computing Core",
+      "heroLine1": "Hệ thống thi",
+      "heroLine2": "IC3 trực tuyến",
+      "heroSubtitle": "Luyện tập và kiểm tra kỹ năng tin học chuẩn quốc tế IC3 GS6 / GS7 / GS8.",
+      "features": [
+        "Thi trực tuyến IC3 chuẩn quốc tế",
+        "Bảo mật, tự động nộp bài khi hết giờ",
+        "Kết quả tức thì, theo dõi tiến độ"
+      ],
+      "copyright": "© {{year}} IC3 Exam Platform · Bản quyền bảo lưu",
+      "mobileSubtitle": "Hệ thống thi trực tuyến",
+      "title": "Đăng nhập",
+      "subtitle": "Nhập thông tin tài khoản để tiếp tục",
+      "usernameLabel": "Tên đăng nhập hoặc Email",
+      "usernamePlaceholder": "Tên đăng nhập hoặc email...",
+      "passwordLabel": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu...",
+      "showPassword": "Hiện mật khẩu",
+      "hidePassword": "Ẩn mật khẩu",
+      "submitting": "Đang đăng nhập...",
+      "submit": "Đăng nhập",
+      "noAccount": "Chưa có tài khoản?",
+      "registerNow": "Đăng ký ngay",
+      "forgotPassword": "Liên hệ giáo viên nếu quên mật khẩu.",
+      "errorInvalid": "Tên đăng nhập / email hoặc mật khẩu không đúng. Vui lòng thử lại."
+    },
+    "register": {
+      "tagline": "Luyện thi IC3",
+      "badge": "Tạo tài khoản miễn phí",
+      "heroLine1": "Bắt đầu hành trình",
+      "heroLine2": "chinh phục IC3",
+      "heroSubtitle": "Đăng ký để tiếp cận hệ thống luyện thi IC3 GS6 / GS7 / GS8 chuẩn quốc tế.",
+      "features": [
+        "Đăng ký nhanh, không cần email xác nhận",
+        "Luyện tập với hàng trăm câu hỏi thực tế",
+        "Theo dõi tiến độ học tập cá nhân"
+      ],
+      "copyright": "© {{year}} IC3-Fighter · Bản quyền bảo lưu",
+      "mobileSubtitle": "Tạo tài khoản mới",
+      "title": "Đăng ký",
+      "subtitle": "Tạo tài khoản để bắt đầu luyện thi",
+      "successTitle": "Đăng ký thành công!",
+      "successSubtitle": "Đang chuyển đến trang đăng nhập...",
+      "fullNameLabel": "Họ và tên *",
+      "fullNamePlaceholder": "Nguyễn Văn A",
+      "usernameLabel": "Tên đăng nhập *",
+      "usernamePlaceholder": "vidu_123",
+      "usernameHint": "Chỉ chữ cái, số và dấu gạch dưới. Tối thiểu 4 ký tự.",
+      "passwordLabel": "Mật khẩu *",
+      "passwordPlaceholder": "Tối thiểu 6 ký tự",
+      "confirmPasswordLabel": "Nhập lại mật khẩu *",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+      "passwordMismatchHint": "Mật khẩu không khớp",
+      "submitting": "Đang đăng ký...",
+      "submit": "Tạo tài khoản",
+      "haveAccount": "Đã có tài khoản?",
+      "loginNow": "Đăng nhập ngay",
+      "errorMismatch": "Mật khẩu nhập lại không khớp.",
+      "errorPasswordLength": "Mật khẩu phải có ít nhất 6 ký tự.",
+      "errorUsernameLength": "Tên đăng nhập phải có ít nhất 4 ký tự.",
+      "errorUsernameFormat": "Tên đăng nhập chỉ được chứa chữ cái, số và dấu gạch dưới.",
+      "errorGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại."
+    }
+  },
+  "landing": {
+    "nav": {
+      "features": "Tính năng",
+      "howItWorks": "Cách hoạt động",
+      "forTeachers": "Dành cho Giáo viên",
+      "login": "Đăng nhập",
+      "register": "Đăng ký"
+    },
+    "hero": {
+      "badge": "Internet & Computing Core Certification",
+      "titleLine1": "Chinh phục chứng chỉ",
+      "titleLine2": "IC3",
+      "titleLine3": "một cách bài bản",
+      "subtitle": "Nền tảng luyện thi IC3 GS6 / GS7 / GS8 trực tuyến — ngân hàng câu hỏi bám sát cấu trúc thật, thi thử theo thang điểm IC3 chuẩn, flashcard ôn tập, chứng chỉ hoàn thành ngay sau khi đạt.",
+      "ctaPrimary": "Bắt đầu miễn phí",
+      "ctaSecondary": "Tôi đã có tài khoản"
+    },
+    "trustBar": {
+      "gs6": "IC3 GS6",
+      "gs7": "IC3 GS7",
+      "gs8": "IC3 GS8",
+      "quote": "Ba phiên bản đề thi IC3 được hỗ trợ đầy đủ trên cùng một nền tảng"
+    },
+    "features": {
+      "title": "Mọi thứ bạn cần để đạt chứng chỉ IC3",
+      "subtitle": "Được xây dựng riêng cho quy trình luyện thi và giảng dạy IC3 — không phải một nền tảng LMS chung chung.",
+      "items": [
+        { "title": "Ngân hàng đề theo cấu trúc thật", "desc": "Bài luyện tập tổ chức theo đúng Level 1-3 và Testing/GMetrix của từng phiên bản GS6/GS7/GS8." },
+        { "title": "Thi thử chuẩn thang điểm IC3", "desc": "Mô phỏng bài thi GMetrix với thang điểm 0-1000, mốc đạt 700 điểm đúng như bài thi thật." },
+        { "title": "Flashcard ôn tập nhanh", "desc": "Học theo thẻ lật, xáo trộn câu hỏi, tự chấm điểm ngay tại chỗ cho mọi dạng câu hỏi." },
+        { "title": "Giám sát thi trực tiếp", "desc": "Giáo viên theo dõi lớp đang thi theo thời gian thực, phát hiện chuyển tab/thoát fullscreen." },
+        { "title": "Phân tích kết quả & AI insight", "desc": "Biểu đồ phân bố điểm, thống kê câu hay sai, nhận xét tự động bằng AI cho từng lớp/trường." },
+        { "title": "Chứng chỉ hoàn thành", "desc": "Xuất chứng chỉ PDF ngay khi học sinh đạt yêu cầu, lưu lại lịch sử làm bài đầy đủ." }
+      ]
+    },
+    "howItWorks": {
+      "title": "Bắt đầu chỉ trong 4 bước",
+      "steps": [
+        { "title": "Đăng ký tài khoản", "desc": "Tạo tài khoản học sinh chỉ với tên đăng nhập, không cần email xác nhận." },
+        { "title": "Được cấp quyền truy cập", "desc": "Giáo viên/trường cấp quyền học tập, hoặc mua bài thi theo nhu cầu." },
+        { "title": "Luyện tập & ôn flashcard", "desc": "Làm bài luyện tập theo từng Level, ôn nhanh bằng flashcard trước khi thi thử." },
+        { "title": "Thi thử & nhận chứng chỉ", "desc": "Thi thử theo thang điểm IC3 thật, tải chứng chỉ PDF khi đạt yêu cầu." }
+      ]
+    },
+    "forTeachers": {
+      "badge": "Dành cho Giáo viên & Nhà trường",
+      "title": "Toàn quyền quản lý lớp học của bạn",
+      "subtitle": "Từ ngân hàng câu hỏi đến giám sát phòng thi — mọi công cụ giảng dạy IC3 trong một nơi.",
+      "items": [
+        "Quản lý ngân hàng câu hỏi, nhập hàng loạt từ Excel/CSV",
+        "Thiết lập cấu trúc bài thi theo Level & phiên bản",
+        "Theo dõi tiến độ từng học sinh, từng lớp, từng trường",
+        "Giám sát thi trực tiếp, cấu hình thanh toán linh hoạt"
+      ],
+      "cta": "Tôi là Giáo viên"
+    },
+    "ctaBand": {
+      "title": "Sẵn sàng chinh phục IC3?",
+      "subtitle": "Liên hệ trường hoặc giáo viên của bạn để được cấp quyền truy cập, hoặc tự đăng ký để bắt đầu luyện tập ngay.",
+      "cta": "Đăng ký ngay"
+    },
+    "footer": {
+      "tagline": "Nền tảng luyện thi IC3 trực tuyến",
+      "copyright": "© {{year}} IC3-Fighter · Bản quyền bảo lưu",
+      "login": "Đăng nhập",
+      "register": "Đăng ký"
+    }
+  }
+}

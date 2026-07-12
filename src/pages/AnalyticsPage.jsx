@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import {
   BarChart3, Building2, School, Calendar, X, Sparkles, Loader2, AlertCircle, TrendingDown, Layers,
@@ -30,6 +31,7 @@ const Card = ({ title, action, children }) => (
 );
 
 export const AnalyticsPage = () => {
+  const { t } = useTranslation();
   const [levels, setLevels] = useState([]);
   const [schools, setSchools] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -96,11 +98,11 @@ export const AnalyticsPage = () => {
       setBreakdown(breakdownRes.data || []);
       setWorstQuestions((questionsRes.data || []).slice(0, 8));
     } catch (err) {
-      setError(err.message || 'Không tải được dữ liệu phân tích');
+      setError(err.message || t('analytics.errorLoadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [levelId, examType, passFilter, schoolId, className, dateFrom, dateTo, minAttempts, groupBy]);
+  }, [levelId, examType, passFilter, schoolId, className, dateFrom, dateTo, minAttempts, groupBy, t]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -120,9 +122,9 @@ export const AnalyticsPage = () => {
       });
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
-      setAiInsight(data?.insight || 'Không có nhận xét nào được trả về.');
+      setAiInsight(data?.insight || t('analytics.aiNoInsight'));
     } catch (err) {
-      setAiError(err.message || 'Không thể phân tích lúc này');
+      setAiError(err.message || t('analytics.aiErrorFallback'));
     } finally {
       setAiLoading(false);
     }
@@ -133,8 +135,8 @@ export const AnalyticsPage = () => {
       {/* Header */}
       <PageHeader
         icon={BarChart3}
-        title="Phân tích nâng cao"
-        description="Phân bố điểm, so sánh theo lớp/trường/level, và nhận xét từ AI."
+        title={t('analytics.title')}
+        description={t('analytics.description')}
       />
 
       {/* Filter bar */}
@@ -144,7 +146,7 @@ export const AnalyticsPage = () => {
             <Layers className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
             <select value={levelId} onChange={e => setLevelId(e.target.value)}
               className="outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer max-w-[220px]">
-              <option value="">Tất cả Level</option>
+              <option value="">{t('analytics.allLevels')}</option>
               {[...new Set(levels.map(l => l.version))].map(v => (
                 <optgroup key={v} label={v}>
                   {levels.filter(l => l.version === v).map(l => (
@@ -154,13 +156,13 @@ export const AnalyticsPage = () => {
               ))}
             </select>
           </div>
-          <Chip label="Tất cả loại bài" active={!examType} onClick={() => setExamType('')} />
-          <Chip label="Testing" active={examType === 'testing'} onClick={() => setExamType('testing')} />
-          <Chip label="Gmetrix" active={examType === 'gmetrix'} onClick={() => setExamType('gmetrix')} />
+          <Chip label={t('analytics.allTypes')} active={!examType} onClick={() => setExamType('')} />
+          <Chip label={t('analytics.testing')} active={examType === 'testing'} onClick={() => setExamType('testing')} />
+          <Chip label={t('analytics.gmetrix')} active={examType === 'gmetrix'} onClick={() => setExamType('gmetrix')} />
           <span className="w-px h-4 bg-gray-200 dark:bg-slate-700 mx-1" />
-          <Chip label="Tất cả" active={passFilter === 'all'} onClick={() => setPassFilter('all')} />
-          <Chip label="✓ Đạt" active={passFilter === 'pass'} onClick={() => setPassFilter('pass')} />
-          <Chip label="✗ Chưa đạt" active={passFilter === 'fail'} onClick={() => setPassFilter('fail')} />
+          <Chip label={t('analytics.filterAll')} active={passFilter === 'all'} onClick={() => setPassFilter('all')} />
+          <Chip label={t('analytics.filterPass')} active={passFilter === 'pass'} onClick={() => setPassFilter('pass')} />
+          <Chip label={t('analytics.filterFail')} active={passFilter === 'fail'} onClick={() => setPassFilter('fail')} />
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -168,7 +170,7 @@ export const AnalyticsPage = () => {
             <Building2 className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400" />
             <select value={schoolId} onChange={e => setSchoolId(e.target.value)}
               className="outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer">
-              <option value="">Tất cả trường</option>
+              <option value="">{t('analytics.allSchools')}</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
@@ -176,7 +178,7 @@ export const AnalyticsPage = () => {
             <School className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
             <select value={className} onChange={e => setClassName(e.target.value)}
               className="outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer">
-              <option value="">Tất cả lớp</option>
+              <option value="">{t('analytics.allClasses')}</option>
               {classes.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
@@ -190,7 +192,7 @@ export const AnalyticsPage = () => {
           </div>
           {hasActiveFilters && (
             <button onClick={resetFilters} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-semibold">
-              <X className="w-3.5 h-3.5" /> Xóa lọc
+              <X className="w-3.5 h-3.5" /> {t('analytics.clearFilters')}
             </button>
           )}
         </div>
@@ -203,15 +205,15 @@ export const AnalyticsPage = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Phân bố điểm">
+        <Card title={t('analytics.scoreDistributionTitle')}>
           {loading ? <ChartLoading /> : <ScoreDistributionChart data={distribution} />}
         </Card>
 
         <Card
-          title="So sánh trung bình"
+          title={t('analytics.groupComparisonTitle')}
           action={
             <div className="flex gap-1">
-              {[['class', 'Lớp'], ['school', 'Trường'], ['level', 'Level']].map(([v, l]) => (
+              {[['class', t('analytics.groupByClass')], ['school', t('analytics.groupBySchool')], ['level', t('analytics.groupByLevel')]].map(([v, l]) => (
                 <button key={v} onClick={() => setGroupBy(v)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
                     groupBy === v ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : 'text-gray-400 hover:bg-gray-50 dark:text-slate-500 dark:hover:bg-slate-700/40'
@@ -227,17 +229,17 @@ export const AnalyticsPage = () => {
       </div>
 
       <Card
-        title="Câu hỏi sai nhiều nhất"
+        title={t('analytics.worstQuestionsTitle')}
         action={
           <div className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-slate-500">
-            <span>Ngưỡng lượt tối thiểu:</span>
+            <span>{t('analytics.minAttemptsLabel')}</span>
             <input type="number" min={0} value={minAttempts} onChange={e => setMinAttempts(e.target.value)}
               className="w-14 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100" />
           </div>
         }
       >
         {loading ? <ChartLoading /> : worstQuestions.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">Không có dữ liệu phù hợp.</p>
+          <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">{t('analytics.noDataMatch')}</p>
         ) : (
           <div className="space-y-2">
             {worstQuestions.map(q => (
@@ -246,7 +248,7 @@ export const AnalyticsPage = () => {
                   <TrendingDown className="w-3 h-3" /> {q.wrong_pct}%
                 </span>
                 <p className="flex-1 min-w-0 text-sm text-gray-700 dark:text-slate-300 truncate">{stripHtml(q.content)}</p>
-                <span className="flex-shrink-0 text-xs text-gray-400 dark:text-slate-500">{q.level_label} · {q.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {q.exam_number}</span>
+                <span className="flex-shrink-0 text-xs text-gray-400 dark:text-slate-500">{q.level_label} · {q.exam_type === 'testing' ? t('analytics.testing') : t('analytics.gmetrix')} {q.exam_number}</span>
               </div>
             ))}
           </div>
@@ -258,7 +260,7 @@ export const AnalyticsPage = () => {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <h2 className="text-sm font-bold text-gray-800 dark:text-slate-100">Phân tích bằng AI</h2>
+            <h2 className="text-sm font-bold text-gray-800 dark:text-slate-100">{t('analytics.aiTitle')}</h2>
           </div>
           <button
             onClick={runAiAnalysis}
@@ -266,7 +268,7 @@ export const AnalyticsPage = () => {
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50"
           >
             {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-            Phân tích với dữ liệu đang lọc
+            {t('analytics.aiRunButton')}
           </button>
         </div>
         {aiError && <p className="mt-3 text-xs text-red-600 dark:text-red-400">{aiError}</p>}

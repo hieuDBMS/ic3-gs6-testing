@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -9,7 +10,7 @@ import { QuestionRenderer } from '../components/exam/QuestionRenderer';
 import {
   Flag, CheckCircle2, AlertTriangle, X,
   BookOpen, ShieldAlert, Send, LayoutGrid,
-  ChevronLeft, ChevronRight, Maximize, Minimize,
+  ChevronLeft, ChevronRight, Maximize, Minimize, PlayCircle,
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────
@@ -74,7 +75,9 @@ const ExamSkeleton = () => (
 /* ─────────────────────────────────────────────────────────
    Confirm Submit Modal
 ───────────────────────────────────────────────────────── */
-const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => (
+const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
+  const { t } = useTranslation();
+  return (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={onCancel} />
     <div
@@ -97,14 +100,14 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => (
             }
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Xác nhận nộp bài</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('exam.confirmSubmit.title')}</h2>
             {unansweredCount > 0 ? (
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
-                Còn <span className="font-bold text-amber-600 dark:text-amber-400">{unansweredCount} câu chưa trả lời</span>. Bạn vẫn muốn nộp?
+                {t('exam.confirmSubmit.unansweredPre')} <span className="font-bold text-amber-600 dark:text-amber-400">{t('exam.confirmSubmit.unansweredCount', { count: unansweredCount })}</span>{t('exam.confirmSubmit.unansweredPost')}
               </p>
             ) : (
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
-                Bạn đã trả lời tất cả câu hỏi. Xác nhận nộp bài?
+                {t('exam.confirmSubmit.allAnswered')}
               </p>
             )}
           </div>
@@ -116,7 +119,7 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => (
             onClick={onCancel}
             className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors text-sm"
           >
-            Kiểm tra lại
+            {t('exam.confirmSubmit.reviewAgain')}
           </button>
           <button
             onClick={onConfirm}
@@ -126,19 +129,87 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => (
               boxShadow: '0 4px 16px rgba(99,102,241,0.4)',
             }}
           >
-            <Send className="w-4 h-4" /> Nộp bài
+            <Send className="w-4 h-4" /> {t('exam.confirmSubmit.submit')}
           </button>
         </div>
       </div>
     </div>
   </div>
-);
+  );
+};
+
+/* ─────────────────────────────────────────────────────────
+   Resume Session Modal — shown when an `in_progress` attempt
+   already exists for this exam (student closed the tab / navigated
+   away without submitting last time).
+───────────────────────────────────────────────────────── */
+const ResumeModal = ({ examTitle, existingAttempt, onResume, onRestart, loading }) => {
+  const { t } = useTranslation();
+  const startedLabel = new Date(existingAttempt.started_at).toLocaleString('vi-VN', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+  });
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-md" />
+      <div
+        className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+        style={{ animation: 'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
+      >
+        <div className="h-1.5 w-full bg-gradient-to-r from-indigo-400 to-violet-500" />
+        <div className="p-7 space-y-5">
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/40">
+              <PlayCircle className="w-8 h-8 text-indigo-500" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('exam.resume.title')}</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
+                {t('exam.resume.unfinishedPre')} <span className="font-semibold text-gray-700 dark:text-slate-300">{examTitle}</span>.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl p-4 space-y-1.5 text-sm bg-indigo-50/60 dark:bg-indigo-950/20">
+            <p className="text-gray-600 dark:text-slate-400">
+              {t('exam.resume.progressPre')} <span className="font-bold text-gray-900 dark:text-slate-100">{(existingAttempt.current_question_index ?? 0) + 1}</span>
+            </p>
+            <p className="text-gray-600 dark:text-slate-400">
+              {t('exam.resume.startedAtPre')} <span className="font-semibold text-gray-900 dark:text-slate-100">{startedLabel}</span>
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={onRestart}
+              disabled={loading}
+              className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors text-sm disabled:opacity-50"
+            >
+              {t('exam.resume.restart')}
+            </button>
+            <button
+              onClick={onResume}
+              disabled={loading}
+              className="flex-1 py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                boxShadow: '0 4px 16px rgba(99,102,241,0.4)',
+              }}
+            >
+              {t('exam.resume.continue')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /* ─────────────────────────────────────────────────────────
    Refresh Warning Modal (preserved from original)
 ───────────────────────────────────────────────────────── */
 const RefreshWarningModal = ({ onStay, onLeave }) => {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   return (
   <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
@@ -153,18 +224,18 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
             <ShieldAlert className="w-8 h-8 text-rose-500" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Tải lại trang?</h2>
-            <p className="text-xs font-semibold uppercase tracking-widest text-rose-400">Cảnh báo quan trọng</p>
+            <h2 className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('exam.refreshWarning.title')}</h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-rose-400">{t('exam.refreshWarning.subtitle')}</p>
           </div>
         </div>
         <div className="rounded-2xl p-4 space-y-2 text-sm" style={{ background: isDark ? 'rgba(239,68,68,0.1)' : 'linear-gradient(135deg,#fff7ed,#fef2f2)' }}>
           <p className="font-semibold text-orange-700 dark:text-orange-400 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" /> Bài làm sẽ bị mất toàn bộ!
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {t('exam.refreshWarning.warningTitle')}
           </p>
           <ul className="text-gray-600 dark:text-slate-400 space-y-1 pl-6 list-disc leading-relaxed">
-            <li>Tất cả câu trả lời đã chọn sẽ biến mất</li>
-            <li>Thời gian đang chạy không được lưu lại</li>
-            <li>Bạn phải bắt đầu lại từ đầu</li>
+            <li>{t('exam.refreshWarning.bullet1')}</li>
+            <li>{t('exam.refreshWarning.bullet2')}</li>
+            <li>{t('exam.refreshWarning.bullet3')}</li>
           </ul>
         </div>
         <div className="flex gap-3">
@@ -172,14 +243,14 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
             onClick={onLeave}
             className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:border-slate-500 transition-all"
           >
-            Vẫn tải lại
+            {t('exam.refreshWarning.stillReload')}
           </button>
           <button
             onClick={onStay}
             className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all shadow-lg"
             style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)', boxShadow: '0 4px 14px rgba(239,68,68,0.35)' }}
           >
-            Tiếp tục làm bài
+            {t('exam.refreshWarning.continueExam')}
           </button>
         </div>
       </div>
@@ -189,9 +260,60 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
 };
 
 /* ─────────────────────────────────────────────────────────
+   Navigate Away Modal — shown when the student tries to leave
+   the exam via an in-app link (navbar/logo) or the browser
+   back button while an attempt is still in_progress.
+───────────────────────────────────────────────────────── */
+const NavigateAwayModal = ({ onStay, onLeave }) => {
+  const { isDark } = useTheme();
+  const { t } = useTranslation();
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div
+        className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+        style={{ animation: 'refreshModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
+      >
+        <div className="h-1.5 w-full bg-gradient-to-r from-orange-400 via-red-500 to-rose-500" />
+        <div className="p-7 space-y-5">
+          <div className="flex flex-col items-center text-center space-y-3">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: isDark ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#fff7ed,#fee2e2)' }}>
+              <ShieldAlert className="w-8 h-8 text-rose-500" />
+            </div>
+            <h2 className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('exam.navigateAway.title')}</h2>
+          </div>
+          <div className="rounded-2xl p-4 text-sm" style={{ background: isDark ? 'rgba(239,68,68,0.1)' : 'linear-gradient(135deg,#fff7ed,#fef2f2)' }}>
+            <p className="text-gray-600 dark:text-slate-400">
+              {t('exam.navigateAway.subtitle')}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={onLeave}
+              className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:border-slate-500 transition-all"
+            >
+              {t('exam.navigateAway.leave')}
+            </button>
+            <button
+              onClick={onStay}
+              className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all shadow-lg"
+              style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)', boxShadow: '0 4px 14px rgba(239,68,68,0.35)' }}
+            >
+              {t('exam.navigateAway.continueExam')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────
    Mobile Navigator Bottom Sheet
 ───────────────────────────────────────────────────────── */
-const MobileNavSheet = ({ questions, currentIndex, answers, flagged, onSelect, onClose }) => (
+const MobileNavSheet = ({ questions, currentIndex, answers, flagged, onSelect, onClose }) => {
+  const { t } = useTranslation();
+  return (
   <div className="fixed inset-0 z-50 flex flex-col justify-end">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
     <div
@@ -205,7 +327,7 @@ const MobileNavSheet = ({ questions, currentIndex, answers, flagged, onSelect, o
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-slate-700 flex-shrink-0">
-        <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">Danh sách câu hỏi</h3>
+        <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">{t('exam.mobileNav.title')}</h3>
         <button onClick={onClose} className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
           <X className="w-4 h-4 text-gray-600 dark:text-slate-300" />
         </button>
@@ -223,12 +345,14 @@ const MobileNavSheet = ({ questions, currentIndex, answers, flagged, onSelect, o
       </div>
     </div>
   </div>
-);
+  );
+};
 
 /* ═══════════════════════════════════════════════════════════════
    MAIN EXAM PAGE
 ═══════════════════════════════════════════════════════════════ */
 export const ExamPage = () => {
+  const { t } = useTranslation();
   const { examId }  = useParams();
   const navigate    = useNavigate();
   const { user, isSelfRegistered }    = useAuth();
@@ -246,6 +370,9 @@ export const ExamPage = () => {
   const [showRefreshWarn,   setShowRefreshWarn]   = useState(false);
   const [showMobileNav,     setShowMobileNav]     = useState(false);
   const [cheatToast,        setCheatToast]        = useState(null);
+  const [existingAttempt,   setExistingAttempt]   = useState(null);
+  const [resumeLoading,     setResumeLoading]     = useState(false);
+  const [showNavigateAway,  setShowNavigateAway]  = useState(false);
 
   const pendingReloadRef  = useRef(false);
   const isSubmittingRef   = useRef(false);
@@ -256,6 +383,8 @@ export const ExamPage = () => {
   const lastCheatLogRef   = useRef(0);
   const wasFullscreenRef  = useRef(false);
   const manualExitRef     = useRef(false);
+  const pendingNavElRef   = useRef(null);
+  const bypassNavGuardRef = useRef(false);
   const { isFullscreen, toggle: toggleFullscreen } = useExamFullscreen(containerRef);
 
   /* ── Access check for self-registered users ── */
@@ -264,13 +393,80 @@ export const ExamPage = () => {
     supabase.rpc('user_can_access_exam', { p_user_id: user.id, p_exam_id: examId })
       .then(({ data: canAccess }) => {
         if (!canAccess) {
-          navigate('/exam', { replace: true, state: { toast: 'Bạn chưa mua bài thi này.' } });
+          navigate('/exam', { replace: true, state: { toast: t('exam.accessDenied') } });
         }
       });
   }, [isSelfRegistered, user, examId]);
 
   /* ── Init ── */
   useEffect(() => { initExam(); }, [examId]);
+
+  /* ── Navigate-away guard ──
+     react-router-dom v7 here runs on a plain <BrowserRouter>, not a data
+     router, so useBlocker() isn't available (it throws without a data
+     router). Reproduce the same "confirm before leaving" UX manually by
+     intercepting at the DOM level:
+       - any in-app <a href> (navbar/logo, teacher dropdown links)
+       - any element marked data-nav-guard (e.g. Navbar's logout button —
+         it navigates via a button onClick, not a Link, so href-sniffing
+         alone would miss it)
+       - the browser back button (popstate sentinel)
+     On confirm, we re-dispatch the *original* click on the captured element
+     (with the guard bypassed) so it takes its normal action — real Link
+     navigation, or the real logout flow — rather than us guessing a route. */
+  useEffect(() => {
+    if (!attemptId) return;
+
+    const onClick = (e) => {
+      if (isSubmittingRef.current || bypassNavGuardRef.current) return;
+      const target = e.target.closest('a[href], [data-nav-guard]');
+      if (!target) return;
+      if (target.matches('a[href]')) {
+        const href = target.getAttribute('href');
+        if (!href || href.startsWith('http') || href.startsWith('#') || target.target === '_blank') return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      pendingNavElRef.current = target;
+      setShowNavigateAway(true);
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [attemptId]);
+
+  useEffect(() => {
+    if (!attemptId) return;
+
+    // Sentinel history entry: a back-button press pops it instead of leaving
+    // the page, which fires this handler so we can confirm first.
+    window.history.pushState(null, '', window.location.href);
+    const onPopState = () => {
+      if (isSubmittingRef.current) return;
+      window.history.pushState(null, '', window.location.href);
+      pendingNavElRef.current = null;
+      setShowNavigateAway(true);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [attemptId]);
+
+  const handleNavigateAwayLeave = useCallback(() => {
+    setShowNavigateAway(false);
+    const el = pendingNavElRef.current;
+    pendingNavElRef.current = null;
+    if (el) {
+      bypassNavGuardRef.current = true;
+      el.click();
+      setTimeout(() => { bypassNavGuardRef.current = false; }, 0);
+    } else {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
+
+  const handleNavigateAwayStay = useCallback(() => {
+    setShowNavigateAway(false);
+    pendingNavElRef.current = null;
+  }, []);
 
   /* ── Keyboard & beforeunload ── */
   useEffect(() => {
@@ -354,7 +550,7 @@ export const ExamPage = () => {
       event_type: eventType,
     }).then(() => {});
 
-    setCheatToast('Đã phát hiện bạn rời khỏi bài thi — hành vi này được ghi lại.');
+    setCheatToast(t('exam.cheatWarning'));
     setTimeout(() => setCheatToast(null), 4000);
   }, [attemptId, user]);
 
@@ -405,18 +601,38 @@ export const ExamPage = () => {
       setExam(examResult.data);
       setQuestions(qResult.data || []);
 
-      const { data: attempt, error: attemptError } = await supabase
+      // Check for a session left behind (tab closed / navigated away without
+      // submitting) before creating a new attempt — otherwise every re-entry
+      // piles up another `in_progress` row and duplicates the student's card
+      // on LiveMonitorPage.
+      const { data: existing, error: existingError } = await supabase
         .from('exam_attempts')
-        .insert({
-          user_id:         user.id,
-          exam_id:         examId,
-          total_questions: qResult.data?.length || 0,
-          status:          'in_progress',
-        })
-        .select('id')
-        .single();
-      if (attemptError) throw attemptError;
-      setAttemptId(attempt.id);
+        .select('id, started_at, current_question_index')
+        .eq('user_id', user.id)
+        .eq('exam_id', examId)
+        .eq('status', 'in_progress')
+        .eq('is_mock', false)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existingError) throw existingError;
+
+      if (existing) {
+        setExistingAttempt(existing);
+      } else {
+        const { data: attempt, error: attemptError } = await supabase
+          .from('exam_attempts')
+          .insert({
+            user_id:         user.id,
+            exam_id:         examId,
+            total_questions: qResult.data?.length || 0,
+            status:          'in_progress',
+          })
+          .select('id')
+          .single();
+        if (attemptError) throw attemptError;
+        setAttemptId(attempt.id);
+      }
     } catch (error) {
       console.error('Failed to init exam:', error);
       navigate('/exam');
@@ -424,6 +640,42 @@ export const ExamPage = () => {
       setLoading(false);
     }
   };
+
+  const handleResumeAttempt = useCallback(() => {
+    setAttemptId(existingAttempt.id);
+    setCurrentIndex(existingAttempt.current_question_index || 0);
+    setExistingAttempt(null);
+  }, [existingAttempt]);
+
+  const handleRestartAttempt = useCallback(async () => {
+    setResumeLoading(true);
+    try {
+      await supabase
+        .from('exam_attempts')
+        .update({ status: 'auto_submitted', submitted_at: new Date().toISOString() })
+        .eq('id', existingAttempt.id);
+
+      const { data: attempt, error: attemptError } = await supabase
+        .from('exam_attempts')
+        .insert({
+          user_id:         user.id,
+          exam_id:         examId,
+          total_questions: questions.length,
+          status:          'in_progress',
+        })
+        .select('id')
+        .single();
+      if (attemptError) throw attemptError;
+
+      setAttemptId(attempt.id);
+      setExistingAttempt(null);
+    } catch (error) {
+      console.error('Failed to restart exam:', error);
+      navigate('/exam');
+    } finally {
+      setResumeLoading(false);
+    }
+  }, [existingAttempt, user, examId, questions.length, navigate]);
 
   const handleAnswerChange = useCallback((val) => {
     const q = questions[currentIndex];
@@ -469,7 +721,7 @@ export const ExamPage = () => {
         }
       }
 
-      const { data: result, error: rpcError } = await supabase.rpc('submit_exam_attempt', {
+      const { error: rpcError } = await supabase.rpc('submit_exam_attempt', {
         p_attempt_id: attemptId,
         p_time_spent: timeSpent,
         p_answers:    p_answers,
@@ -485,7 +737,7 @@ export const ExamPage = () => {
       if (error?.message?.includes('already_submitted')) {
         navigate(`/exam/${attemptId}/result`);
       } else {
-        alert('Lỗi khi nộp bài! Vui lòng thử lại.');
+        alert(t('exam.submitError'));
         isSubmittingRef.current = false;
       }
     } finally {
@@ -510,9 +762,21 @@ export const ExamPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="text-center space-y-3 p-8">
           <BookOpen className="w-12 h-12 text-gray-300 dark:text-slate-700 mx-auto" />
-          <p className="text-gray-500 dark:text-slate-400 font-medium">Bài thi này chưa có câu hỏi.</p>
+          <p className="text-gray-500 dark:text-slate-400 font-medium">{t('exam.noQuestions')}</p>
         </div>
       </div>
+    );
+  }
+
+  if (existingAttempt && !attemptId) {
+    return (
+      <ResumeModal
+        examTitle={exam.title}
+        existingAttempt={existingAttempt}
+        onResume={handleResumeAttempt}
+        onRestart={handleRestartAttempt}
+        loading={resumeLoading}
+      />
     );
   }
 
@@ -523,11 +787,11 @@ export const ExamPage = () => {
     : exam.title;
 
   const TYPE_LABEL = {
-    choice:    'Chọn một',
-    multi:     'Chọn nhiều',
-    truefalse: 'Đúng / Sai',
-    hotspot:   'Chọn vùng ảnh',
-    dragdrop:  'Kéo thả',
+    choice:    t('exam.types.choice'),
+    multi:     t('exam.types.multi'),
+    truefalse: t('exam.types.truefalse'),
+    hotspot:   t('exam.types.hotspot'),
+    dragdrop:  t('exam.types.dragdrop'),
   };
   const TYPE_COLOR = {
     choice:    'bg-indigo-100 text-indigo-700 border-indigo-200',
@@ -582,6 +846,12 @@ export const ExamPage = () => {
           onClose={() => setShowMobileNav(false)}
         />
       )}
+      {showNavigateAway && (
+        <NavigateAwayModal
+          onStay={handleNavigateAwayStay}
+          onLeave={handleNavigateAwayLeave}
+        />
+      )}
 
       {/* ═══════════════════════════════════════════════════════
           ASIDE — dark sidebar (desktop) / top bar (mobile)
@@ -598,7 +868,7 @@ export const ExamPage = () => {
             <BookOpen className="w-4 h-4 text-white" />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">Đang làm bài</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">{t('exam.inProgress')}</p>
             <h1 className="text-sm font-bold text-white truncate mt-0.5">{examLabel}</h1>
           </div>
         </div>
@@ -637,11 +907,11 @@ export const ExamPage = () => {
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="rounded-xl py-2.5 text-center" style={{ background: 'rgba(16,185,129,0.12)' }}>
               <p className="text-xl font-bold text-emerald-400 leading-none">{answeredCount}</p>
-              <p className="text-[10px] text-emerald-600/70 mt-0.5">Đã làm</p>
+              <p className="text-[10px] text-emerald-600/70 mt-0.5">{t('exam.answered')}</p>
             </div>
             <div className="rounded-xl py-2.5 text-center" style={{ background: 'rgba(255,255,255,0.06)' }}>
               <p className="text-xl font-bold leading-none" style={{ color: '#64748B' }}>{unanswered}</p>
-              <p className="text-[10px] mt-0.5" style={{ color: '#475569' }}>Chưa làm</p>
+              <p className="text-[10px] mt-0.5" style={{ color: '#475569' }}>{t('exam.unanswered')}</p>
             </div>
           </div>
           <button
@@ -654,8 +924,8 @@ export const ExamPage = () => {
             }}
           >
             {submitting
-              ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Đang nộp...</>
-              : <><Send className="w-4 h-4" /> Nộp bài</>
+              ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('exam.submitting')}</>
+              : <><Send className="w-4 h-4" /> {t('exam.submit')}</>
             }
           </button>
         </div>
@@ -705,13 +975,13 @@ export const ExamPage = () => {
             }`}
           >
             <Flag className={`w-3.5 h-3.5 ${isFlagged ? 'fill-amber-400' : ''}`} />
-            <span className="hidden sm:inline">{isFlagged ? 'Đã đánh dấu' : 'Đánh dấu'}</span>
+            <span className="hidden sm:inline">{isFlagged ? t('exam.flagged') : t('exam.flag')}</span>
           </button>
 
           {/* Fullscreen toggle */}
           <button
             onClick={() => { if (isFullscreen) manualExitRef.current = true; toggleFullscreen(); }}
-            title={isFullscreen ? 'Thoát toàn màn hình (F11)' : 'Toàn màn hình'}
+            title={isFullscreen ? t('exam.exitFullscreenTitle') : t('exam.enterFullscreenTitle')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
               isFullscreen
                 ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm dark:bg-indigo-950/40 dark:border-indigo-700 dark:text-indigo-300'
@@ -719,8 +989,8 @@ export const ExamPage = () => {
             }`}
           >
             {isFullscreen
-              ? <><Minimize className="w-3.5 h-3.5" /><span className="hidden sm:inline">Thu nhỏ</span></>
-              : <><Maximize className="w-3.5 h-3.5" /><span className="hidden sm:inline">Toàn màn hình</span></>
+              ? <><Minimize className="w-3.5 h-3.5" /><span className="hidden sm:inline">{t('exam.minimize')}</span></>
+              : <><Maximize className="w-3.5 h-3.5" /><span className="hidden sm:inline">{t('exam.fullscreen')}</span></>
             }
           </button>
         </div>
@@ -744,11 +1014,11 @@ export const ExamPage = () => {
           <button
             onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
             disabled={currentIndex === 0}
-            title="Câu trước (←)"
+            title={t('exam.prevTitle')}
             className="flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 bg-white hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/50 dark:border-slate-600 dark:text-slate-300 dark:bg-slate-800 dark:hover:border-indigo-500 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Trước</span>
+            <span className="hidden sm:inline">{t('exam.prev')}</span>
           </button>
 
           {/* Mobile centre: counter + nav sheet + submit */}
@@ -767,7 +1037,7 @@ export const ExamPage = () => {
               style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
             >
               <Send className="w-3.5 h-3.5" />
-              Nộp
+              {t('exam.submitShort')}
             </button>
           </div>
 
@@ -775,21 +1045,21 @@ export const ExamPage = () => {
           <div className="hidden md:flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-slate-500 select-none">
             <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 border border-gray-200 dark:bg-slate-700 dark:border-slate-600">←</kbd>
             <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 border border-gray-200 dark:bg-slate-700 dark:border-slate-600">→</kbd>
-            <span className="text-gray-300 dark:text-slate-600">để chuyển câu</span>
+            <span className="text-gray-300 dark:text-slate-600">{t('exam.navHint')}</span>
           </div>
 
           {/* Next */}
           <button
             onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))}
             disabled={currentIndex === questions.length - 1}
-            title="Câu tiếp theo (→)"
+            title={t('exam.nextTitle')}
             className="flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             style={currentIndex === questions.length - 1
               ? { background: isDark ? '#334155' : '#E5E7EB', color: isDark ? '#64748B' : '#9CA3AF' }
               : { background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }
             }
           >
-            <span className="hidden sm:inline">Tiếp</span>
+            <span className="hidden sm:inline">{t('exam.next')}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

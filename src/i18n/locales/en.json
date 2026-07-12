@@ -1,0 +1,166 @@
+{
+  "common": {
+    "loading": "Loading..."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "practice": "Practice",
+    "mockExam": "Mock Exam",
+    "flashcard": "Flashcard",
+    "payments": "Payments",
+    "manage": "Manage",
+    "logout": "Log out",
+    "openMenu": "Open menu",
+    "themeToLight": "Light mode",
+    "themeToDark": "Dark mode",
+    "language": "Language",
+    "roleTeacher": "Teacher",
+    "roleStudentFull": "Student (Full)",
+    "roleStudent": "Student",
+    "teacherToolsHeader": "Teacher Tools",
+    "teacherMenuMobile": "Teacher Tools",
+    "teacher": {
+      "questions": { "label": "Questions", "desc": "Manage the question bank" },
+      "examStructure": { "label": "Exam Structure", "desc": "Configure exams & levels" },
+      "students": { "label": "Students", "desc": "Track student progress" },
+      "paymentSettings": { "label": "Payment Settings", "desc": "Manage payments" },
+      "questionStats": { "label": "Missed Questions", "desc": "System-wide statistics" },
+      "liveMonitor": { "label": "Live Monitor", "desc": "Watch classes in progress" },
+      "analytics": { "label": "Advanced Analytics", "desc": "Charts & AI insights" }
+    }
+  },
+  "auth": {
+    "login": {
+      "badge": "Internet & Computing Core",
+      "heroLine1": "The online",
+      "heroLine2": "IC3 exam system",
+      "heroSubtitle": "Practice and test your computing skills against the international IC3 GS6 / GS7 / GS8 standard.",
+      "features": [
+        "IC3 online exams, international standard",
+        "Secure, auto-submits when time runs out",
+        "Instant results, progress tracking"
+      ],
+      "copyright": "© {{year}} IC3 Exam Platform · All rights reserved",
+      "mobileSubtitle": "Online exam system",
+      "title": "Sign in",
+      "subtitle": "Enter your account details to continue",
+      "usernameLabel": "Username or Email",
+      "usernamePlaceholder": "Username or email...",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password...",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "submitting": "Signing in...",
+      "submit": "Sign in",
+      "noAccount": "Don't have an account?",
+      "registerNow": "Register now",
+      "forgotPassword": "Contact your teacher if you forgot your password.",
+      "errorInvalid": "Incorrect username/email or password. Please try again."
+    },
+    "register": {
+      "tagline": "IC3 Exam Prep",
+      "badge": "Free account",
+      "heroLine1": "Start your journey",
+      "heroLine2": "to IC3 mastery",
+      "heroSubtitle": "Sign up to access the IC3 GS6 / GS7 / GS8 international exam prep system.",
+      "features": [
+        "Quick sign-up, no email confirmation needed",
+        "Practice with hundreds of real questions",
+        "Track your own learning progress"
+      ],
+      "copyright": "© {{year}} IC3-Fighter · All rights reserved",
+      "mobileSubtitle": "Create a new account",
+      "title": "Sign up",
+      "subtitle": "Create an account to start practicing",
+      "successTitle": "Registration successful!",
+      "successSubtitle": "Redirecting to the sign-in page...",
+      "fullNameLabel": "Full name *",
+      "fullNamePlaceholder": "Jane Doe",
+      "usernameLabel": "Username *",
+      "usernamePlaceholder": "example_123",
+      "usernameHint": "Letters, numbers and underscores only. Minimum 4 characters.",
+      "passwordLabel": "Password *",
+      "passwordPlaceholder": "Minimum 6 characters",
+      "confirmPasswordLabel": "Confirm password *",
+      "confirmPasswordPlaceholder": "Re-enter your password",
+      "passwordMismatchHint": "Passwords don't match",
+      "submitting": "Signing up...",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "loginNow": "Sign in now",
+      "errorMismatch": "Passwords don't match.",
+      "errorPasswordLength": "Password must be at least 6 characters.",
+      "errorUsernameLength": "Username must be at least 4 characters.",
+      "errorUsernameFormat": "Username can only contain letters, numbers and underscores.",
+      "errorGeneric": "Something went wrong. Please try again."
+    }
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "howItWorks": "How it works",
+      "forTeachers": "For Teachers",
+      "login": "Sign in",
+      "register": "Sign up"
+    },
+    "hero": {
+      "badge": "Internet & Computing Core Certification",
+      "titleLine1": "Master the",
+      "titleLine2": "IC3",
+      "titleLine3": "certification, step by step",
+      "subtitle": "An online prep platform for IC3 GS6 / GS7 / GS8 — a question bank that mirrors the real exam structure, mock exams on the real IC3 scoring scale, flashcard review, and a certificate the moment you pass.",
+      "ctaPrimary": "Get started for free",
+      "ctaSecondary": "I already have an account"
+    },
+    "trustBar": {
+      "gs6": "IC3 GS6",
+      "gs7": "IC3 GS7",
+      "gs8": "IC3 GS8",
+      "quote": "All three IC3 exam versions, fully supported on one platform"
+    },
+    "features": {
+      "title": "Everything you need to earn your IC3 certification",
+      "subtitle": "Purpose-built for IC3 exam prep and teaching — not a generic LMS.",
+      "items": [
+        { "title": "Practice mapped to the real structure", "desc": "Exercises organized by Level 1-3 and Testing/GMetrix for each GS6/GS7/GS8 version." },
+        { "title": "Mock exams on the real IC3 scale", "desc": "GMetrix-style simulation scored 0-1000, with the same 700-point pass mark as the real exam." },
+        { "title": "Fast flashcard review", "desc": "Flip-card study, shuffled questions, instant self-scoring for every question type." },
+        { "title": "Live exam monitoring", "desc": "Teachers watch classes sit exams in real time, with tab-switch and fullscreen-exit detection." },
+        { "title": "Analytics & AI insights", "desc": "Score distribution charts, most-missed-question stats, and AI-generated commentary per class or school." },
+        { "title": "Completion certificates", "desc": "Instant PDF certificate on passing, with a full attempt history kept for every student." }
+      ]
+    },
+    "howItWorks": {
+      "title": "Get started in 4 steps",
+      "steps": [
+        { "title": "Create an account", "desc": "Sign up with just a username — no email confirmation required." },
+        { "title": "Get access", "desc": "Your teacher or school grants access, or you purchase exams as needed." },
+        { "title": "Practice & review", "desc": "Work through practice exams by Level, then review quickly with flashcards." },
+        { "title": "Sit a mock exam & get certified", "desc": "Take a mock exam on the real IC3 scale and download your certificate on passing." }
+      ]
+    },
+    "forTeachers": {
+      "badge": "For Teachers & Schools",
+      "title": "Complete control over your classroom",
+      "subtitle": "From the question bank to exam-room monitoring — every IC3 teaching tool in one place.",
+      "items": [
+        "Manage the question bank, bulk-import from Excel/CSV",
+        "Configure exam structure by Level & version",
+        "Track progress per student, per class, per school",
+        "Live exam monitoring, flexible payment configuration"
+      ],
+      "cta": "I'm a teacher"
+    },
+    "ctaBand": {
+      "title": "Ready to conquer IC3?",
+      "subtitle": "Contact your school or teacher for access, or register yourself and start practicing right away.",
+      "cta": "Sign up now"
+    },
+    "footer": {
+      "tagline": "The online IC3 exam prep platform",
+      "copyright": "© {{year}} IC3-Fighter · All rights reserved",
+      "login": "Sign in",
+      "register": "Sign up"
+    }
+  }
+}

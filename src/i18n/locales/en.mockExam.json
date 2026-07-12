@@ -1,0 +1,231 @@
+{
+  "mockExam": {
+    "confirmModal": {
+      "title": "Confirm Submission",
+      "unansweredPrefix": "You have",
+      "unansweredCount": "{{count}} unanswered question(s)",
+      "unansweredSuffix": "Do you still want to submit?",
+      "allAnsweredMessage": "You have answered all questions. Confirm submission?",
+      "reviewButton": "Review Again",
+      "submitButton": "Submit"
+    },
+    "refreshModal": {
+      "title": "Reload the page?",
+      "warningBadge": "Important Warning",
+      "autoSubmitWarning": "Your exam will be submitted automatically!",
+      "dataUnchanged": "Question data will not be affected.",
+      "choicesMayBeLost": "However, your selected answers may be lost if you reload.",
+      "leaveAnyway": "Reload Anyway",
+      "stayButton": "Continue Exam"
+    },
+    "navigateAwayModal": {
+      "title": "Are you sure you want to leave the exam?",
+      "message": "Your progress will be saved. You can come back and continue the exam later.",
+      "leaveButton": "Leave",
+      "stayButton": "Continue Exam"
+    },
+    "mobileNavSheet": {
+      "title": "Question List"
+    },
+    "errors": {
+      "submitFailed": "Failed to submit! Please try again.",
+      "loadFailed": "Failed to load the mock exam."
+    },
+    "typeLabels": {
+      "choice": "Single Choice",
+      "multi": "Multiple Choice",
+      "truefalse": "True / False",
+      "hotspot": "Select Region",
+      "dragdrop": "Drag & Drop"
+    },
+    "sidebar": {
+      "headerLabel": "MOCK EXAM",
+      "mobileTitle": "Mock Exam",
+      "answered": "Answered",
+      "unanswered": "Unanswered",
+      "submitting": "Submitting...",
+      "submitButton": "Submit"
+    },
+    "flag": {
+      "flagged": "Flagged",
+      "unflagged": "Flag"
+    },
+    "fullscreen": {
+      "exit": "Exit Fullscreen",
+      "enter": "Fullscreen",
+      "exitShort": "Minimize"
+    },
+    "nav": {
+      "prevTitle": "Previous question (←)",
+      "prev": "Previous",
+      "nextTitle": "Next question (→)",
+      "next": "Next",
+      "submitShort": "Submit",
+      "keyboardHint": "to navigate"
+    }
+  },
+  "mockExamSetup": {
+    "badge": "Mock Exam",
+    "title": "IC3 Certification Mock Exam",
+    "subtitle": "The system will randomly select 45 questions from all exams within a Level. Your score will be converted to the standard IC3 global 1000-point scale.",
+    "chooseVersion": "Choose Version",
+    "noExamsForVersion": "No exams available for this version yet.",
+    "trialBadge": "Trial",
+    "questionsFull": "45 Questions",
+    "questionsTrial": "10 Questions (Trial)",
+    "examMeta": "• 50 Minutes • Passing score: 700/1000",
+    "paymentRequired": "Purchase all exercises in this Level to take the full 45-question mock exam.",
+    "gmetrixMissing": "No GMetrix exam available for this Level yet, mock exam is temporarily unavailable.",
+    "creating": "Creating...",
+    "gmetrixMissingButton": "No GMetrix Yet",
+    "startButton": "Start Mock Exam",
+    "errors": {
+      "noQuestions": "No questions available for this Level.",
+      "createFailedPrefix": "Failed to create mock exam: "
+    }
+  },
+  "mockResult": {
+    "loading": "Loading results...",
+    "notFound": {
+      "title": "Result Not Found",
+      "message": "This mock exam attempt doesn't exist or you don't have permission to view it."
+    },
+    "backToReview": "Back to Review List",
+    "passedTitle": "Congratulations!",
+    "failedTitle": "Keep Practicing!",
+    "subtitle": "You have completed the Mock Exam",
+    "stats": {
+      "questionCount": "Questions",
+      "time": "Time"
+    },
+    "homeLink": "Back to Home"
+  },
+  "flashcardList": {
+    "hero": {
+      "badge": "Flashcard · IC3",
+      "titlePart1": "Smart",
+      "titlePart2": "Review",
+      "subtitle": "Interactive practice — pick an answer, see results instantly, automatically review missed questions.",
+      "cardsUnit": "cards",
+      "levelsUnit": "levels",
+      "versionLabel": "Version"
+    },
+    "level": {
+      "examCountSuffix": "exams",
+      "emptyLevel": "No questions available in this level yet."
+    },
+    "examCard": {
+      "gmetrixLabel": "Gmetrix",
+      "testingLabel": "Testing",
+      "purchased": "Purchased",
+      "pending": "Pending",
+      "notPurchased": "Not Purchased",
+      "durationUnit": "min",
+      "studyNow": "Study Now",
+      "continuePayment": "Continue Payment",
+      "cancelTransactionTitle": "Cancel Transaction",
+      "buyNow": "Buy Now"
+    },
+    "cancelSheet": {
+      "title": "Cancel Transaction?",
+      "subtitle": "This action cannot be undone",
+      "messagePrefix": "Transaction",
+      "messageSuffix": "will be deleted. You can purchase again anytime.",
+      "keepButton": "Keep It",
+      "cancelling": "Cancelling...",
+      "confirmCancelButton": "Confirm Cancel"
+    }
+  },
+  "flashcard": {
+    "typeLabels": {
+      "choice": "Single Choice",
+      "multi": "Multiple Choice",
+      "dragdrop": "Matching",
+      "truefalse": "True / False",
+      "hotspot": "Select Region"
+    },
+    "multi": {
+      "hint": "Select all correct answers"
+    },
+    "trueFalse": {
+      "true": "True",
+      "false": "False",
+      "answerLabel": "Answer"
+    },
+    "dragDrop": {
+      "resultTitle": "Matching Results",
+      "notSelected": "Not selected",
+      "correctAnswer": "Correct: {{value}}",
+      "instructionTitle": "Drag & Drop",
+      "instructionPrefix": "Drag each card into its matching zone. On mobile:",
+      "tapCard": "tap a card",
+      "instructionMiddle": "then",
+      "tapZone": "tap a zone",
+      "instructionSuffix": "to place it.",
+      "poolLabel": "Card Pool",
+      "cardsRemaining": "{{count}} cards left",
+      "allPlaced": "All cards placed!",
+      "selectZoneHint": "Pick a zone",
+      "zoneCardCount": "{{count}} cards",
+      "dropHereActive": "Drop here!",
+      "dropHerePlaceholder": "Drag a card here",
+      "tapToReturn": "Tap to return to pool",
+      "progressCount": "{{done}}/{{total}} cards",
+      "resetButton": "Reset"
+    },
+    "hotspot": {
+      "hintSingle": "Click the 1 correct region on the image",
+      "hintMulti": "Click {{count}} correct regions on the image",
+      "selectedCount": "· Selected {{count}}",
+      "imageAlt": "Hotspot",
+      "legend": {
+        "correctSelected": "Correct & selected",
+        "correctMissed": "Correct but missed",
+        "wrongSelected": "Wrong but selected"
+      }
+    },
+    "result": {
+      "correctTitle": "🎉 Correct!",
+      "wrongTitle": "❌ Not quite",
+      "correctSubtitle": "Great job, keep going!",
+      "wrongSubtitle": "See the correct answer above, keep trying!"
+    },
+    "summary": {
+      "grades": {
+        "excellent": { "title": "Excellent!", "sub": "You've mastered this material!" },
+        "good": { "title": "Well done!", "sub": "Keep practicing!" },
+        "needsWork": { "title": "Needs more practice!", "sub": "Persistence leads to success!" }
+      },
+      "totalQuestions": "{{count}} questions",
+      "correctLabel": "Correct",
+      "wrongLabel": "Wrong",
+      "skippedLabel": "Skipped",
+      "accuracyLabel": "Accuracy",
+      "retryWrongButton": "Retry Wrong ({{count}})",
+      "retryAllButton": "Retry All"
+    },
+    "quizCard": {
+      "reviewBadge": "Review",
+      "questionImageAlt": "Question",
+      "skipTwice": "Skip Again",
+      "skip": "Skip",
+      "checkAnswer": "Check Answer",
+      "nextQuestion": "Next Question",
+      "viewResults": "View Results"
+    },
+    "loading": "Loading flashcards...",
+    "noQuestions": "This exam has no questions yet.",
+    "chooseAnother": "Choose another exam",
+    "shuffleButton": "Shuffle",
+    "keyHints": {
+      "checkNext": "Check / Next",
+      "skip": "Skip"
+    },
+    "pendingReview": "{{count}} pending review",
+    "finishButton": "Finish",
+    "reviewBanner": {
+      "title": "Reviewing Skipped Questions",
+      "remaining": "{{count}} question(s) remaining"
+    }
+  }
+}

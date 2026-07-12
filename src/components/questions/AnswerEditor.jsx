@@ -1,4 +1,4 @@
-import React, { useId } from 'react';
+import { useId } from "react";
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { ImageUploader } from './ImageUploader';
 import { RichTextEditor } from './RichTextEditor';

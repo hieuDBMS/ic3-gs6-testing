@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from '../lib/supabase';
-import { Link, useNavigate } from 'react-router-dom';
-import { Monitor, BookOpen, PlayCircle, Loader2, Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Monitor, PlayCircle, Loader2, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const VERSION_STYLES = {
@@ -21,6 +22,7 @@ const Skeleton = () => (
 );
 
 export const MockExamSetupPage = () => {
+  const { t } = useTranslation();
   const { user, isSelfRegistered } = useAuth();
   const navigate = useNavigate();
   const [allLevels, setAllLevels] = useState([]);
@@ -78,7 +80,7 @@ export const MockExamSetupPage = () => {
         data.purchases.forEach(p => { map[p.exam_id] = p; });
         setPurchases(map);
       }
-    } catch {}
+    } catch { /* non-critical: setup page still renders without purchase status */ }
     finally { setPurchasesLoaded(true); }
   }, []);
 
@@ -96,7 +98,7 @@ export const MockExamSetupPage = () => {
         p_user_id: user.id
       });
       if (error) {
-        if (error.message.includes('no_questions_found')) throw new Error('Không có câu hỏi nào cho Level này.');
+        if (error.message.includes('no_questions_found')) throw new Error(t('mockExamSetup.errors.noQuestions'));
         throw error;
       }
       if (attemptId) {
@@ -104,7 +106,7 @@ export const MockExamSetupPage = () => {
       }
     } catch (err) {
       console.error(err);
-      alert('Không thể tạo đề thi thử: ' + err.message);
+      alert(t('mockExamSetup.errors.createFailedPrefix') + err.message);
     } finally {
       setCreatingMock(null);
     }
@@ -139,20 +141,20 @@ export const MockExamSetupPage = () => {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-400/20 border border-red-400/25 mb-4">
                 <PlayCircle className="w-3.5 h-3.5 text-red-300" />
-                <span className="text-red-300 text-xs font-semibold tracking-wide uppercase">Mock Exam</span>
+                <span className="text-red-300 text-xs font-semibold tracking-wide uppercase">{t('mockExamSetup.badge')}</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                Thi thử chứng chỉ IC3
+                {t('mockExamSetup.title')}
               </h1>
               <p className="mt-2 text-red-100/70 text-sm max-w-lg leading-relaxed">
-                Hệ thống sẽ ngẫu nhiên chọn ra 45 câu hỏi từ tất cả các bài thi trong một Level. Điểm số sẽ được quy đổi theo thang điểm 1000 chuẩn IC3 toàn cầu.
+                {t('mockExamSetup.subtitle')}
               </p>
             </div>
           </div>
 
           {/* ── Version selector ── */}
           <div className="mt-8">
-            <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-3">Chọn phiên bản</p>
+            <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-3">{t('mockExamSetup.chooseVersion')}</p>
             <div className="flex flex-wrap gap-3">
               {availableVersions.map(v => {
                 const active = selectedVersion === v;
@@ -185,7 +187,7 @@ export const MockExamSetupPage = () => {
           <div className="space-y-4">
             {filteredLevels.length === 0 && (
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center border border-slate-100 dark:border-slate-700 shadow-sm">
-                <p className="text-slate-500 dark:text-slate-400">Chưa có bài thi nào cho phiên bản này.</p>
+                <p className="text-slate-500 dark:text-slate-400">{t('mockExamSetup.noExamsForVersion')}</p>
               </div>
             )}
             {filteredLevels.map((level, idx) => {
@@ -218,21 +220,21 @@ export const MockExamSetupPage = () => {
                           {level.version} — {level.label}
                         </h2>
                         {!isFullyPaid && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide dark:bg-amber-950/40 dark:text-amber-300">Dùng thử</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide dark:bg-amber-950/40 dark:text-amber-300">{t('mockExamSetup.trialBadge')}</span>
                         )}
                       </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                        {isFullyPaid ? '45 Câu hỏi' : '10 Câu hỏi (Dùng thử)'} • 50 Phút • Mức đạt: 700/1000
+                        {isFullyPaid ? t('mockExamSetup.questionsFull') : t('mockExamSetup.questionsTrial')} {t('mockExamSetup.examMeta')}
                       </p>
                       {!isFullyPaid && !isGmetrixMissing && (
                         <div className="mt-2 text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800/60 flex items-start sm:items-center gap-1.5 max-w-sm">
                           <Lock className="w-3.5 h-3.5 mt-0.5 sm:mt-0 flex-shrink-0" />
-                          <span>Thanh toán toàn bộ bài tập của Level này để thi thử đầy đủ 45 câu.</span>
+                          <span>{t('mockExamSetup.paymentRequired')}</span>
                         </div>
                       )}
                       {isGmetrixMissing && (
                         <div className="mt-2 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 dark:text-slate-400 dark:bg-slate-700/50 dark:border-slate-600">
-                          Chưa có bài thi GMetrix cho Level này, tạm thời không thể thi thử.
+                          {t('mockExamSetup.gmetrixMissing')}
                         </div>
                       )}
                     </div>
@@ -244,7 +246,7 @@ export const MockExamSetupPage = () => {
                     style={isGmetrixMissing ? { background: '#9CA3AF' } : { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' }}
                   >
                     {creatingMock === level.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <PlayCircle className="w-5 h-5" />}
-                    {creatingMock === level.id ? 'Đang tạo...' : isGmetrixMissing ? 'Chưa có GMetrix' : 'Bắt đầu thi thử'}
+                    {creatingMock === level.id ? t('mockExamSetup.creating') : isGmetrixMissing ? t('mockExamSetup.gmetrixMissingButton') : t('mockExamSetup.startButton')}
                   </button>
                 </div>
               </div>

@@ -1,8 +1,10 @@
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { ProtectedRoute } from './components/shared/ProtectedRoute';
+import { RootRoute } from './components/shared/RootRoute';
 import { Navbar } from './components/shared/Navbar';
 
 /* ─── Lazy-loaded pages ─────────────────────────────────────────────────────
@@ -62,12 +64,14 @@ const Layout = () => (
 
 function App() {
   return (
+    <LanguageProvider>
     <ThemeProvider>
       <AuthProvider>
         <Router>
           <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
             <Suspense fallback={<PageFallback />}>
               <Routes>
+                <Route path="/"          element={<RootRoute />} />
                 <Route path="/login"    element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
 
@@ -103,7 +107,6 @@ function App() {
                   </Route>
                 </Route>
 
-                <Route path="/"  element={<Navigate to="/dashboard" replace />} />
                 <Route path="*"  element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </Suspense>
@@ -111,6 +114,7 @@ function App() {
         </Router>
       </AuthProvider>
     </ThemeProvider>
+    </LanguageProvider>
   );
 }
 

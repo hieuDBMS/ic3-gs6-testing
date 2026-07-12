@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
-import { Award, ArrowLeft, Target, Clock, AlertTriangle, BookOpen, RefreshCcw } from 'lucide-react';
+import { Award, ArrowLeft, Target, Clock, AlertTriangle, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const MockResultPage = () => {
+  const { t } = useTranslation();
   const { attemptId } = useParams();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [attempt, setAttempt] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +38,7 @@ export const MockResultPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
         <div className="text-center space-y-4">
           <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto" />
-          <p className="text-gray-500 dark:text-slate-400 font-medium">Đang tải kết quả...</p>
+          <p className="text-gray-500 dark:text-slate-400 font-medium">{t('mockResult.loading')}</p>
         </div>
       </div>
     );
@@ -48,10 +49,10 @@ export const MockResultPage = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
         <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 max-w-sm w-full mx-4">
           <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-2">Không tìm thấy kết quả</h2>
-          <p className="text-gray-500 dark:text-slate-400 mb-6 text-sm">Bài thi thử không tồn tại hoặc bạn không có quyền xem.</p>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-2">{t('mockResult.notFound.title')}</h2>
+          <p className="text-gray-500 dark:text-slate-400 mb-6 text-sm">{t('mockResult.notFound.message')}</p>
           <Link to="/exam" className="inline-flex items-center justify-center w-full py-2.5 px-4 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors">
-            Về danh sách ôn tập
+            {t('mockResult.backToReview')}
           </Link>
         </div>
       </div>
@@ -71,7 +72,7 @@ export const MockResultPage = () => {
           <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center group-hover:border-slate-300 dark:group-hover:border-slate-600 group-hover:shadow-sm transition-all">
             <ArrowLeft className="w-4 h-4" />
           </div>
-          Về danh sách ôn tập
+          {t('mockResult.backToReview')}
         </Link>
 
         {/* Card */}
@@ -87,10 +88,10 @@ export const MockResultPage = () => {
             </div>
 
             <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight mb-2">
-              {isPassed ? 'Chúc mừng bạn!' : 'Cần cố gắng thêm!'}
+              {isPassed ? t('mockResult.passedTitle') : t('mockResult.failedTitle')}
             </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium">
-              Bạn đã hoàn thành bài Thi Thử (Mock Exam)
+              {t('mockResult.subtitle')}
             </p>
 
             {/* Score Ring */}
@@ -118,14 +119,14 @@ export const MockResultPage = () => {
               <div className="bg-slate-50 dark:bg-slate-700/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 justify-center mb-1">
                   <Target className="w-4 h-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Số câu hỏi</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">{t('mockResult.stats.questionCount')}</span>
                 </div>
                 <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{attempt.total_questions}</p>
               </div>
               <div className="bg-slate-50 dark:bg-slate-700/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 justify-center mb-1">
                   <Clock className="w-4 h-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Thời gian</span>
+                  <span className="text-xs font-bold uppercase tracking-wider">{t('mockResult.stats.time')}</span>
                 </div>
                 <p className="text-xl font-bold text-slate-900 dark:text-slate-100">{minutes}p {seconds}s</p>
               </div>
@@ -138,7 +139,7 @@ export const MockResultPage = () => {
                 className="flex-1 py-3.5 px-6 rounded-xl border-2 border-slate-200 text-slate-600 font-bold hover:bg-slate-50 hover:border-slate-300 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:border-slate-500 transition-colors flex items-center justify-center gap-2"
               >
                 <BookOpen className="w-4 h-4" />
-                Về trang chủ
+                {t('mockResult.homeLink')}
               </Link>
             </div>
 

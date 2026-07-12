@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { AttemptHistoryTable } from '../components/dashboard/AttemptHistoryTable';
 import { StudentOverviewTable } from '../components/dashboard/StudentOverviewTable';
@@ -83,6 +84,7 @@ const useTeacherStats = (enabled) => {
 
 /* ─── Main DashboardPage ─── */
 export const DashboardPage = () => {
+  const { t } = useTranslation();
   const { user, profile, isTeacher } = useAuth();
 
   const studentStats = useStudentStats(!isTeacher ? user?.id : null);
@@ -92,7 +94,7 @@ export const DashboardPage = () => {
 
   const initials = getInitials(profile.full_name);
   const avatarColor = getColor(profile.full_name);
-  const roleLabel = isTeacher ? 'Giáo viên' : 'Học sinh';
+  const roleLabel = isTeacher ? t('dashboard.roleTeacher') : t('dashboard.roleStudent');
   const roleColor = isTeacher ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700';
 
   return (
@@ -120,7 +122,7 @@ export const DashboardPage = () => {
                 {roleLabel}
               </span>
               <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">
-                Xin chào, {profile.full_name?.split(' ').pop() || profile.full_name}! 👋
+                {t('dashboard.greeting', { name: profile.full_name?.split(' ').pop() || profile.full_name })}
               </h1>
               <p className="text-white/55 text-sm mt-1">{profile.email}</p>
             </div>
@@ -131,14 +133,14 @@ export const DashboardPage = () => {
                 to="/exam"
                 className="flex items-center gap-2 px-5 py-2.5 bg-white text-primary-700 font-bold text-sm rounded-xl hover:bg-white/90 transition-colors shadow-md"
               >
-                <PlayCircle className="w-4 h-4" /> Làm bài thi
+                <PlayCircle className="w-4 h-4" /> {t('dashboard.takeExam')}
               </Link>
               {isTeacher && (
                 <Link
                   to="/teacher/students"
                   className="flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white font-semibold text-sm rounded-xl hover:bg-white/20 transition-colors border border-white/20"
                 >
-                  <Users className="w-4 h-4" /> Quản lý học sinh
+                  <Users className="w-4 h-4" /> {t('dashboard.manageStudents')}
                 </Link>
               )}
             </div>
@@ -150,20 +152,20 @@ export const DashboardPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
               icon={<Users className="w-6 h-6 text-white" />}
-              label="Học sinh" value={teacherStats.totalStudents}
-              sub="Đang quản lý"
+              label={t('dashboard.statStudents')} value={teacherStats.totalStudents}
+              sub={t('dashboard.statManaging')}
               color="from-indigo-500 to-violet-600"
             />
             <StatCard
               icon={<BookOpen className="w-6 h-6 text-white" />}
-              label="Lượt thi" value={teacherStats.totalAttempts}
-              sub="Toàn trường"
+              label={t('dashboard.statAttempts')} value={teacherStats.totalAttempts}
+              sub={t('dashboard.statSchoolWide')}
               color="from-emerald-500 to-teal-600"
             />
             <StatCard
               icon={<TrendingUp className="w-6 h-6 text-white" />}
-              label="Điểm TB" value={`${teacherStats.avgScore}%`}
-              sub="Toàn trường"
+              label={t('dashboard.statAvgScore')} value={`${teacherStats.avgScore}%`}
+              sub={t('dashboard.statSchoolWide')}
               color="from-amber-500 to-orange-600"
             />
           </div>
@@ -171,18 +173,18 @@ export const DashboardPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
               icon={<BookOpen className="w-6 h-6 text-white" />}
-              label="Bài đã làm" value={studentStats.total}
+              label={t('dashboard.statCompleted')} value={studentStats.total}
               color="from-indigo-500 to-violet-600"
             />
             <StatCard
               icon={<TrendingUp className="w-6 h-6 text-white" />}
-              label="Điểm trung bình" value={`${studentStats.avgScore}%`}
+              label={t('dashboard.statAvgScoreFull')} value={`${studentStats.avgScore}%`}
               color="from-amber-500 to-orange-600"
             />
             <StatCard
               icon={<CheckCircle className="w-6 h-6 text-white" />}
-              label="Tỉ lệ đạt" value={`${studentStats.passRate}%`}
-              sub="Ngưỡng đạt ≥ 70%"
+              label={t('dashboard.statPassRate')} value={`${studentStats.passRate}%`}
+              sub={t('dashboard.statPassThreshold')}
               color="from-emerald-500 to-teal-600"
             />
           </div>
@@ -198,13 +200,13 @@ export const DashboardPage = () => {
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary-500" />
-                <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Tổng quan học sinh</h2>
+                <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">{t('dashboard.studentOverviewTitle')}</h2>
               </div>
               <Link
                 to="/teacher/students"
                 className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
               >
-                Quản lý <ChevronRight className="w-4 h-4" />
+                {t('dashboard.manageLink')} <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
             <StudentOverviewTable />
@@ -217,14 +219,14 @@ export const DashboardPage = () => {
             <div className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-primary-500" />
               <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">
-                {isTeacher ? 'Lịch sử làm bài (Cá nhân)' : 'Lịch sử làm bài'}
+                {isTeacher ? t('dashboard.historyPersonalTitle') : t('dashboard.historyTitle')}
               </h2>
             </div>
             <Link
               to="/exam"
               className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
             >
-              Làm bài mới <ChevronRight className="w-4 h-4" />
+              {t('dashboard.newExamLink')} <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
           <AttemptHistoryTable studentId={user.id} />
@@ -236,14 +238,14 @@ export const DashboardPage = () => {
             to="/exam"
             className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-bold text-sm rounded-2xl shadow-md shadow-primary-200"
           >
-            <PlayCircle className="w-4 h-4" /> Làm bài thi
+            <PlayCircle className="w-4 h-4" /> {t('dashboard.takeExam')}
           </Link>
           {isTeacher && (
             <Link
               to="/teacher/students"
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 font-bold text-sm rounded-2xl border-2 border-primary-100 dark:border-primary-900/50"
             >
-              <Users className="w-4 h-4" /> Học sinh
+              <Users className="w-4 h-4" /> {t('dashboard.studentsLink')}
             </Link>
           )}
         </div>

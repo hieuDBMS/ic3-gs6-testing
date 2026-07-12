@@ -1,17 +1,12 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { TrendingDown, AlertCircle, Loader2, BookOpen, Layers } from 'lucide-react';
 import { stripHtml } from '../utils/text';
 import { PageHeader } from '../components/shared/PageHeader';
 import { EmptyState } from '../components/shared/EmptyState';
 
-const QUESTION_TYPE_LABELS = {
-  choice: 'Chọn một',
-  multi: 'Chọn nhiều',
-  dragdrop: 'Kéo thả',
-  truefalse: 'Đúng / Sai',
-  hotspot: 'Chọn vùng ảnh',
-};
+const QUESTION_TYPES = ['choice', 'multi', 'dragdrop', 'truefalse', 'hotspot'];
 
 const Chip = ({ label, active, onClick }) => (
   <button
@@ -31,6 +26,7 @@ const wrongPctColor = (pct) => {
 };
 
 export const QuestionStatsPage = () => {
+  const { t } = useTranslation();
   const [levels, setLevels] = useState([]);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,12 +55,12 @@ export const QuestionStatsPage = () => {
       if (rpcError) throw rpcError;
       setRows(data || []);
     } catch (err) {
-      setError(err.message || 'Không tải được thống kê');
+      setError(err.message || t('questionStats.errorLoadFailed'));
       setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [minAttempts, levelId, examType, questionType]);
+  }, [minAttempts, levelId, examType, questionType, t]);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
@@ -74,8 +70,8 @@ export const QuestionStatsPage = () => {
       <div className="mb-6">
         <PageHeader
           icon={TrendingDown}
-          title="Câu hỏi hay sai nhất"
-          description="Thống kê tỉ lệ trả lời sai theo từng câu hỏi trên toàn hệ thống — giúp phát hiện câu ra đề chưa rõ ràng."
+          title={t('questionStats.title')}
+          description={t('questionStats.description')}
         />
       </div>
 
@@ -86,7 +82,7 @@ export const QuestionStatsPage = () => {
             <Layers className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
             <select value={levelId} onChange={e => setLevelId(e.target.value)}
               className="outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer max-w-[220px]">
-              <option value="">Tất cả Level</option>
+              <option value="">{t('questionStats.allLevels')}</option>
               {[...new Set(levels.map(l => l.version))].map(v => (
                 <optgroup key={v} label={v}>
                   {levels.filter(l => l.version === v).map(l => (
@@ -96,24 +92,24 @@ export const QuestionStatsPage = () => {
               ))}
             </select>
           </div>
-          <Chip label="Tất cả loại bài" active={!examType} onClick={() => setExamType('')} />
-          <Chip label="Testing" active={examType === 'testing'} onClick={() => setExamType('testing')} />
-          <Chip label="Gmetrix" active={examType === 'gmetrix'} onClick={() => setExamType('gmetrix')} />
+          <Chip label={t('questionStats.allTypes')} active={!examType} onClick={() => setExamType('')} />
+          <Chip label={t('questionStats.testing')} active={examType === 'testing'} onClick={() => setExamType('testing')} />
+          <Chip label={t('questionStats.gmetrix')} active={examType === 'gmetrix'} onClick={() => setExamType('gmetrix')} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Chip label="Tất cả loại câu" active={!questionType} onClick={() => setQuestionType('')} />
-          {Object.entries(QUESTION_TYPE_LABELS).map(([k, label]) => (
-            <Chip key={k} label={label} active={questionType === k} onClick={() => setQuestionType(k)} />
+          <Chip label={t('questionStats.allQuestionTypes')} active={!questionType} onClick={() => setQuestionType('')} />
+          {QUESTION_TYPES.map((k) => (
+            <Chip key={k} label={t(`questionStats.questionType.${k}`)} active={questionType === k} onClick={() => setQuestionType(k)} />
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-gray-500 dark:text-slate-400">Số lượt làm tối thiểu:</label>
+          <label className="text-xs font-semibold text-gray-500 dark:text-slate-400">{t('questionStats.minAttemptsLabel')}</label>
           <input
             type="number" min={0} value={minAttempts}
             onChange={e => setMinAttempts(e.target.value)}
             className="w-20 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
           />
-          <span className="text-[11px] text-gray-400 dark:text-slate-500">(tránh nhiễu bởi câu mới có ít lượt làm)</span>
+          <span className="text-[11px] text-gray-400 dark:text-slate-500">{t('questionStats.minAttemptsHint')}</span>
         </div>
       </div>
 
@@ -129,7 +125,7 @@ export const QuestionStatsPage = () => {
             <p className="text-sm font-medium">{error}</p>
           </div>
         ) : rows.length === 0 ? (
-          <EmptyState icon={BookOpen} title="Không có câu hỏi nào phù hợp bộ lọc." />
+          <EmptyState icon={BookOpen} title={t('questionStats.emptyTitle')} />
         ) : (
           <div className="divide-y divide-gray-100 dark:divide-slate-700">
             {rows.map((r) => (
@@ -144,11 +140,11 @@ export const QuestionStatsPage = () => {
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs text-gray-400 dark:text-slate-500">
                     <span className="font-semibold text-gray-500 dark:text-slate-400">{r.level_label}</span>
                     <span>·</span>
-                    <span>{r.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {r.exam_number}</span>
+                    <span>{r.exam_type === 'testing' ? t('questionStats.testing') : t('questionStats.gmetrix')} {r.exam_number}</span>
                     <span>·</span>
-                    <span>{QUESTION_TYPE_LABELS[r.question_type] || r.question_type}</span>
+                    <span>{QUESTION_TYPES.includes(r.question_type) ? t(`questionStats.questionType.${r.question_type}`) : r.question_type}</span>
                     <span>·</span>
-                    <span>{r.wrong_count}/{r.total_attempts} lượt sai</span>
+                    <span>{t('questionStats.wrongCount', { wrong: r.wrong_count, total: r.total_attempts })}</span>
                   </div>
                 </div>
               </div>

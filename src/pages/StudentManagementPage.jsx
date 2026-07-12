@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import {
@@ -48,6 +49,7 @@ const ScoreBar = ({ score }) => {
 
 /* ─── Student Card (mobile) ─────────────────────────────────── */
 const StudentCard = ({ student, onResetPassword, onDelete, schools = [] }) => {
+  const { t } = useTranslation();
   const schoolName = student.school
     ? (schools.find(s => s.id === student.school)?.name || null)
     : null;
@@ -70,7 +72,7 @@ const StudentCard = ({ student, onResetPassword, onDelete, schools = [] }) => {
         </div>
       </div>
       <span className={`flex-shrink-0 px-2 py-0.5 text-xs font-semibold rounded-full ${student.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400'}`}>
-        {student.is_active ? 'Hoạt động' : 'Đã khoá'}
+        {student.is_active ? t('studentManagement.activeStatus') : t('studentManagement.lockedStatus')}
       </span>
     </div>
 
@@ -79,7 +81,7 @@ const StudentCard = ({ student, onResetPassword, onDelete, schools = [] }) => {
       <div className="mb-3 p-2.5 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1">
-            <BookOpen className="w-3.5 h-3.5" /> {student.totalAttempts} bài đã làm
+            <BookOpen className="w-3.5 h-3.5" /> {t('studentManagement.attemptsCount', { count: student.totalAttempts })}
           </span>
           {student.lastActiveAt && (
             <span className="text-[10px] text-gray-400 dark:text-slate-500">
@@ -91,7 +93,7 @@ const StudentCard = ({ student, onResetPassword, onDelete, schools = [] }) => {
       </div>
     ) : (
       <div className="mb-3">
-        <span className="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 rounded-full font-semibold">Chưa làm bài</span>
+        <span className="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 rounded-full font-semibold">{t('studentManagement.notAttemptedBadge')}</span>
       </div>
     )}
 
@@ -100,13 +102,13 @@ const StudentCard = ({ student, onResetPassword, onDelete, schools = [] }) => {
         to={`/teacher/students/${student.id}`}
         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition"
       >
-        <ChevronRight className="w-3.5 h-3.5" /> Tiến độ
+        <ChevronRight className="w-3.5 h-3.5" /> {t('studentManagement.progressLink')}
       </Link>
       <button
         onClick={() => onResetPassword(student)}
         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 text-xs font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition"
       >
-        <Key className="w-3.5 h-3.5" /> Mật khẩu
+        <Key className="w-3.5 h-3.5" /> {t('studentManagement.resetPasswordButton')}
       </button>
       <button
         onClick={() => onDelete(student)}
@@ -121,6 +123,7 @@ const StudentCard = ({ student, onResetPassword, onDelete, schools = [] }) => {
 
 /* ─── Main Page ──────────────────────────────────────────────── */
 export const StudentManagementPage = () => {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
 
   const [modal, setModal] = useState(null);
@@ -165,7 +168,7 @@ export const StudentManagementPage = () => {
 
   useEffect(() => { fetchSchools(); }, []);
   useEffect(() => {
-    if (fetchError) addToast('Lỗi khi tải dữ liệu: ' + fetchError.message, 'error');
+    if (fetchError) addToast(t('studentManagement.loadDataError', { message: fetchError.message }), 'error');
   }, [fetchError]);
 
   const fetchSchools = async () => {
@@ -175,7 +178,7 @@ export const StudentManagementPage = () => {
       if (!token) return;
       const { data } = await supabase.functions.invoke('manage-school', { body: { action: 'list' } });
       if (data?.schools) setSchools(data.schools);
-    } catch {}
+    } catch { /* non-critical: school filter list stays empty */ }
   };
 
   const handleCreateSchool = async (e) => {
@@ -185,14 +188,14 @@ export const StudentManagementPage = () => {
       if (data?.error) { setSchoolError(data.error); return; }
       setNewSchoolName('');
       await fetchSchools();
-      addToast('Đã thêm trường!', 'success');
+      addToast(t('studentManagement.schoolAddedToast'), 'success');
     } catch (err) { setSchoolError(err.message); }
     finally { setSchoolSaving(false); }
   };
 
   const handleUpdateSchool = async (schoolId) => {
     if (!editingSchoolName.trim()) {
-      setSchoolError('Tên trường không được để trống');
+      setSchoolError(t('studentManagement.schoolNameEmptyError'));
       return;
     }
     setSchoolUpdating(true); setSchoolError('');
@@ -210,26 +213,26 @@ export const StudentManagementPage = () => {
       setEditingSchoolId(null);
       setEditingSchoolName('');
       await fetchSchools();
-      addToast('Đã cập nhật tên trường!', 'success');
-    } catch (err) { setSchoolError(err.message || 'Có lỗi xảy ra'); }
+      addToast(t('studentManagement.schoolUpdatedToast'), 'success');
+    } catch (err) { setSchoolError(err.message || t('studentManagement.genericError')); }
     finally { setSchoolUpdating(false); }
   };
 
   const handleDeleteSchool = async (school) => {
-    if (!window.confirm(`Xoá trường "${school.name}"? Học sinh thuộc trường này sẽ không còn được gán trường.`)) return;
+    if (!window.confirm(t('studentManagement.deleteSchoolConfirm', { name: school.name }))) return;
     try {
       const { data } = await supabase.functions.invoke('manage-school', { body: { action: 'delete', schoolId: school.id } });
       if (data?.error) { addToast(data.error, 'error'); return; }
       await fetchSchools(); await fetchStudents();
-      addToast('Đã xoá trường!', 'success');
+      addToast(t('studentManagement.schoolDeletedToast'), 'success');
     } catch (err) { addToast(err.message, 'error'); }
   };
 
   const callEdgeFunction = async (body) => {
     const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
-    if (refreshErr || !refreshed?.session) throw new Error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+    if (refreshErr || !refreshed?.session) throw new Error(t('studentManagement.sessionExpiredError'));
     const { data, error: fnErr } = await supabase.functions.invoke('manage-student', { body });
-    if (fnErr) throw new Error(fnErr.message || 'Lỗi kết nối Edge Function');
+    if (fnErr) throw new Error(fnErr.message || t('studentManagement.edgeFunctionError'));
     if (data?.error) throw new Error(data.error);
     return data;
   };
@@ -244,7 +247,7 @@ export const StudentManagementPage = () => {
     try {
       await callEdgeFunction({ action: 'create', fullName, email, password, school: studentSchool || null, className: studentClass || null });
       closeModal(); fetchStudents();
-      addToast('Đã tạo tài khoản học sinh thành công!', 'success');
+      addToast(t('studentManagement.studentCreatedToast'), 'success');
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }
   };
@@ -254,7 +257,7 @@ export const StudentManagementPage = () => {
     try {
       await callEdgeFunction({ action: 'update', studentId: selectedStudent.id, school: studentSchool || null, className: studentClass || null });
       closeModal(); fetchStudents();
-      addToast('Đã cập nhật thông tin học sinh!', 'success');
+      addToast(t('studentManagement.studentUpdatedToast'), 'success');
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }
   };
@@ -264,7 +267,7 @@ export const StudentManagementPage = () => {
     try {
       await callEdgeFunction({ action: 'reset-password', studentId: selectedStudent.id, password });
       closeModal();
-      addToast('Đã đặt lại mật khẩu thành công!', 'success');
+      addToast(t('studentManagement.passwordResetToast'), 'success');
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }
   };
@@ -276,15 +279,14 @@ export const StudentManagementPage = () => {
     try {
       await callEdgeFunction({ action: 'delete', studentId: confirmStudent.id });
       setConfirmStudent(null); fetchStudents();
-      addToast('Đã xoá học sinh và toàn bộ lịch sử làm bài!', 'success');
+      addToast(t('studentManagement.studentDeletedToast'), 'success');
     } catch (err) {
-      addToast('Lỗi khi xoá: ' + err.message, 'error');
+      addToast(t('studentManagement.deleteErrorToast', { message: err.message }), 'error');
       setConfirmStudent(null);
     }
     finally { setDeleting(false); }
   };
 
-  const activeCount = rawStudents.filter(s => s.is_active).length;
   const attemptedCount = rawStudents.filter(s => s.totalAttempts > 0).length;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   // Unique class names for class filter dropdown
@@ -300,31 +302,31 @@ export const StudentManagementPage = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <GraduationCap className="w-6 h-6 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">Quản lý Học Sinh</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">{t('studentManagement.pageTitle')}</h1>
           </div>
-          <p className="text-sm text-gray-500 dark:text-slate-400">Thêm, đặt lại mật khẩu, xoá và theo dõi tiến độ học sinh.</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400">{t('studentManagement.pageSubtitle')}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
             onClick={() => { setModal('manage-schools'); setSchoolError(''); }}
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition font-semibold shadow-sm text-sm"
           >
-            <Building2 className="w-4 h-4" /> Quản lý Trường
+            <Building2 className="w-4 h-4" /> {t('studentManagement.manageSchoolsButton')}
           </button>
           <button
             onClick={openCreate}
             className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-semibold shadow-sm text-sm"
           >
-            <Plus className="w-4 h-4" /> Thêm học sinh
+            <Plus className="w-4 h-4" /> {t('studentManagement.addStudentButton')}
           </button>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <StatCard icon={Users} label="Tổng số" value={rawStudents.length} color="bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300" />
-        <StatCard icon={BookOpen} label="Đã làm bài" value={attemptedCount} color="bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300" />
-        <StatCard icon={TrendingUp} label="Chưa làm" value={rawStudents.length - attemptedCount} color="bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400" />
+        <StatCard icon={Users} label={t('studentManagement.statTotal')} value={rawStudents.length} color="bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300" />
+        <StatCard icon={BookOpen} label={t('studentManagement.statAttempted')} value={attemptedCount} color="bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300" />
+        <StatCard icon={TrendingUp} label={t('studentManagement.statNotAttempted')} value={rawStudents.length - attemptedCount} color="bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400" />
       </div>
 
       {/* Search */}
@@ -332,7 +334,7 @@ export const StudentManagementPage = () => {
         <Search className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
         <input
           type="text"
-          placeholder="Tìm theo tên hoặc email..."
+          placeholder={t('studentManagement.searchPlaceholder')}
           value={searchTerm}
           onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
           className="flex-1 outline-none text-gray-900 dark:text-slate-100 text-sm placeholder-gray-400 dark:placeholder-slate-500"
@@ -347,9 +349,9 @@ export const StudentManagementPage = () => {
       {/* Filter chips */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {[
-          { key: 'all', label: 'Tất cả', count: rawStudents.length },
-          { key: 'attempted', label: '✓ Đã làm bài', count: attemptedCount },
-          { key: 'not-attempted', label: '○ Chưa làm', count: rawStudents.length - attemptedCount },
+          { key: 'all', label: t('studentManagement.filterAll'), count: rawStudents.length },
+          { key: 'attempted', label: `✓ ${t('studentManagement.filterAttempted')}`, count: attemptedCount },
+          { key: 'not-attempted', label: `○ ${t('studentManagement.filterNotAttempted')}`, count: rawStudents.length - attemptedCount },
         ].map(({ key, label, count }) => (
           <button
             key={key}
@@ -368,11 +370,11 @@ export const StudentManagementPage = () => {
         ))}
         {hasActiveFilters && (
           <button onClick={resetFilters} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-slate-700 text-xs text-gray-500 dark:text-slate-400 hover:border-red-300 dark:hover:border-red-500 hover:text-red-500 dark:hover:text-red-400 transition ml-auto">
-            <X className="w-3 h-3" /> Xoá bộ lọc
+            <X className="w-3 h-3" /> {t('studentManagement.clearFiltersButton')}
           </button>
         )}
         {!hasActiveFilters && (
-          <span className="ml-auto text-xs text-gray-400 dark:text-slate-500">{totalCount} kết quả</span>
+          <span className="ml-auto text-xs text-gray-400 dark:text-slate-500">{t('studentManagement.resultsCount', { count: totalCount })}</span>
         )}
       </div>
 
@@ -385,7 +387,7 @@ export const StudentManagementPage = () => {
             onChange={e => { setSchoolFilter(e.target.value); setPage(1); }}
             className="flex-1 outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer"
           >
-            <option value="">Tất cả trường</option>
+            <option value="">{t('studentManagement.allSchools')}</option>
             {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
@@ -396,24 +398,24 @@ export const StudentManagementPage = () => {
             onChange={e => { setClassFilter(e.target.value); setPage(1); }}
             className="flex-1 outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer"
           >
-            <option value="">Tất cả lớp</option>
+            <option value="">{t('studentManagement.allClasses')}</option>
             {allClasses.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
-        <span className="ml-auto self-center text-xs text-gray-400 dark:text-slate-500">{totalCount} kết quả</span>
+        <span className="ml-auto self-center text-xs text-gray-400 dark:text-slate-500">{t('studentManagement.resultsCount', { count: totalCount })}</span>
       </div>
 
       {/* Content */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-slate-500">
           <RotateCcw className="w-8 h-8 animate-spin mb-3 text-blue-400" />
-          <span className="text-sm">Đang tải danh sách học sinh...</span>
+          <span className="text-sm">{t('studentManagement.loadingStudents')}</span>
         </div>
       ) : totalCount === 0 ? (
         <EmptyState
           icon={GraduationCap}
-          title={rawStudents.length === 0 ? 'Chưa có học sinh nào' : 'Không tìm thấy kết quả'}
-          description={rawStudents.length === 0 ? 'Nhấn "Thêm học sinh" để bắt đầu.' : 'Thử tìm kiếm với từ khoá khác.'}
+          title={rawStudents.length === 0 ? t('studentManagement.noStudentsTitle') : t('studentManagement.noResultsTitle')}
+          description={rawStudents.length === 0 ? t('studentManagement.noStudentsDesc') : t('studentManagement.noResultsDesc')}
         />
       ) : (
         <>
@@ -435,11 +437,11 @@ export const StudentManagementPage = () => {
             <table className="min-w-full">
               <thead>
                 <tr className="bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700">
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Học sinh</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Trường / Lớp</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Tiến độ làm bài</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Ngày tham gia</th>
-                  <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Thao tác</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('studentManagement.tableHeaders.student')}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('studentManagement.tableHeaders.schoolClass')}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('studentManagement.tableHeaders.progress')}</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('studentManagement.tableHeaders.joinDate')}</th>
+                  <th className="px-6 py-3.5 text-right text-xs font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('studentManagement.tableHeaders.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
@@ -461,7 +463,7 @@ export const StudentManagementPage = () => {
                         <div className="space-y-1">
                           <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400">
                             <BookOpen className="w-3.5 h-3.5" />
-                            <span className="font-semibold text-gray-700 dark:text-slate-300">{student.totalAttempts}</span> bài
+                            <span className="font-semibold text-gray-700 dark:text-slate-300">{student.totalAttempts}</span> {t('studentManagement.attemptsCountTable')}
                             {student.lastActiveAt && (
                               <span className="text-gray-400 dark:text-slate-500 ml-1">· {new Date(student.lastActiveAt).toLocaleDateString('vi-VN')}</span>
                             )}
@@ -471,7 +473,7 @@ export const StudentManagementPage = () => {
                           </div>
                         </div>
                       ) : (
-                        <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 rounded-full font-semibold">Chưa làm bài</span>
+                        <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 rounded-full font-semibold">{t('studentManagement.notAttemptedBadge')}</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
@@ -486,7 +488,7 @@ export const StudentManagementPage = () => {
                             <span>{schools.find(s => s.id === student.school)?.name}</span>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-gray-300 dark:text-slate-600">Chưa gán trường</span>
+                          <span className="text-[10px] text-gray-300 dark:text-slate-600">{t('studentManagement.notAssignedSchool')}</span>
                         )}
                         {student.class_name ? (
                           <div className="flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-300">
@@ -504,26 +506,26 @@ export const StudentManagementPage = () => {
                           to={`/teacher/students/${student.id}`}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition"
                         >
-                          <ChevronRight className="w-3 h-3" /> Tiến độ
+                          <ChevronRight className="w-3 h-3" /> {t('studentManagement.progressLink')}
                         </Link>
                         <button
                           onClick={() => openEditSchoolClass(student)}
                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-300 text-xs font-semibold hover:bg-violet-100 dark:hover:bg-violet-900/40 transition"
-                          title="Sửa trường/lớp"
+                          title={t('studentManagement.editSchoolClassTitle')}
                         >
                           <Edit2 className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => openResetPassword(student)}
                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-300 text-xs font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/40 transition"
-                          title="Đặt lại mật khẩu"
+                          title={t('studentManagement.resetPasswordButton')}
                         >
                           <Key className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => openDeleteConfirm(student)}
                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400 text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/40 transition"
-                          title="Xoá học sinh"
+                          title={t('studentManagement.deleteStudentTitle')}
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -536,7 +538,7 @@ export const StudentManagementPage = () => {
             {/* Desktop table footer with pagination */}
             <div className="flex items-center justify-between px-6 py-3 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-100 dark:border-slate-700">
               <p className="text-xs text-gray-400 dark:text-slate-500">
-                Trang {page}/{Math.max(1, totalPages)} · {totalCount} học sinh
+                {t('studentManagement.pageInfo', { page, totalPages: Math.max(1, totalPages), count: totalCount })}
               </p>
               {totalPages > 1 && (
                 <div className="flex items-center gap-1">
@@ -545,7 +547,7 @@ export const StudentManagementPage = () => {
                     disabled={page === 1}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
                   >
-                    <ChevronLeft className="w-3.5 h-3.5" /> Trước
+                    <ChevronLeft className="w-3.5 h-3.5" /> {t('studentManagement.prevPage')}
                   </button>
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let p;
@@ -565,7 +567,7 @@ export const StudentManagementPage = () => {
                     disabled={page === totalPages}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-600 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
                   >
-                    Sau <ChevronRight className="w-3.5 h-3.5" />
+                    {t('studentManagement.nextPage')} <ChevronRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
@@ -580,15 +582,15 @@ export const StudentManagementPage = () => {
                 disabled={page === 1}
                 className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
               >
-                <ChevronLeft className="w-4 h-4" /> Trước
+                <ChevronLeft className="w-4 h-4" /> {t('studentManagement.prevPage')}
               </button>
-              <span className="text-sm text-gray-500 dark:text-slate-400">Trang <strong>{page}</strong> / {totalPages}</span>
+              <span className="text-sm text-gray-500 dark:text-slate-400">{t('studentManagement.pagePrefix')} <strong>{page}</strong> / {totalPages}</span>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
               >
-                Sau <ChevronRight className="w-4 h-4" />
+                {t('studentManagement.nextPage')} <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           )}
@@ -609,7 +611,7 @@ export const StudentManagementPage = () => {
               </div>
               <div>
                 <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">
-                  {modal === 'create' ? 'Thêm học sinh mới' : 'Đặt lại mật khẩu'}
+                  {modal === 'create' ? t('studentManagement.createModalTitle') : t('studentManagement.resetModalTitle')}
                 </h2>
                 {modal === 'reset-password' && (
                   <p className="text-xs text-gray-500 dark:text-slate-400">{selectedStudent?.full_name}</p>
@@ -628,40 +630,40 @@ export const StudentManagementPage = () => {
               {modal === 'create' && (
                 <>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Họ và tên *</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">{t('studentManagement.fullNameLabel')}</label>
                     <input
                       type="text" required autoFocus
                       value={fullName} onChange={e => setFullName(e.target.value)}
-                      placeholder="Nguyễn Văn A"
+                      placeholder={t('studentManagement.fullNamePlaceholder')}
                       className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Email *</label>
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">{t('studentManagement.emailLabel')}</label>
                     <input
                       type="email" required
                       value={email} onChange={e => setEmail(e.target.value)}
-                      placeholder="hocsinh@truong.edu.vn"
+                      placeholder={t('studentManagement.emailPlaceholder')}
                       className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Trường</label>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">{t('studentManagement.schoolLabel')}</label>
                       <select
                         value={studentSchool} onChange={e => setStudentSchool(e.target.value)}
                         className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white dark:bg-slate-800 dark:text-slate-100"
                       >
-                        <option value="">-- Chọn trường --</option>
+                        <option value="">{t('studentManagement.selectSchoolPlaceholder')}</option>
                         {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Lớp</label>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">{t('studentManagement.classLabel')}</label>
                       <input
                         type="text"
                         value={studentClass} onChange={e => setStudentClass(e.target.value)}
-                        placeholder="VD: 10A1"
+                        placeholder={t('studentManagement.classPlaceholder')}
                         className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                       />
                     </div>
@@ -671,13 +673,13 @@ export const StudentManagementPage = () => {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                  {modal === 'create' ? 'Mật khẩu * (tối thiểu 6 ký tự)' : 'Mật khẩu mới *'}
+                  {modal === 'create' ? t('studentManagement.passwordLabelCreate') : t('studentManagement.passwordLabelReset')}
                 </label>
                 <div className="relative">
                   <input
                     type={showPwd ? 'text' : 'password'} required minLength={6}
                     value={password} onChange={e => setPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu..."
+                    placeholder={t('studentManagement.passwordPlaceholder')}
                     className="w-full px-3.5 py-2.5 pr-11 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
                   <button
@@ -697,14 +699,14 @@ export const StudentManagementPage = () => {
                     ${modal === 'create' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-amber-500 hover:bg-amber-600'}`}
                 >
                   {saving
-                    ? <><RotateCcw className="w-4 h-4 animate-spin" /> Đang xử lý...</>
-                    : modal === 'create' ? 'Tạo tài khoản' : 'Đặt lại mật khẩu'}
+                    ? <><RotateCcw className="w-4 h-4 animate-spin" /> {t('studentManagement.processingButton')}</>
+                    : modal === 'create' ? t('studentManagement.createSubmit') : t('studentManagement.resetSubmit')}
                 </button>
                 <button
                   type="button" onClick={closeModal}
                   className="flex-1 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-slate-600 transition"
                 >
-                  Huỷ
+                  {t('studentManagement.cancelButton')}
                 </button>
               </div>
             </form>
@@ -722,36 +724,36 @@ export const StudentManagementPage = () => {
                 <Edit2 className="w-5 h-5 text-violet-600 dark:text-violet-300" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Sửa Trường / Lớp</h2>
+                <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">{t('studentManagement.editSchoolClassModalTitle')}</h2>
                 <p className="text-xs text-gray-500 dark:text-slate-400">{selectedStudent?.full_name}</p>
               </div>
             </div>
             {error && <div className="mb-4 flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-sm rounded-xl border border-red-100 dark:border-red-800/60"><AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" /><span>{error}</span></div>}
             <form onSubmit={handleEditSchoolClass} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Trường</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">{t('studentManagement.schoolLabel')}</label>
                 <select
                   value={studentSchool} onChange={e => setStudentSchool(e.target.value)}
                   className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition bg-white dark:bg-slate-800 dark:text-slate-100"
                 >
-                  <option value="">-- Không gán trường --</option>
+                  <option value="">{t('studentManagement.noSchoolOption')}</option>
                   {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">Lớp</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">{t('studentManagement.classLabel')}</label>
                 <input
                   type="text"
                   value={studentClass} onChange={e => setStudentClass(e.target.value)}
-                  placeholder="VD: 10A1"
+                  placeholder={t('studentManagement.classPlaceholder')}
                   className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
                 />
               </div>
               <div className="flex gap-3 pt-1">
                 <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2">
-                  {saving ? <><RotateCcw className="w-4 h-4 animate-spin" /> Đang lưu...</> : 'Lưu thay đổi'}
+                  {saving ? <><RotateCcw className="w-4 h-4 animate-spin" /> {t('studentManagement.savingButton')}</> : t('studentManagement.saveChangesButton')}
                 </button>
-                <button type="button" onClick={closeModal} className="flex-1 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-slate-600 transition">Huỷ</button>
+                <button type="button" onClick={closeModal} className="flex-1 py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-slate-600 transition">{t('studentManagement.cancelButton')}</button>
               </div>
             </form>
           </div>
@@ -767,25 +769,25 @@ export const StudentManagementPage = () => {
               <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-violet-600 dark:text-violet-300" />
               </div>
-              <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Quản lý Trường</h2>
+              <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">{t('studentManagement.manageSchoolsModalTitle')}</h2>
             </div>
             {/* Add school form */}
             <form onSubmit={handleCreateSchool} className="flex gap-2 mb-4">
               <input
                 type="text" required autoFocus
                 value={newSchoolName} onChange={e => setNewSchoolName(e.target.value)}
-                placeholder="Tên trường mới..."
+                placeholder={t('studentManagement.newSchoolPlaceholder')}
                 className="flex-1 px-3.5 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
               />
               <button type="submit" disabled={schoolSaving} className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-semibold text-sm transition disabled:opacity-50 flex items-center gap-1.5">
-                {schoolSaving ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Thêm
+                {schoolSaving ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} {t('studentManagement.addButton')}
               </button>
             </form>
             {schoolError && <p className="text-xs text-red-500 dark:text-red-400 mb-3">{schoolError}</p>}
             {/* Schools list */}
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {schools.length === 0 ? (
-                <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">Chưa có trường nào. Thêm trường đầu tiên!</p>
+                <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-6">{t('studentManagement.noSchoolsYet')}</p>
               ) : schools.map(s => (
                 <div key={s.id} className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-700/50 border border-gray-100 dark:border-slate-700">
                   {editingSchoolId === s.id ? (
@@ -808,7 +810,7 @@ export const StudentManagementPage = () => {
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-violet-400 dark:text-violet-500" />
                         <span className="text-sm font-medium text-gray-800 dark:text-slate-100">{s.name}</span>
-                        <span className="text-[10px] text-gray-400 dark:text-slate-500">({rawStudents.filter(st => st.school === s.id).length} HS)</span>
+                        <span className="text-[10px] text-gray-400 dark:text-slate-500">{t('studentManagement.studentCountSuffix', { count: rawStudents.filter(st => st.school === s.id).length })}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button onClick={() => { setEditingSchoolId(s.id); setEditingSchoolName(s.name); }} className="p-1.5 rounded-lg text-gray-400 dark:text-slate-500 hover:bg-violet-50 dark:hover:bg-violet-950/40 hover:text-violet-600 dark:hover:text-violet-300 transition">
@@ -823,7 +825,7 @@ export const StudentManagementPage = () => {
                 </div>
               ))}
             </div>
-            <button onClick={closeModal} className="mt-4 w-full py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-slate-600 transition text-sm">Xong</button>
+            <button onClick={closeModal} className="mt-4 w-full py-2.5 bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-slate-600 transition text-sm">{t('studentManagement.doneButton')}</button>
           </div>
         </div>
       )}
@@ -831,8 +833,8 @@ export const StudentManagementPage = () => {
       {/* ── Confirm Delete Dialog ── */}
       <ConfirmDialog
         open={!!confirmStudent}
-        title="Xoá học sinh"
-        message={<>Bạn sắp xoá tài khoản của <strong>{confirmStudent?.full_name}</strong>. Toàn bộ lịch sử làm bài sẽ bị xoá vĩnh viễn. Không thể hoàn tác!</>}
+        title={t('studentManagement.deleteStudentTitle')}
+        message={<>{t('studentManagement.deleteConfirmPre')} <strong>{confirmStudent?.full_name}</strong>. {t('studentManagement.deleteConfirmPost')}</>}
         onConfirm={handleDelete}
         onCancel={() => setConfirmStudent(null)}
         loading={deleting}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import {
   ChevronLeft, FileSpreadsheet, Download, Upload, AlertCircle,
@@ -10,17 +11,18 @@ import {
   parseCsvText, parseWorkbookFile, validateRows, commitQuestions, buildTemplateWorkbook,
 } from '../utils/questionImport';
 
-const CSV_TYPES = [
-  { value: 'choice_multi', label: 'Chọn một / Chọn nhiều' },
-  { value: 'dragdrop', label: 'Kéo thả' },
-  { value: 'truefalse', label: 'Đúng / Sai' },
-];
-
-const STEPS = ['Tải lên', 'Xem trước & Xác nhận', 'Kết quả'];
-
 export const QuestionImportPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+
+  const CSV_TYPES = [
+    { value: 'choice_multi', label: t('questionImport.csvTypes.choiceMulti') },
+    { value: 'dragdrop', label: t('questionImport.csvTypes.dragdrop') },
+    { value: 'truefalse', label: t('questionImport.csvTypes.truefalse') },
+  ];
+
+  const STEPS = [t('questionImport.steps.upload'), t('questionImport.steps.preview'), t('questionImport.steps.results')];
 
   const [levels, setLevels] = useState([]);
   const [exams, setExams] = useState([]);
@@ -61,7 +63,7 @@ export const QuestionImportPage = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'mau-import-cau-hoi.xlsx';
+    a.download = t('questionImport.templateFileName');
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -86,7 +88,7 @@ export const QuestionImportPage = () => {
       setErrors(errs);
       setStep(1);
     } catch (err) {
-      setParseError(err.message || 'Không đọc được file. Kiểm tra định dạng file.');
+      setParseError(err.message || t('questionImport.fileReadError'));
     } finally {
       setParsing(false);
     }
@@ -107,7 +109,7 @@ export const QuestionImportPage = () => {
     const exam = exams.find(e => e.id === examId);
     if (!exam) return '—';
     const level = levels.find(l => l.id === exam.level_id);
-    return `${level?.version} · ${level?.label} · ${exam.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} ${exam.exam_number}`;
+    return `${level?.version} · ${level?.label} · ${exam.exam_type === 'testing' ? t('questionImport.examTypeTesting') : t('questionImport.examTypeGmetrix')} ${exam.exam_number}`;
   };
 
   const successCount = results?.filter(r => r.ok).length ?? 0;
@@ -118,14 +120,14 @@ export const QuestionImportPage = () => {
       <div className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-screen-lg mx-auto flex items-center gap-3 px-4 sm:px-6 py-3">
           <button onClick={() => navigate('/questions')} className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-100 transition-colors text-sm font-medium">
-            <ChevronLeft className="w-4 h-4" /> Ngân hàng câu hỏi
+            <ChevronLeft className="w-4 h-4" /> {t('questionImport.backToQuestions')}
           </button>
           <div className="w-px h-5 bg-gray-200 dark:bg-slate-700" />
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
               <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
             </div>
-            <h1 className="text-sm font-bold text-gray-900 dark:text-slate-100">Import câu hỏi hàng loạt</h1>
+            <h1 className="text-sm font-bold text-gray-900 dark:text-slate-100">{t('questionImport.title')}</h1>
           </div>
         </div>
       </div>
@@ -152,9 +154,8 @@ export const QuestionImportPage = () => {
             <div className="flex items-start gap-3 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-xs text-indigo-800 leading-relaxed dark:bg-indigo-950/30 dark:border-indigo-800/50 dark:text-indigo-300">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <div>
-                Hỗ trợ 3 loại câu hỏi: <b>Chọn một/Chọn nhiều</b>, <b>Kéo thả</b>, <b>Đúng/Sai</b>.
-                Không hỗ trợ loại <b>Chọn vùng ảnh</b> (cần toạ độ kéo chuột) và không hỗ trợ upload ảnh qua import —
-                thêm ảnh sau bằng cách sửa câu hỏi.
+                {t('questionImport.supportedTypesIntro')} <b>{t('questionImport.csvTypes.choiceMulti')}</b>, <b>{t('questionImport.csvTypes.dragdrop')}</b>, <b>{t('questionImport.csvTypes.truefalse')}</b>.
+                {' '}{t('questionImport.unsupportedIntro')} <b>{t('questionImport.hotspotTypeLabel')}</b> {t('questionImport.unsupportedNote')}
               </div>
             </div>
 
@@ -163,7 +164,7 @@ export const QuestionImportPage = () => {
                 onClick={handleDownloadTemplate}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-indigo-200 text-indigo-700 text-sm font-bold hover:bg-indigo-50 dark:border-indigo-800/60 dark:text-indigo-300 dark:hover:bg-indigo-950/30 transition-all"
               >
-                <Download className="w-4 h-4" /> Tải file mẫu (.xlsx)
+                <Download className="w-4 h-4" /> {t('questionImport.downloadTemplate')}
               </button>
             </div>
 
@@ -180,8 +181,8 @@ export const QuestionImportPage = () => {
                   className="border-2 border-dashed border-gray-200 hover:border-indigo-300 dark:border-slate-600 dark:hover:border-indigo-500 rounded-2xl py-10 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors"
                 >
                   <Upload className="w-8 h-8 text-gray-300 dark:text-slate-600" />
-                  <p className="text-sm font-semibold text-gray-600 dark:text-slate-300">Kéo thả file vào đây hoặc bấm để chọn</p>
-                  <p className="text-xs text-gray-400 dark:text-slate-500">Hỗ trợ .xlsx hoặc .csv</p>
+                  <p className="text-sm font-semibold text-gray-600 dark:text-slate-300">{t('questionImport.dropzoneHint')}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500">{t('questionImport.dropzoneFormats')}</p>
                   <input
                     ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
                     onChange={e => handleFile(e.target.files?.[0])}
@@ -189,7 +190,7 @@ export const QuestionImportPage = () => {
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400">
-                  <span>Nếu tải lên file .csv, chọn loại câu hỏi cho file đó:</span>
+                  <span>{t('questionImport.csvTypeHint')}</span>
                   <select
                     value={csvType} onChange={e => setCsvType(e.target.value)}
                     className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200"
@@ -200,7 +201,7 @@ export const QuestionImportPage = () => {
 
                 {parsing && (
                   <div className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Đang đọc {fileName}...
+                    <Loader2 className="w-4 h-4 animate-spin" /> {t('questionImport.readingFile', { fileName })}
                   </div>
                 )}
                 {parseError && (
@@ -219,23 +220,23 @@ export const QuestionImportPage = () => {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex gap-3 text-sm">
                 <span className="flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4" /> {questions.length} câu hợp lệ
+                  <CheckCircle2 className="w-4 h-4" /> {t('questionImport.validCount', { count: questions.length })}
                 </span>
                 {errors.length > 0 && (
                   <span className="flex items-center gap-1.5 font-semibold text-red-600 dark:text-red-400">
-                    <AlertCircle className="w-4 h-4" /> {errors.length} dòng lỗi
+                    <AlertCircle className="w-4 h-4" /> {t('questionImport.errorRowCount', { count: errors.length })}
                   </span>
                 )}
               </div>
               <button onClick={resetAll} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 font-semibold">
-                <X className="w-3.5 h-3.5" /> Chọn file khác
+                <X className="w-3.5 h-3.5" /> {t('questionImport.chooseAnotherFile')}
               </button>
             </div>
 
             {errors.length > 0 && (
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-red-100 dark:border-red-900/50 shadow-sm overflow-hidden">
                 <div className="px-4 py-2.5 bg-red-50 border-b border-red-100 text-xs font-bold text-red-700 uppercase tracking-wide dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-300">
-                  Các dòng bị lỗi (sẽ không được import)
+                  {t('questionImport.errorRowsHeader')}
                 </div>
                 <div className="max-h-64 overflow-y-auto divide-y divide-gray-50 dark:divide-slate-700">
                   {errors.map((e, i) => (
@@ -251,14 +252,14 @@ export const QuestionImportPage = () => {
             {questions.length > 0 && (
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
                 <div className="px-4 py-2.5 bg-emerald-50 border-b border-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wide dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-300">
-                  Câu hỏi sẽ được thêm
+                  {t('questionImport.questionsToAdd')}
                 </div>
                 <div className="max-h-96 overflow-y-auto divide-y divide-gray-50 dark:divide-slate-700">
                   {questions.map((q, i) => (
                     <div key={i} className="px-4 py-3 text-sm">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[11px] font-bold dark:bg-indigo-950/40 dark:text-indigo-300">
-                          {q.question_type === 'choice' ? 'Chọn một' : q.question_type === 'multi' ? 'Chọn nhiều' : q.question_type === 'dragdrop' ? 'Kéo thả' : 'Đúng/Sai'}
+                          {q.question_type === 'choice' ? t('questionImport.qTypeChoice') : q.question_type === 'multi' ? t('questionImport.qTypeMulti') : q.question_type === 'dragdrop' ? t('questionImport.qTypeDragdrop') : t('questionImport.qTypeTruefalse')}
                         </span>
                         <span className="text-[11px] text-gray-400 dark:text-slate-500">{examLabel(q.examId)}</span>
                       </div>
@@ -277,7 +278,7 @@ export const QuestionImportPage = () => {
                 style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
               >
                 {committing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                Xác nhận thêm {questions.length} câu hỏi
+                {t('questionImport.confirmAdd', { count: questions.length })}
               </button>
             </div>
           </div>
@@ -291,9 +292,9 @@ export const QuestionImportPage = () => {
                 <CheckCircle2 className="w-6 h-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-lg font-bold text-gray-900">Đã import xong</p>
+                <p className="text-lg font-bold text-gray-900">{t('questionImport.importDone')}</p>
                 <p className="text-sm text-gray-500">
-                  {successCount} câu thành công{failCount > 0 ? `, ${failCount} câu thất bại` : ''}
+                  {t('questionImport.successCount', { count: successCount })}{failCount > 0 ? `, ${t('questionImport.failCount', { count: failCount })}` : ''}
                 </p>
               </div>
             </div>
@@ -311,14 +312,14 @@ export const QuestionImportPage = () => {
 
             <div className="flex gap-3">
               <button onClick={resetAll} className="px-4 py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 text-sm font-bold hover:bg-gray-50">
-                Import thêm file khác
+                {t('questionImport.importAnotherFile')}
               </button>
               <button
                 onClick={() => navigate('/questions')}
                 className="px-4 py-2.5 rounded-xl text-white text-sm font-bold"
                 style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
               >
-                Về Ngân hàng câu hỏi
+                {t('questionImport.backToQuestionsShort')}
               </button>
             </div>
           </div>

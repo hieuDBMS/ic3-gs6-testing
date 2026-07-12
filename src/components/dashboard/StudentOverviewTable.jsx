@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { Link } from 'react-router-dom';
 import { Search, Users, ArrowRight, BookOpen, ChevronLeft, ChevronRight, Building2, School } from 'lucide-react';
@@ -59,6 +60,7 @@ const Chip = ({ label, active, onClick }) => (
 );
 
 const StudentOverviewTableImpl = () => {
+  const { t } = useTranslation();
   const [schools, setSchools] = useState([]);
   const [search, setSearch] = useState('');
   const [activityFilter, setActivityFilter] = useState('active'); // all | active | inactive
@@ -102,7 +104,7 @@ const StudentOverviewTableImpl = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
           <input
             type="text"
-            placeholder="Tìm kiếm theo tên hoặc email..."
+            placeholder={t('studentOverview.searchPlaceholder')}
             value={search}
             onChange={e => handleFilterChange(setSearch, e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-gray-50 dark:bg-slate-700/50 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
@@ -111,9 +113,9 @@ const StudentOverviewTableImpl = () => {
 
         {/* Filters Row */}
         <div className="flex flex-wrap items-center gap-2">
-          <Chip label="Tất cả" active={activityFilter === 'all'} onClick={() => handleFilterChange(setActivityFilter, 'all')} />
-          <Chip label="✓ Đã làm bài" active={activityFilter === 'active'} onClick={() => handleFilterChange(setActivityFilter, 'active')} />
-          <Chip label="○ Chưa làm bài" active={activityFilter === 'inactive'} onClick={() => handleFilterChange(setActivityFilter, 'inactive')} />
+          <Chip label={t('studentOverview.filterAll')} active={activityFilter === 'all'} onClick={() => handleFilterChange(setActivityFilter, 'all')} />
+          <Chip label={t('studentOverview.filterActive')} active={activityFilter === 'active'} onClick={() => handleFilterChange(setActivityFilter, 'active')} />
+          <Chip label={t('studentOverview.filterInactive')} active={activityFilter === 'inactive'} onClick={() => handleFilterChange(setActivityFilter, 'inactive')} />
         </div>
 
         {/* School & Class Row */}
@@ -125,7 +127,7 @@ const StudentOverviewTableImpl = () => {
               onChange={e => handleFilterChange(setSchoolFilter, e.target.value)}
               className="flex-1 outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer"
             >
-              <option value="">Tất cả trường</option>
+              <option value="">{t('studentOverview.allSchools')}</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
@@ -136,13 +138,13 @@ const StudentOverviewTableImpl = () => {
               onChange={e => handleFilterChange(setClassFilter, e.target.value)}
               className="flex-1 outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer"
             >
-              <option value="">Tất cả lớp</option>
+              <option value="">{t('studentOverview.allClasses')}</option>
               {allClasses.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
           <span className="ml-auto text-xs text-gray-400 dark:text-slate-500 font-medium self-center">
-            {totalCount} học sinh
+            {t('studentOverview.studentCount', { count: totalCount })}
           </span>
         </div>
       </div>
@@ -154,7 +156,7 @@ const StudentOverviewTableImpl = () => {
         <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-slate-500 space-y-2">
           <Users className="w-10 h-10 text-gray-200 dark:text-slate-600" />
           <p className="text-sm font-medium">
-            {search || activityFilter !== 'all' ? 'Không tìm thấy học sinh nào.' : 'Chưa có học sinh nào.'}
+            {search || activityFilter !== 'all' ? t('studentOverview.noResultsFiltered') : t('studentOverview.noResults')}
           </p>
         </div>
       ) : (
@@ -168,7 +170,7 @@ const StudentOverviewTableImpl = () => {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-800 dark:text-slate-100 truncate">{student.full_name || '(Chưa đặt tên)'}</p>
+                <p className="text-sm font-bold text-gray-800 dark:text-slate-100 truncate">{student.full_name || t('studentOverview.unnamed')}</p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                   <p className="text-xs text-gray-400 dark:text-slate-500 truncate">{student.email}</p>
                   {(() => {
@@ -182,7 +184,7 @@ const StudentOverviewTableImpl = () => {
                         )}
                         {student.class_name && (
                           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                            {sName && '· '}Lớp {student.class_name}
+                            {sName && '· '}{t('studentOverview.classPrefix')} {student.class_name}
                           </span>
                         )}
                       </div>
@@ -195,7 +197,7 @@ const StudentOverviewTableImpl = () => {
                   </div>
                 ) : (
                   <span className="mt-1 inline-block text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500 rounded-full font-semibold">
-                    Chưa làm bài
+                    {t('studentOverview.notAttempted')}
                   </span>
                 )}
               </div>
@@ -205,7 +207,7 @@ const StudentOverviewTableImpl = () => {
                 <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-400">
                   <BookOpen className="w-3.5 h-3.5" />
                   <span className="font-semibold">{student.totalAttempts}</span>
-                  <span className="text-gray-400 dark:text-slate-500">bài</span>
+                  <span className="text-gray-400 dark:text-slate-500">{t('studentOverview.attemptsSuffix')}</span>
                 </div>
                 {student.lastActiveAt && (
                   <p className="text-[10px] text-gray-400 dark:text-slate-500">
@@ -219,7 +221,7 @@ const StudentOverviewTableImpl = () => {
                 to={`/teacher/students/${student.id}`}
                 className="flex-shrink-0 flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-colors opacity-0 group-hover:opacity-100 dark:text-indigo-300 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/40 dark:border-indigo-800/60"
               >
-                Tiến độ <ArrowRight className="w-3.5 h-3.5" />
+                {t('studentOverview.progressLink')} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           ))}
@@ -234,7 +236,7 @@ const StudentOverviewTableImpl = () => {
             disabled={page === 0}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
-            <ChevronLeft className="w-4 h-4" /> Trước
+            <ChevronLeft className="w-4 h-4" /> {t('studentOverview.prev')}
           </button>
 
           <div className="flex items-center gap-1">
@@ -260,7 +262,7 @@ const StudentOverviewTableImpl = () => {
             disabled={page >= totalPages - 1}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
-            Sau <ChevronRight className="w-4 h-4" />
+            {t('studentOverview.next')} <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}

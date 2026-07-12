@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { Flag } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const QuestionNavigatorImpl = ({ questions, currentIndex, answers, flagged, onSelect, dark = false }) => {
+  const { t } = useTranslation();
   useEffect(() => {
     const el = document.getElementById(`nav-btn-${currentIndex}`);
     if (el) {
@@ -37,7 +39,7 @@ const QuestionNavigatorImpl = ({ questions, currentIndex, answers, flagged, onSe
     <button
       id={`nav-btn-${index}`}
       onClick={() => onSelect(index)}
-      title={`Câu ${index + 1}`}
+      title={t('questionNavigator.questionNumber', { number: index + 1 })}
       className={`relative w-9 h-9 border-2 rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-150 ${getButtonStyle(q, index)}`}
     >
       {index + 1}
@@ -66,7 +68,7 @@ const QuestionNavigatorImpl = ({ questions, currentIndex, answers, flagged, onSe
       {/* ── Header ── */}
       <div className={`px-4 pt-4 pb-3 border-b ${dividerCls} flex-shrink-0`}>
         <div className="flex items-center justify-between mb-2.5">
-          <h3 className={`text-sm font-bold ${titleCls}`}>Câu hỏi</h3>
+          <h3 className={`text-sm font-bold ${titleCls}`}>{t('questionNavigator.title')}</h3>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${countCls}`}>
             {answeredCount}/{total}
           </span>
@@ -94,7 +96,7 @@ const QuestionNavigatorImpl = ({ questions, currentIndex, answers, flagged, onSe
         {flaggedQuestions.length > 0 && (
           <div>
             <p className={`text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1 ${sectionCls}`}>
-              <Flag className="w-3 h-3" /> Đánh dấu
+              <Flag className="w-3 h-3" /> {t('questionNavigator.flagged')}
             </p>
             <div className="grid grid-cols-5 gap-1.5">
               {flaggedQuestions.map(q => {
@@ -110,19 +112,19 @@ const QuestionNavigatorImpl = ({ questions, currentIndex, answers, flagged, onSe
       <div className={`px-4 pb-4 pt-3 border-t ${dividerCls} flex-shrink-0 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs ${legendCls}`}>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-md bg-emerald-500 flex-shrink-0" />
-          Đã trả lời
+          {t('questionNavigator.legend.answered')}
         </div>
         <div className="flex items-center gap-1.5">
           <span className={`w-3 h-3 rounded-md flex-shrink-0 ${dark ? 'bg-slate-700 border border-slate-600' : 'bg-white border-2 border-gray-200'}`} />
-          Chưa làm
+          {t('questionNavigator.legend.unanswered')}
         </div>
         <div className="flex items-center gap-1.5">
           <span className={`w-3 h-3 rounded-full flex-shrink-0 ${dark ? 'bg-white' : 'bg-indigo-600'}`} />
-          Hiện tại
+          {t('questionNavigator.legend.current')}
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-md bg-amber-500 flex-shrink-0" />
-          Đánh dấu
+          {t('questionNavigator.legend.flagged')}
         </div>
       </div>
     </div>

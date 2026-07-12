@@ -1,0 +1,208 @@
+{
+  "exam": {
+    "confirmSubmit": {
+      "title": "Xác nhận nộp bài",
+      "unansweredPre": "Còn",
+      "unansweredCount": "{{count}} câu chưa trả lời",
+      "unansweredPost": ". Bạn vẫn muốn nộp?",
+      "allAnswered": "Bạn đã trả lời tất cả câu hỏi. Xác nhận nộp bài?",
+      "reviewAgain": "Kiểm tra lại",
+      "submit": "Nộp bài"
+    },
+    "resume": {
+      "title": "Tiếp tục làm bài?",
+      "unfinishedPre": "Bạn có một bài làm dở cho",
+      "progressPre": "Đã làm đến câu",
+      "startedAtPre": "Bắt đầu lúc",
+      "restart": "Bắt đầu lại",
+      "continue": "Tiếp tục làm bài"
+    },
+    "refreshWarning": {
+      "title": "Tải lại trang?",
+      "subtitle": "Cảnh báo quan trọng",
+      "warningTitle": "Bài làm sẽ bị mất toàn bộ!",
+      "bullet1": "Tất cả câu trả lời đã chọn sẽ biến mất",
+      "bullet2": "Thời gian đang chạy không được lưu lại",
+      "bullet3": "Bạn phải bắt đầu lại từ đầu",
+      "stillReload": "Vẫn tải lại",
+      "continueExam": "Tiếp tục làm bài"
+    },
+    "navigateAway": {
+      "title": "Bạn có chắc muốn rời khỏi bài thi?",
+      "subtitle": "Bài làm đang dở sẽ được lưu lại. Bạn có thể quay lại tiếp tục làm bài sau.",
+      "leave": "Rời khỏi",
+      "continueExam": "Tiếp tục làm bài"
+    },
+    "mobileNav": {
+      "title": "Danh sách câu hỏi"
+    },
+    "accessDenied": "Bạn chưa mua bài thi này.",
+    "cheatWarning": "Đã phát hiện bạn rời khỏi bài thi — hành vi này được ghi lại.",
+    "submitError": "Lỗi khi nộp bài! Vui lòng thử lại.",
+    "noQuestions": "Bài thi này chưa có câu hỏi.",
+    "types": {
+      "choice": "Chọn một",
+      "multi": "Chọn nhiều",
+      "truefalse": "Đúng / Sai",
+      "hotspot": "Chọn vùng ảnh",
+      "dragdrop": "Kéo thả"
+    },
+    "inProgress": "Đang làm bài",
+    "answered": "Đã làm",
+    "unanswered": "Chưa làm",
+    "submitting": "Đang nộp...",
+    "submit": "Nộp bài",
+    "flagged": "Đã đánh dấu",
+    "flag": "Đánh dấu",
+    "exitFullscreenTitle": "Thoát toàn màn hình (F11)",
+    "enterFullscreenTitle": "Toàn màn hình",
+    "minimize": "Thu nhỏ",
+    "fullscreen": "Toàn màn hình",
+    "prevTitle": "Câu trước (←)",
+    "prev": "Trước",
+    "submitShort": "Nộp",
+    "navHint": "để chuyển câu",
+    "nextTitle": "Câu tiếp theo (→)",
+    "next": "Tiếp"
+  },
+  "examList": {
+    "typeTesting": "Testing",
+    "typeGmetrix": "Gmetrix",
+    "cancelSheet": {
+      "title": "Huỷ giao dịch?",
+      "subtitle": "Thao tác này không thể hoàn tác",
+      "transactionPrefix": "Giao dịch",
+      "transactionSuffix": "sẽ bị xoá.",
+      "rebuyHint": "Bạn có thể mua lại bất kỳ lúc nào.",
+      "keep": "Giữ lại",
+      "cancelling": "Đang huỷ...",
+      "confirm": "Xác nhận huỷ"
+    },
+    "hero": {
+      "title": "Chọn bài thi",
+      "subtitle": "Chọn phiên bản IC3, sau đó chọn cấp độ và bài thi phù hợp để bắt đầu.",
+      "selected": "Đang chọn",
+      "levelsAndExams": "{{levels}} cấp · {{exams}} bài thi",
+      "versionLabel": "Phiên bản IC3"
+    },
+    "emptyState": {
+      "chooseVersionTitle": "Chọn phiên bản để bắt đầu",
+      "chooseVersionSubtitle": "Chọn một phiên bản IC3 (GS6, GS7, GS8) ở trên để xem danh sách cấp độ và bài thi."
+    },
+    "noLevels": "Không có cấp độ nào.",
+    "countTesting": "{{count}} Testing",
+    "countGmetrix": "{{count}} Gmetrix",
+    "status": {
+      "purchased": "Đã mua",
+      "pending": "Chờ TT",
+      "notPurchased": "Chưa mua"
+    },
+    "durationMinutes": "{{minutes}} phút",
+    "startExam": "Bắt đầu làm bài",
+    "continuePayment": "Tiếp tục TT",
+    "buyNow": "Mua ngay — {{amount}}đ",
+    "noExamsInLevel": "Chưa có bài thi nào trong cấp độ này."
+  },
+  "result": {
+    "status": {
+      "skipped": "Bỏ qua",
+      "correct": "Đúng",
+      "wrong": "Sai"
+    },
+    "questionNumber": "Câu {{number}}",
+    "questionTypes": {
+      "choice": "Chọn một",
+      "multi": "Chọn nhiều",
+      "truefalse": "Đúng / Sai",
+      "dragdrop": "Kéo thả"
+    },
+    "yourAnswer": "Bạn chọn",
+    "correctAnswer": "Đáp án đúng",
+    "groupingResult": "Kết quả xếp nhóm",
+    "yourAnswerColon": "Bạn chọn:",
+    "emptyAnswer": "Bỏ trống",
+    "correctAnswerArrow": "→ Đáp án đúng:",
+    "statementResult": "Kết quả từng nhận định",
+    "notAnswered": "Chưa trả lời",
+    "correctAnswerColon": "· Đáp án đúng:",
+    "hotspotResult": "Kết quả vùng chọn",
+    "hotspotImageAlt": "Hotspot",
+    "legend": {
+      "correctSelected": "Đúng & đã chọn",
+      "correctNotSelected": "Đúng nhưng chưa chọn",
+      "wrongSelected": "Sai mà chọn"
+    },
+    "notFound": "Không tìm thấy kết quả bài thi.",
+    "defaultExamTitle": "Bài thi",
+    "filters": {
+      "all": "Tất cả ({{count}})",
+      "correct": "✓ Đúng ({{count}})",
+      "wrong": "✗ Sai ({{count}})",
+      "skipped": "— Bỏ qua ({{count}})"
+    },
+    "backToDashboard": "Về Dashboard",
+    "retakeExam": "Làm lại bài này",
+    "passed": "ĐẠT",
+    "notPassed": "CHƯA ĐẠT",
+    "congrats": "🎉 Chúc mừng! Bạn đã vượt qua.",
+    "sorry": "😔 Rất tiếc, bạn chưa đạt.",
+    "correctAnswersCount": "câu đúng",
+    "noQuestionsMatch": "Không có câu hỏi nào phù hợp.",
+    "downloadCertificate": "Tải chứng chỉ"
+  },
+  "questionRenderer": {
+    "multiHint": "☑ Có thể chọn nhiều đáp án đúng",
+    "questionImageAlt": "Câu hỏi",
+    "dragdrop": {
+      "title": "Kéo & Thả",
+      "hint": "Kéo các thẻ vào ô tương ứng. Trên điện thoại: <strong>bấm chọn thẻ</strong> rồi <strong>bấm vào ô</strong>.",
+      "poolLabel": "Kho thẻ",
+      "cardsLeft": "{{count}} thẻ còn lại",
+      "allPlaced": "Tất cả đã được xếp vào ô!",
+      "selectZoneBelow": "Chọn ô bên dưới",
+      "cardsCount": "{{count}} thẻ",
+      "dropHere": "Thả vào đây!",
+      "dragHere": "Kéo thẻ vào đây",
+      "returnToPool": "Bấm để trả về kho",
+      "reset": "🔄 Làm lại"
+    },
+    "truefalse": {
+      "instructionPre": "Chọn",
+      "true": "Đúng",
+      "instructionOr": "hoặc",
+      "false": "Sai",
+      "instructionPost": "cho mỗi nhận định",
+      "columnIndex": "#",
+      "columnStatement": "Nhận định",
+      "allDone": "Đã hoàn thành tất cả {{total}} nhận định!"
+    },
+    "hotspot": {
+      "instructionMultiPrefix": "Click vào tất cả vùng đúng",
+      "instructionSuffix": "trên ảnh",
+      "instructionSinglePrefix": "Click vào vùng đúng",
+      "imageAlt": "Ảnh khoanh vùng",
+      "imageNotLoaded": "Ảnh chưa được tải",
+      "selectedCount": "Đã chọn {{count}} vùng",
+      "selectedRequired": " / cần {{correct}}",
+      "reset": "🔄 Làm lại"
+    }
+  },
+  "questionNavigator": {
+    "questionNumber": "Câu {{number}}",
+    "title": "Câu hỏi",
+    "flagged": "Đánh dấu",
+    "legend": {
+      "answered": "Đã trả lời",
+      "unanswered": "Chưa làm",
+      "current": "Hiện tại",
+      "flagged": "Đánh dấu"
+    }
+  },
+  "timer": {
+    "label": "Thời gian còn lại",
+    "unitLabel": "phút : giây",
+    "ariaRemaining": "Còn lại {{time}}",
+    "dangerBadge": "⚠ Gần hết giờ!",
+    "warningBadge": "Còn dưới 5 phút"
+  }
+}

@@ -26,6 +26,12 @@ Các file tài liệu này được viết để Claude AI có thể tra cứu s
 | Dark mode | PATTERNS_AND_CONVENTIONS.md → Dark Mode |
 | Upload ảnh | COMPONENTS.md → ImageUploader |
 | Anti-cheat | PATTERNS_AND_CONVENTIONS.md → Anti-Cheat |
+| Schema bảng `purchases`/`payment_config`/mock exam | DATABASE_SCHEMA.md → Bẫy thường gặp (tên bảng/cột dễ nhầm) |
+| Luồng mua bài / PaymentModal | COMPONENTS.md → PaymentModal, ROUTES_AND_PAGES.md → PaymentHistoryPage |
+| Luồng thi thử (Mock Exam) | ROUTES_AND_PAGES.md → MockExamSetupPage/MockExamPage/MockResultPage |
+| Học sinh thoát bài giữa chừng / trùng session | PATTERNS_AND_CONVENTIONS.md → #22 Resume Session, ROUTES_AND_PAGES.md → ExamPage |
+| Chặn rời trang thi (logo/back/logout) | PATTERNS_AND_CONVENTIONS.md → #23 Navigate-Away Guard |
+| LiveMonitorPage không hiện / hiện trùng / không tự ẩn | PATTERNS_AND_CONVENTIONS.md → #24 LiveMonitor Zombie Filter, ROUTES_AND_PAGES.md → LiveMonitorPage |
 
 ## Shared Infrastructure (đã có, dùng luôn không cần tạo mới)
 
@@ -50,17 +56,23 @@ Các file tài liệu này được viết để Claude AI có thể tra cứu s
 - `avatar.js` — `getInitials(name)`
 - `certificate.js` — `generateCertificatePdf(options)` (canvas → jsPDF)
 
-## File Sizes (complexity reference)
+## File Sizes (complexity reference, 2026-07-10)
 
 | File | Lines |
 |---|---|
-| `src/pages/FlashcardPage.jsx` | 1127 |
-| `src/pages/StudentManagementPage.jsx` | 948 |
-| `src/components/questions/QuestionModal.jsx` | 866 (deprecated) |
-| `src/pages/ExamPage.jsx` | 821 |
-| `src/pages/QuestionsPage.jsx` | 751 |
-| `src/pages/MockExamPage.jsx` | 688 |
-| `src/components/exam/QuestionRenderer.jsx` | 657 |
-| `src/pages/QuestionFormPage.jsx` | 602 |
-| `src/pages/ExamStructurePage.jsx` | 573 |
-| `src/pages/ResultPage.jsx` | 539 |
+| `src/pages/FlashcardPage.jsx` | 1137 |
+| `src/pages/ExamPage.jsx` | 1089 |
+| `src/pages/StudentManagementPage.jsx` | 844 |
+| `src/components/questions/QuestionModal.jsx` | 865 (deprecated) |
+| `src/pages/MockExamPage.jsx` | 801 |
+| `src/pages/QuestionsPage.jsx` | 702 |
+| `src/components/exam/QuestionRenderer.jsx` | 658 |
+| `src/pages/PaymentHistoryPage.jsx` | 570 |
+| `src/pages/QuestionFormPage.jsx` | 583 |
+| `src/pages/ExamStructurePage.jsx` | 516 |
+| `src/pages/ResultPage.jsx` | 538 |
+| `src/components/shared/Navbar.jsx` | 358 |
+
+## Tests (`src/utils/*.test.js`)
+
+Có test cho: `avatar.js`, `format.js`, `questionImport.js`, `scoreUtils.js`. Không có test cho components/pages (chưa setup React Testing Library) — chỉ pure-function utils.

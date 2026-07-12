@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle, memo } from 'react';
+import { useEffect, useState, useRef, forwardRef, useImperativeHandle, memo } from "react";
+import { useTranslation } from 'react-i18next';
 
 /**
  * Timer — ONE instance, TWO responsive layouts via CSS:
@@ -8,6 +9,7 @@ import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle, me
  * Exposes getTimeLeft() via ref so parent can read elapsed time on submit.
  */
 const TimerImpl = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = true }, ref) {
+  const { t } = useTranslation();
   const [timeLeft, setTimeLeft] = useState(durationSeconds);
   const firedRef    = useRef(false);
   const onTimeUpRef = useRef(onTimeUp);
@@ -92,11 +94,11 @@ const TimerImpl = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = 
       ═══════════════════════════════════════════════ */}
       <div className={`hidden md:flex flex-col items-center gap-3 w-full ${isDanger ? 'animate-pulse' : ''}`}>
         <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: labelColor }}>
-          Thời gian còn lại
+          {t('timer.label')}
         </p>
 
         <div className="relative" style={glowStyle}>
-          <svg width="152" height="152" className="-rotate-90" aria-label={`Còn lại ${timeStr}`}>
+          <svg width="152" height="152" className="-rotate-90" aria-label={t('timer.ariaRemaining', { time: timeStr })}>
             <defs>
               <linearGradient id="timerRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%"   stopColor={strokeA} />
@@ -126,7 +128,7 @@ const TimerImpl = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = 
               {timeStr}
             </span>
             <span className="text-[10px] font-bold mt-1 uppercase tracking-widest" style={{ color: dark ? '#475569' : '#94A3B8' }}>
-              phút : giây
+              {t('timer.unitLabel')}
             </span>
           </div>
         </div>
@@ -135,13 +137,13 @@ const TimerImpl = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = 
         {isDanger && (
           <span className="text-xs font-bold px-3 py-1 rounded-full border"
             style={{ color: '#F87171', background: 'rgba(239,68,68,0.1)', borderColor: 'rgba(239,68,68,0.25)' }}>
-            ⚠ Gần hết giờ!
+            {t('timer.dangerBadge')}
           </span>
         )}
         {isWarning && !isDanger && (
           <span className="text-xs font-semibold px-3 py-1 rounded-full border"
             style={{ color: '#FCD34D', background: 'rgba(245,158,11,0.1)', borderColor: 'rgba(245,158,11,0.25)' }}>
-            Còn dưới 5 phút
+            {t('timer.warningBadge')}
           </span>
         )}
       </div>

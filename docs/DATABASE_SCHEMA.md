@@ -134,6 +134,7 @@ current_question_index  int NOT NULL DEFAULT 0          -- live tracking (LiveMo
 last_activity_at        timestamptz NOT NULL DEFAULT now() -- ping từ client mỗi 4s
 ```
 > **Pass threshold khác nhau theo loại bài**: `exam_attempts` thường (`score`, thang 0-100) → pass ≥70 (`utils/scoreUtils.js`). Mock exam (`score_1000`, thang 0-1000) → pass ≥700 (hard-coded trong `MockResultPage.jsx`, KHÔNG dùng `isPassed()`).
+> **`status='auto_submitted'` có 2 nguồn gốc khác nhau** (kể từ khi ExamPage có Resume Session — xem PATTERNS_AND_CONVENTIONS.md #22): (1) Timer hết giờ → `doSubmit(true)` → RPC `submit_exam_attempt` chấm điểm thật như bình thường; (2) học sinh bấm "Bắt đầu lại" trên `ResumeModal` khi có attempt cũ dở dang → client `UPDATE` trực tiếp `status='auto_submitted', submitted_at=now()` cho attempt cũ, **KHÔNG** qua RPC, **KHÔNG có** `score`/`correct_count` (giữ nguyên default 0/NULL) vì chưa từng có answers để chấm. Khi đọc lịch sử/thống kê theo `auto_submitted`, cân nhắc loại trừ các row `score IS NULL` nếu cần phân biệt "hết giờ thật" với "bị hủy vì làm lại".
 
 ### `attempt_answers`
 ```sql
@@ -168,7 +169,8 @@ notes             text
 created_at        timestamptz DEFAULT now()
 updated_at        timestamptz DEFAULT now()
 ```
-> Hỗ trợ **thanh toán một phần** (`PARTIAL`): `paid_amount` tăng dần qua nhiều lần chuyển khoản, `status` tự chuyển `SUCCESS` khi `paid_amount >= required_amount` (webhook/Edge Function xử lý). Toàn bộ CRUD qua Edge Function `manage-purchase` (actions: `status`, `create`, `list-mine`, `cancel`) — không insert/update trực tiếp từ client.
+> Hỗ trợ **thanh toán một phần** (`PARTIAL`): `paid_amount` tăng dần qua nhiều lần chuyển khoản, `status` tự chuyển `SUCCESS` khi `paid_amount >= required_amount`. Toàn bộ CRUD qua Edge Function `manage-purchase` (actions: `create`, `cancel`, `teacher-create`, `list-mine`, `list-all`, `confirm`, `status`, `history`) — không insert/update trực tiếp từ client.
+> **Cập nhật tự động qua `sepay-webhook`** (public, `verify_jwt=false`): SePay gọi vào khi phát hiện chuyển khoản ngân hàng khớp `transaction_code`, tự set `paid_amount`/`status`. Bắt buộc secret `SEPAY_WEBHOOK_SECRET` (fail-closed) — nếu thiếu, function từ chối toàn bộ request thay vì bỏ qua xác thực.
 
 ### `payment_history`
 ```sql

@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
-  CheckCircle, XCircle, Clock, Calendar, ArrowLeft,
+  CheckCircle, XCircle, Calendar, ArrowLeft,
   RotateCcw, LayoutDashboard, Minus, ChevronDown, ChevronUp,
-  Trophy, Target, Timer, Download
+  Trophy, Timer, Download
 } from 'lucide-react';
 import { ZoomableImage } from '../components/shared/ImageLightbox';
 import { formatDurationLabel } from '../utils/format';
@@ -13,6 +14,7 @@ import { isPassed as checkPassed } from '../utils/scoreUtils';
 import { generateCertificatePdf } from '../utils/certificate';
 import { EmptyState } from '../components/shared/EmptyState';
 import { Skeleton } from '../components/shared/Skeleton';
+import { sanitizeHtml } from '../utils/sanitizeHtml';
 
 /* ─── Loading Skeleton ─── */
 const ResultSkeleton = () => (
@@ -29,7 +31,6 @@ const ScoreRing = ({ score }) => {
   const r = 52;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - score / 100);
-  const isPassed = checkPassed(score);
   return (
     <svg width="140" height="140" className="-rotate-90">
       <circle cx="70" cy="70" r={r} strokeWidth="10" fill="none" stroke="rgba(255,255,255,0.2)" />
@@ -48,6 +49,7 @@ const ScoreRing = ({ score }) => {
 
 /* ─── Question Detail Card ─── */
 const QuestionCard = ({ detail, index }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(!detail.is_correct); // expand wrong answers by default
   const q = detail.questions;
   if (!q) return null;
@@ -61,10 +63,10 @@ const QuestionCard = ({ detail, index }) => {
   const ddResponse = detail.dragdrop_response || {};
 
   const statusBadge = isSkipped
-    ? { label: 'Bỏ qua', icon: <Minus className="w-3.5 h-3.5" />, cls: 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400' }
+    ? { label: t('result.status.skipped'), icon: <Minus className="w-3.5 h-3.5" />, cls: 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400' }
     : isCorrect
-      ? { label: 'Đúng', icon: <CheckCircle className="w-3.5 h-3.5" />, cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }
-      : { label: 'Sai', icon: <XCircle className="w-3.5 h-3.5" />, cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' };
+      ? { label: t('result.status.correct'), icon: <CheckCircle className="w-3.5 h-3.5" />, cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }
+      : { label: t('result.status.wrong'), icon: <XCircle className="w-3.5 h-3.5" />, cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' };
 
   const borderCls = isCorrect ? 'border-emerald-200 dark:border-emerald-800/60' : isSkipped ? 'border-gray-200 dark:border-slate-700' : 'border-red-200 dark:border-red-800/60';
 
@@ -80,11 +82,11 @@ const QuestionCard = ({ detail, index }) => {
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1">
-            Câu {index + 1} · {q.question_type === 'choice' ? 'Chọn một' : q.question_type === 'multi' ? 'Chọn nhiều' : q.question_type === 'truefalse' ? 'Đúng / Sai' : 'Kéo thả'}
+            {t('result.questionNumber', { number: index + 1 })} · {q.question_type === 'choice' ? t('result.questionTypes.choice') : q.question_type === 'multi' ? t('result.questionTypes.multi') : q.question_type === 'truefalse' ? t('result.questionTypes.truefalse') : t('result.questionTypes.dragdrop')}
           </p>
           <div
             className="text-sm font-medium text-gray-900 dark:text-slate-100 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: q.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.content) }}
           />
         </div>
         <span className="flex-shrink-0 mt-1 text-gray-400 dark:text-slate-500">
@@ -125,14 +127,14 @@ const QuestionCard = ({ detail, index }) => {
                     )}
                     <span
                       className="flex-1 leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: ans.content }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(ans.content) }}
                     />
                     <div className="flex gap-1.5 flex-shrink-0">
                       {wasSelected && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-white/70 dark:bg-slate-800/70 border font-medium">Bạn chọn</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-white/70 dark:bg-slate-800/70 border font-medium">{t('result.yourAnswer')}</span>
                       )}
                       {isAnsCorrect && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800/60 font-medium">Đáp án đúng</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800/60 font-medium">{t('result.correctAnswer')}</span>
                       )}
                     </div>
                   </div>
@@ -143,7 +145,7 @@ const QuestionCard = ({ detail, index }) => {
 
           {q.question_type === 'dragdrop' && (
             <div className="space-y-2 mt-3">
-              <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Kết quả xếp nhóm</p>
+              <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('result.groupingResult')}</p>
               {sortedPairs.map(pair => {
                 const userZone = ddResponse[pair.id];
                 const correctZone = pair.drop_content;
@@ -164,13 +166,13 @@ const QuestionCard = ({ detail, index }) => {
                     </div>
                     {/* Answer zones */}
                     <div className="px-3 py-2 bg-white dark:bg-slate-800 flex flex-wrap gap-2 items-center">
-                      <span className="text-[11px] text-gray-400 dark:text-slate-500 whitespace-nowrap">Bạn chọn:</span>
+                      <span className="text-[11px] text-gray-400 dark:text-slate-500 whitespace-nowrap">{t('result.yourAnswerColon')}</span>
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${ok ? 'bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-900/40 dark:border-emerald-800/60 dark:text-emerald-300' : 'bg-red-100 border-red-200 text-red-700 dark:bg-red-900/40 dark:border-red-800/60 dark:text-red-300'}`}>
-                        {userZone || <em className="opacity-50 font-normal">Bỏ trống</em>}
+                        {userZone || <em className="opacity-50 font-normal">{t('result.emptyAnswer')}</em>}
                       </span>
                       {!ok && (
                         <>
-                          <span className="text-[11px] text-gray-400 dark:text-slate-500 whitespace-nowrap">→ Đáp án đúng:</span>
+                          <span className="text-[11px] text-gray-400 dark:text-slate-500 whitespace-nowrap">{t('result.correctAnswerArrow')}</span>
                           <span className="text-xs font-semibold px-2.5 py-1 rounded-full border bg-emerald-100 border-emerald-200 text-emerald-800 dark:bg-emerald-900/40 dark:border-emerald-800/60 dark:text-emerald-300">
                             {pair.drop_image_url && <img src={pair.drop_image_url} alt="" className="h-4 w-auto inline mr-1 object-contain" />}
                             {correctZone}
@@ -190,7 +192,7 @@ const QuestionCard = ({ detail, index }) => {
             const tfResponse = detail.dragdrop_response || {};
             return (
               <div className="space-y-2 mt-3">
-                <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Kết quả từng nhận định</p>
+                <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('result.statementResult')}</p>
                 {sortedStmts.map((stmt, si) => {
                   const userAnswer = tfResponse[stmt.id]; // true | false | undefined
                   const correctAnswer = stmt.is_true;
@@ -210,25 +212,25 @@ const QuestionCard = ({ detail, index }) => {
                         }`}>{si + 1}</span>
                         <div
                           className="text-sm text-gray-800 dark:text-slate-100 flex-1 leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: stmt.content }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(stmt.content) }}
                         />
                         {ok ? <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
                           : answered ? <XCircle className="w-4 h-4 text-red-400 dark:text-red-400 flex-shrink-0 mt-0.5" />
                           : <Minus className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0 mt-0.5" />}
                       </div>
                       <div className="mt-2 ml-9 flex flex-wrap gap-2 items-center">
-                        <span className="text-[11px] text-gray-400 dark:text-slate-500">Bạn chọn:</span>
+                        <span className="text-[11px] text-gray-400 dark:text-slate-500">{t('result.yourAnswerColon')}</span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
                           !answered ? 'bg-gray-100 border-gray-200 text-gray-400 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-500'
                           : userAnswer ? 'bg-emerald-100 border-emerald-200 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-800/60 dark:text-emerald-300' : 'bg-red-100 border-red-200 text-red-700 dark:bg-red-900/40 dark:border-red-800/60 dark:text-red-300'
                         }`}>
-                          {!answered ? 'Chưa trả lời' : userAnswer ? 'Đúng' : 'Sai'}
+                          {!answered ? t('result.notAnswered') : userAnswer ? t('result.status.correct') : t('result.status.wrong')}
                         </span>
-                        <span className="text-[11px] text-gray-400 dark:text-slate-500">· Đáp án đúng:</span>
+                        <span className="text-[11px] text-gray-400 dark:text-slate-500">{t('result.correctAnswerColon')}</span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
                           correctAnswer ? 'bg-emerald-100 border-emerald-200 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-800/60 dark:text-emerald-300' : 'bg-red-100 border-red-200 text-red-700 dark:bg-red-900/40 dark:border-red-800/60 dark:text-red-300'
                         }`}>
-                          {correctAnswer ? 'Đúng' : 'Sai'}
+                          {correctAnswer ? t('result.status.correct') : t('result.status.wrong')}
                         </span>
                       </div>
                     </div>
@@ -242,15 +244,14 @@ const QuestionCard = ({ detail, index }) => {
           {q.question_type === 'hotspot' && (() => {
             const sortedRegions = [...(q.hotspot_regions || [])].sort((a, b) => a.order_index - b.order_index);
             const userSelected = detail.selected_answer_ids || []; // array of region IDs
-            const correctIds = sortedRegions.filter(r => r.is_correct).map(r => r.id);
             return (
               <div className="mt-3 space-y-2">
-                <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">Kết quả vùng chọn</p>
+                <p className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide">{t('result.hotspotResult')}</p>
                 {/* Image with colored overlays */}
                 {q.image_url && (
                   <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/50">
-                    <img src={q.image_url} alt="Hotspot" className="w-full h-auto block" draggable={false} />
-                    {sortedRegions.map((r, ri) => {
+                    <img src={q.image_url} alt={t('result.hotspotImageAlt')} className="w-full h-auto block" draggable={false} />
+                    {sortedRegions.map((r) => {
                       const userChose = userSelected.includes(r.id);
                       const isCorrect = r.is_correct;
                       let cls = 'border-2 ';
@@ -280,9 +281,9 @@ const QuestionCard = ({ detail, index }) => {
                 )}
                 {/* Legend */}
                 <div className="flex flex-wrap gap-3 text-xs">
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-500/50 border border-emerald-500 inline-block" />Đúng & đã chọn</span>
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm border-2 border-dashed border-emerald-500 inline-block" />Đúng nhưng chưa chọn</span>
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-400/50 border border-red-500 inline-block" />Sai mà chọn</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-500/50 border border-emerald-500 inline-block" />{t('result.legend.correctSelected')}</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm border-2 border-dashed border-emerald-500 inline-block" />{t('result.legend.correctNotSelected')}</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-400/50 border border-red-500 inline-block" />{t('result.legend.wrongSelected')}</span>
                 </div>
               </div>
             );
@@ -295,6 +296,7 @@ const QuestionCard = ({ detail, index }) => {
 
 /* ─── Main ResultPage ─── */
 export const ResultPage = () => {
+  const { t } = useTranslation();
   const { examId } = useParams(); // actually attemptId
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -342,7 +344,7 @@ export const ResultPage = () => {
   if (!attempt) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-500 dark:text-red-400 dark:bg-slate-900">
-        Không tìm thấy kết quả bài thi.
+        {t('result.notFound')}
       </div>
     );
   }
@@ -356,7 +358,7 @@ export const ResultPage = () => {
 
   const examTitle = attempt.exams
     ? `${attempt.exams.exam_levels?.label} · ${attempt.exams.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} ${attempt.exams.exam_number}`
-    : 'Bài thi';
+    : t('result.defaultExamTitle');
 
   const filteredDetails = details.filter(d => {
     if (filter === 'correct') return d.is_correct;
@@ -366,10 +368,10 @@ export const ResultPage = () => {
   });
 
   const FILTERS = [
-    { key: 'all', label: `Tất cả (${details.length})` },
-    { key: 'correct', label: `✓ Đúng (${correctCount})` },
-    { key: 'wrong', label: `✗ Sai (${wrongCount})` },
-    { key: 'skipped', label: `— Bỏ qua (${skippedCount})` },
+    { key: 'all', label: t('result.filters.all', { count: details.length }) },
+    { key: 'correct', label: t('result.filters.correct', { count: correctCount }) },
+    { key: 'wrong', label: t('result.filters.wrong', { count: wrongCount }) },
+    { key: 'skipped', label: t('result.filters.skipped', { count: skippedCount }) },
   ];
 
   return (
@@ -388,13 +390,13 @@ export const ResultPage = () => {
           {/* Top nav */}
           <div className="flex items-center justify-between mb-8">
             <Link to="/dashboard" className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm font-medium transition-colors">
-              <ArrowLeft className="w-4 h-4" /> Về Dashboard
+              <ArrowLeft className="w-4 h-4" /> {t('result.backToDashboard')}
             </Link>
             <button
               onClick={() => navigate(`/exam/${attempt.exam_id}`)}
               className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm font-medium transition-colors"
             >
-              <RotateCcw className="w-4 h-4" /> Làm lại bài này
+              <RotateCcw className="w-4 h-4" /> {t('result.retakeExam')}
             </button>
           </div>
 
@@ -406,7 +408,7 @@ export const ResultPage = () => {
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-4xl font-black text-white leading-none">{score.toFixed(0)}%</span>
                 <span className="text-white/70 text-xs font-semibold mt-1">
-                  {isPassed ? 'ĐẠT' : 'CHƯA ĐẠT'}
+                  {isPassed ? t('result.passed') : t('result.notPassed')}
                 </span>
               </div>
             </div>
@@ -414,7 +416,7 @@ export const ResultPage = () => {
             {/* Info */}
             <div className="text-center sm:text-left text-white">
               <h1 className="text-2xl font-extrabold leading-tight mb-1">
-                {isPassed ? '🎉 Chúc mừng! Bạn đã vượt qua.' : '😔 Rất tiếc, bạn chưa đạt.'}
+                {isPassed ? t('result.congrats') : t('result.sorry')}
               </h1>
               <p className="text-white/70 text-sm mb-5">{examTitle}</p>
 
@@ -423,7 +425,7 @@ export const ResultPage = () => {
                 <div className="flex items-center gap-2 bg-white/15 backdrop-blur rounded-xl px-3 py-2">
                   <Trophy className="w-4 h-4 text-yellow-300" />
                   <span className="text-sm font-bold text-white">{attempt.correct_count} / {attempt.total_questions}</span>
-                  <span className="text-white/60 text-xs">câu đúng</span>
+                  <span className="text-white/60 text-xs">{t('result.correctAnswersCount')}</span>
                 </div>
                 <div className="flex items-center gap-2 bg-white/15 backdrop-blur rounded-xl px-3 py-2">
                   <Timer className="w-4 h-4 text-white/70" />
@@ -459,9 +461,9 @@ export const ResultPage = () => {
         <div className="relative bg-black/10 backdrop-blur">
           <div className="max-w-3xl mx-auto px-4 grid grid-cols-3 divide-x divide-white/10">
             {[
-              { label: 'Đúng', value: correctCount, color: 'text-emerald-200' },
-              { label: 'Sai', value: wrongCount, color: 'text-red-200' },
-              { label: 'Bỏ qua', value: skippedCount, color: 'text-white/60' },
+              { label: t('result.status.correct'), value: correctCount, color: 'text-emerald-200' },
+              { label: t('result.status.wrong'), value: wrongCount, color: 'text-red-200' },
+              { label: t('result.status.skipped'), value: skippedCount, color: 'text-white/60' },
             ].map(s => (
               <div key={s.label} className="py-4 text-center">
                 <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -494,9 +496,9 @@ export const ResultPage = () => {
         {/* Question cards */}
         <div className="space-y-4">
           {filteredDetails.length === 0 ? (
-            <EmptyState title="Không có câu hỏi nào phù hợp." />
+            <EmptyState title={t('result.noQuestionsMatch')} />
           ) : (
-            filteredDetails.map((detail, idx) => {
+            filteredDetails.map((detail) => {
               const globalIdx = details.indexOf(detail);
               return <QuestionCard key={detail.id} detail={detail} index={globalIdx} />;
             })
@@ -509,13 +511,13 @@ export const ResultPage = () => {
             to="/dashboard"
             className="flex items-center gap-2 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-2xl text-sm font-semibold hover:bg-gray-50 hover:border-gray-300 transition-colors dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700/40 dark:hover:border-slate-600"
           >
-            <LayoutDashboard className="w-4 h-4" /> Về Dashboard
+            <LayoutDashboard className="w-4 h-4" /> {t('result.backToDashboard')}
           </Link>
           <button
             onClick={() => navigate(`/exam/${attempt.exam_id}`)}
             className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-200"
           >
-            <RotateCcw className="w-4 h-4" /> Làm lại bài này
+            <RotateCcw className="w-4 h-4" /> {t('result.retakeExam')}
           </button>
           {isPassed && (
             <button
@@ -528,7 +530,7 @@ export const ResultPage = () => {
               })}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-emerald-200"
             >
-              <Download className="w-4 h-4" /> Tải chứng chỉ
+              <Download className="w-4 h-4" /> {t('result.downloadCertificate')}
             </button>
           )}
         </div>

@@ -1,5 +1,5 @@
-import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import { PASS_THRESHOLD } from '../../utils/scoreUtils';
 
 // Status colors reused from ResultPage's own pass/fail convention — not a new palette.
@@ -7,18 +7,20 @@ const PASS_COLOR = '#10b981'; // emerald-500
 const FAIL_COLOR = '#f43f5e'; // rose-500
 
 const CustomTooltip = ({ active, payload, label }) => {
+  const { t } = useTranslation();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg px-3 py-2 text-xs">
-      <p className="font-semibold text-gray-700 dark:text-slate-300">Điểm {label}</p>
-      <p className="text-gray-500 dark:text-slate-500 mt-0.5">{payload[0].value} lượt làm</p>
+      <p className="font-semibold text-gray-700 dark:text-slate-300">{t('scoreDistributionChart.scoreLabel', { label })}</p>
+      <p className="text-gray-500 dark:text-slate-500 mt-0.5">{t('scoreDistributionChart.attemptsCount', { count: payload[0].value })}</p>
     </div>
   );
 };
 
 export const ScoreDistributionChart = ({ data }) => {
+  const { t } = useTranslation();
   if (!data?.length) {
-    return <div className="flex items-center justify-center h-64 text-sm text-gray-400 dark:text-slate-500">Chưa có dữ liệu</div>;
+    return <div className="flex items-center justify-center h-64 text-sm text-gray-400 dark:text-slate-500">{t('scoreDistributionChart.noData')}</div>;
   }
   return (
     <ResponsiveContainer width="100%" height={260}>

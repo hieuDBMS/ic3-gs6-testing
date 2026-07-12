@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ZoomableImage } from '../shared/ImageLightbox';
+import { sanitizeHtml } from '../../utils/sanitizeHtml';
 
 /* ─── Answer option letters ─── */
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -56,7 +58,7 @@ const AnswerOption = ({ ans, idx, selected, onSelect, type }) => {
           className={`text-sm leading-relaxed transition-colors ${
             isSelected ? 'text-indigo-900 font-semibold' : 'text-gray-700 dark:text-slate-300'
           }`}
-          dangerouslySetInnerHTML={{ __html: ans.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(ans.content) }}
         />
       </div>
 
@@ -132,6 +134,7 @@ const DragItemCard = ({ pair, dragging, onDragStart, onDragEnd, inZone = false, 
    Drag-Drop Question
 ══════════════════════════════════════════════════════════ */
 const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
+  const { t } = useTranslation();
   const pairs = [...(question.dragdrop_pairs || [])].sort((a, b) => a.order_index - b.order_index);
   const [dragging,     setDragging]     = useState(null);
   const [dragOverZone, setDragOverZone] = useState(null);
@@ -173,8 +176,11 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
       <div className="flex items-start gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl px-4 py-3 dark:border-blue-800/60">
         <span className="text-lg mt-0.5 flex-shrink-0">🔀</span>
         <div>
-          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">Kéo &amp; Thả</p>
-          <p className="text-xs text-blue-600 mt-0.5 dark:text-blue-300">Kéo các thẻ vào ô tương ứng. Trên điện thoại: <strong>bấm chọn thẻ</strong> rồi <strong>bấm vào ô</strong>.</p>
+          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">{t('questionRenderer.dragdrop.title')}</p>
+          <p
+            className="text-xs text-blue-600 mt-0.5 dark:text-blue-300"
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(t('questionRenderer.dragdrop.hint')) }}
+          />
         </div>
       </div>
 
@@ -192,14 +198,14 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
       >
         <div className="flex items-center gap-2 mb-3">
           <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-          <p className="text-[11px] font-bold text-blue-500 uppercase tracking-widest">Kho thẻ</p>
-          <span className="ml-auto text-[11px] text-gray-400 font-medium dark:text-slate-500">{poolItems.length} thẻ còn lại</span>
+          <p className="text-[11px] font-bold text-blue-500 uppercase tracking-widest">{t('questionRenderer.dragdrop.poolLabel')}</p>
+          <span className="ml-auto text-[11px] text-gray-400 font-medium dark:text-slate-500">{t('questionRenderer.dragdrop.cardsLeft', { count: poolItems.length })}</span>
         </div>
         <div className="flex flex-wrap gap-2.5 min-h-[60px]">
           {poolItems.length === 0 ? (
             <div className="w-full flex items-center justify-center gap-2 py-3">
               <span className="text-green-500">✅</span>
-              <p className="text-sm text-gray-400 font-medium dark:text-slate-500">Tất cả đã được xếp vào ô!</p>
+              <p className="text-sm text-gray-400 font-medium dark:text-slate-500">{t('questionRenderer.dragdrop.allPlaced')}</p>
             </div>
           ) : (
             poolItems.map(pair => (
@@ -208,7 +214,7 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
                 {touchSelected?.id === pair.id && (
                   <div className="mt-1.5 flex items-center gap-1 text-[10px] text-amber-600 font-bold">
                     <span className="animate-bounce">👆</span>
-                    <span>Chọn ô bên dưới</span>
+                    <span>{t('questionRenderer.dragdrop.selectZoneBelow')}</span>
                   </div>
                 )}
               </div>
@@ -241,17 +247,17 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
                 <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isOver ? color.dot : 'bg-gray-300'}`} />
                 {zone.image_url && <img src={zone.image_url} alt="" className="h-8 w-auto object-contain flex-shrink-0" />}
                 <span className={`text-sm font-bold leading-snug ${isOver ? '' : 'text-gray-800 dark:text-slate-100'}`}>{zone.label}</span>
-                <span className="ml-auto text-[11px] font-semibold text-gray-400 dark:text-slate-500">{zoneItems.length > 0 && `${zoneItems.length} thẻ`}</span>
+                <span className="ml-auto text-[11px] font-semibold text-gray-400 dark:text-slate-500">{zoneItems.length > 0 && t('questionRenderer.dragdrop.cardsCount', { count: zoneItems.length })}</span>
               </div>
               <div className="p-3 flex flex-wrap gap-2 min-h-[90px] items-start content-start">
                 {zoneItems.length === 0 ? (
                   <div className="w-full flex flex-col items-center justify-center gap-1 py-4 text-gray-300 dark:text-slate-500">
                     <span className="text-2xl">{isOver ? '⬇️' : '📥'}</span>
-                    <span className="text-xs font-medium">{isOver ? 'Thả vào đây!' : 'Kéo thẻ vào đây'}</span>
+                    <span className="text-xs font-medium">{isOver ? t('questionRenderer.dragdrop.dropHere') : t('questionRenderer.dragdrop.dragHere')}</span>
                   </div>
                 ) : (
                   zoneItems.map(pair => (
-                    <div key={pair.id} title="Bấm để trả về kho" onClick={e => { e.stopPropagation(); returnToPool(pair.id); }}>
+                    <div key={pair.id} title={t('questionRenderer.dragdrop.returnToPool')} onClick={e => { e.stopPropagation(); returnToPool(pair.id); }}>
                       <DragItemCard pair={pair} dragging={dragging} onDragStart={handleDragStart} onDragEnd={handleDragEnd} inZone />
                     </div>
                   ))
@@ -268,11 +274,11 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
           <div className="h-2 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden" style={{ width: '120px' }}>
             <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pairs.length > 0 ? (Object.keys(placed).length / pairs.length) * 100 : 0}%`, background: 'linear-gradient(90deg, #6366F1, #8B5CF6)' }} />
           </div>
-          <span className="text-xs text-gray-500 font-medium dark:text-slate-500">{Object.keys(placed).length}/{pairs.length} thẻ</span>
+          <span className="text-xs text-gray-500 font-medium dark:text-slate-500">{t('questionRenderer.dragdrop.cardsCount', { count: `${Object.keys(placed).length}/${pairs.length}` })}</span>
         </div>
         {Object.keys(placed).length > 0 && (
           <button type="button" onClick={() => onChange(undefined)} className="text-xs text-red-400 hover:text-red-600 font-semibold flex items-center gap-1 hover:underline transition-colors dark:hover:text-red-300">
-            🔄 Làm lại
+            {t('questionRenderer.dragdrop.reset')}
           </button>
         )}
       </div>
@@ -285,6 +291,7 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
    True / False Question (polished)
 ══════════════════════════════════════════════════════════ */
 const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
+  const { t } = useTranslation();
   const sortedStatements = [...(question.truefalse_statements || [])].sort((a, b) => a.order_index - b.order_index);
   const response       = currentAnswer || {};
   const handleSelect   = (stmtId, value) => onChange({ ...response, [stmtId]: value });
@@ -301,7 +308,7 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
             <span className="text-white text-[10px] font-black tracking-tight">T/F</span>
           </div>
           <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
-            Chọn <span className="text-emerald-600 font-bold">Đúng</span> hoặc <span className="text-red-500 font-bold">Sai</span> cho mỗi nhận định
+            {t('questionRenderer.truefalse.instructionPre')} <span className="text-emerald-600 font-bold">{t('questionRenderer.truefalse.true')}</span> {t('questionRenderer.truefalse.instructionOr')} <span className="text-red-500 font-bold">{t('questionRenderer.truefalse.false')}</span> {t('questionRenderer.truefalse.instructionPost')}
           </p>
         </div>
         <span className={`text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 transition-all ${
@@ -325,11 +332,11 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
       <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
         {/* Column headers */}
         <div className="flex items-center bg-gray-50 border-b border-gray-200 px-4 py-2.5 gap-3 dark:bg-slate-700/40 dark:border-slate-700">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest w-5 text-center flex-shrink-0 dark:text-slate-500">#</span>
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex-1 dark:text-slate-500">Nhận định</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest w-5 text-center flex-shrink-0 dark:text-slate-500">{t('questionRenderer.truefalse.columnIndex')}</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex-1 dark:text-slate-500">{t('questionRenderer.truefalse.columnStatement')}</span>
           <div className="flex gap-1.5 flex-shrink-0">
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest w-16 text-center dark:text-emerald-400">Đúng</span>
-            <span className="text-[10px] font-bold text-red-500  uppercase tracking-widest w-16 text-center dark:text-red-400">Sai</span>
+            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest w-16 text-center dark:text-emerald-400">{t('questionRenderer.truefalse.true')}</span>
+            <span className="text-[10px] font-bold text-red-500  uppercase tracking-widest w-16 text-center dark:text-red-400">{t('questionRenderer.truefalse.false')}</span>
           </div>
         </div>
 
@@ -363,7 +370,7 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
                   : isTrue  ? 'text-emerald-900 dark:text-emerald-300 font-medium'
                   : 'text-red-900 dark:text-red-300 font-medium'
                 }`}
-                dangerouslySetInnerHTML={{ __html: stmt.content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(stmt.content) }}
               />
 
               {/* Buttons */}
@@ -377,7 +384,7 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
                       : 'bg-white border-gray-200 text-gray-400 hover:border-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500 dark:hover:border-emerald-600 dark:hover:text-emerald-400 dark:hover:bg-emerald-950/30'
                   }`}
                 >
-                  {isTrue ? '✔ Đúng' : 'Đúng'}
+                  {isTrue ? `✔ ${t('questionRenderer.truefalse.true')}` : t('questionRenderer.truefalse.true')}
                 </button>
                 <button
                   type="button"
@@ -388,7 +395,7 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
                       : 'bg-white border-gray-200 text-gray-400 hover:border-red-400 hover:text-red-600 hover:bg-red-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500 dark:hover:border-red-600 dark:hover:text-red-400 dark:hover:bg-red-950/30'
                   }`}
                 >
-                  {isFalse ? '✘ Sai' : 'Sai'}
+                  {isFalse ? `✘ ${t('questionRenderer.truefalse.false')}` : t('questionRenderer.truefalse.false')}
                 </button>
               </div>
             </div>
@@ -400,7 +407,7 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
       {answeredCount === total && total > 0 && (
         <div className="flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl dark:from-emerald-950/30 dark:to-teal-950/30 dark:border-emerald-800/50">
           <span className="text-emerald-600 text-sm flex-shrink-0">✅</span>
-          <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">Đã hoàn thành tất cả {total} nhận định!</p>
+          <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{t('questionRenderer.truefalse.allDone', { total })}</p>
         </div>
       )}
     </div>
@@ -420,6 +427,7 @@ const hexToRgba = (hex, alpha) => {
 };
 
 const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
+  const { t } = useTranslation();
   const sortedRegions = [...(question.hotspot_regions || [])].sort((a, b) => a.order_index - b.order_index);
   const isMulti       = question.hotspot_multi;
   const selected      = currentAnswer || [];
@@ -449,8 +457,8 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
           </div>
           <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
             {isMulti
-              ? <><span className="text-orange-600 font-bold">Click vào tất cả vùng đúng</span> trên ảnh</>
-              : <><span className="text-orange-600 font-bold">Click vào vùng đúng</span> trên ảnh</>
+              ? <><span className="text-orange-600 font-bold">{t('questionRenderer.hotspot.instructionMultiPrefix')}</span> {t('questionRenderer.hotspot.instructionSuffix')}</>
+              : <><span className="text-orange-600 font-bold">{t('questionRenderer.hotspot.instructionSinglePrefix')}</span> {t('questionRenderer.hotspot.instructionSuffix')}</>
             }
           </p>
         </div>
@@ -474,7 +482,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
                 so percentages line up perfectly 1:1. */}
             <img
               src={question.image_url}
-              alt="Hotspot"
+              alt={t('questionRenderer.hotspot.imageAlt')}
               className="w-full h-auto block"
               draggable={false}
             />
@@ -527,13 +535,15 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none">
                 <div className="bg-black/60 backdrop-blur text-white text-xs px-4 py-2 rounded-xl flex items-center gap-2">
                   <span>🎯</span>
-                  {isMulti ? 'Click vào tất cả vùng đúng trên ảnh' : 'Click vào vùng đúng trên ảnh'}
+                  {isMulti
+                    ? `${t('questionRenderer.hotspot.instructionMultiPrefix')} ${t('questionRenderer.hotspot.instructionSuffix')}`
+                    : `${t('questionRenderer.hotspot.instructionSinglePrefix')} ${t('questionRenderer.hotspot.instructionSuffix')}`}
                 </div>
               </div>
             )}
           </>
         ) : (
-          <div className="flex items-center justify-center h-48 text-gray-400 dark:text-slate-500">Ảnh chưa được tải</div>
+          <div className="flex items-center justify-center h-48 text-gray-400 dark:text-slate-500">{t('questionRenderer.hotspot.imageNotLoaded')}</div>
         )}
       </div>
 
@@ -541,14 +551,14 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
         <div className="flex items-center gap-2 px-4 py-2.5 bg-orange-50 border border-orange-200 rounded-xl dark:bg-orange-950/30 dark:border-orange-800/50">
           <span className="text-orange-500">🎯</span>
           <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
-            Đã chọn {selected.length} vùng{isMulti ? ` / cần ${correctCount}` : ''}
+            {t('questionRenderer.hotspot.selectedCount', { count: selected.length })}{isMulti ? t('questionRenderer.hotspot.selectedRequired', { correct: correctCount }) : ''}
           </p>
           <button
             type="button"
             onClick={() => onChange(undefined)}
             className="ml-auto text-xs text-orange-400 hover:text-orange-600 dark:text-orange-500 dark:hover:text-orange-300 font-semibold flex items-center gap-1"
           >
-            🔄 Làm lại
+            {t('questionRenderer.hotspot.reset')}
           </button>
         </div>
       )}
@@ -561,6 +571,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
    Main Renderer
 ══════════════════════════════════════════════════════════ */
 const QuestionRendererImpl = ({ question, currentAnswer, onChange }) => {
+  const { t } = useTranslation();
   if (!question) return null;
 
   const handleChoiceChange = (ansId)   => onChange([ansId]);
@@ -580,12 +591,12 @@ const QuestionRendererImpl = ({ question, currentAnswer, onChange }) => {
         {/* Render HTML content (supports bold, color, underline from RichTextEditor) */}
         <div
           className="text-[1.05rem] font-semibold text-gray-900 dark:text-slate-100 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: question.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.content) }}
         />
         {question.image_url && question.question_type !== 'hotspot' && (
           <ZoomableImage
             src={question.image_url}
-            alt="Question"
+            alt={t('questionRenderer.questionImageAlt')}
             className="max-h-64 rounded-xl shadow-sm border border-gray-200 object-contain bg-gray-50 dark:border-slate-700 dark:bg-slate-800"
           />
         )}
@@ -612,7 +623,7 @@ const QuestionRendererImpl = ({ question, currentAnswer, onChange }) => {
         {question.question_type === 'multi' && (
           <>
             <p className="text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded-xl px-3 py-2 inline-flex items-center gap-1.5 dark:text-violet-300 dark:bg-violet-950/30 dark:border-violet-800/50">
-              ☑ Có thể chọn nhiều đáp án đúng
+              {t('questionRenderer.multiHint')}
             </p>
             {sortedAnswers.map((ans, idx) => (
               <AnswerOption

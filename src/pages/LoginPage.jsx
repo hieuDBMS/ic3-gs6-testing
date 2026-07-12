@@ -1,16 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from "react";
 import { useNavigate, Navigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, LogIn, Sword, ShieldCheck, Monitor, Award } from 'lucide-react';
 
-/* ── Decorative feature list shown on the left panel ── */
-const features = [
-  { icon: <Monitor className="w-5 h-5" />, text: 'Thi trực tuyến IC3 chuẩn quốc tế' },
-  { icon: <ShieldCheck className="w-5 h-5" />, text: 'Bảo mật, tự động nộp bài khi hết giờ' },
-  { icon: <Award className="w-5 h-5" />, text: 'Kết quả tức thì, theo dõi tiến độ' },
-];
-
 export const LoginPage = () => {
+  const { t } = useTranslation();
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +17,15 @@ export const LoginPage = () => {
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
 
+  /* ── Decorative feature list shown on the left panel ── */
+  const featureTexts = t('auth.login.features', { returnObjects: true });
+  const featureIcons = [
+    <Monitor className="w-5 h-5" />,
+    <ShieldCheck className="w-5 h-5" />,
+    <Award className="w-5 h-5" />,
+  ];
+  const features = featureTexts.map((text, i) => ({ icon: featureIcons[i], text }));
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -30,7 +34,7 @@ export const LoginPage = () => {
       await login(emailOrUsername, password);
       navigate('/dashboard');
     } catch {
-      setError('Tên đăng nhập / email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+      setError(t('auth.login.errorInvalid'));
     } finally {
       setIsLoading(false);
     }
@@ -76,16 +80,16 @@ export const LoginPage = () => {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent-400/20 border border-accent-400/30 mb-5">
               <span className="w-2 h-2 rounded-full bg-accent-400 animate-pulse-slow" />
-              <span className="text-accent-300 text-xs font-semibold tracking-wide uppercase">Internet & Computing Core</span>
+              <span className="text-accent-300 text-xs font-semibold tracking-wide uppercase">{t('auth.login.badge')}</span>
             </div>
             <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight text-balance">
-              Hệ thống thi<br />
+              {t('auth.login.heroLine1')}<br />
               <span className="bg-gradient-to-r from-accent-300 to-primary-300 bg-clip-text text-transparent">
-                IC3 trực tuyến
+                {t('auth.login.heroLine2')}
               </span>
             </h1>
             <p className="mt-4 text-white/55 text-base leading-relaxed max-w-sm">
-              Luyện tập và kiểm tra kỹ năng tin học chuẩn quốc tế IC3 GS6 / GS7 / GS8.
+              {t('auth.login.heroSubtitle')}
             </p>
           </div>
 
@@ -105,7 +109,7 @@ export const LoginPage = () => {
         {/* Bottom badge */}
         <div className="relative z-10">
           <p className="text-white/25 text-xs">
-            © {new Date().getFullYear()} IC3 Exam Platform · Bản quyền bảo lưu
+            {t('auth.login.copyright', { year: new Date().getFullYear() })}
           </p>
         </div>
       </div>
@@ -119,14 +123,14 @@ export const LoginPage = () => {
             <Sword className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-slate-100">IC3-Fighter</h1>
-          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Hệ thống thi trực tuyến</p>
+          <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{t('auth.login.mobileSubtitle')}</p>
         </div>
 
         <div className="w-full max-w-[400px]">
           {/* Form header */}
           <div className="mb-8">
-            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">Đăng nhập</h2>
-            <p className="mt-2 text-gray-500 dark:text-slate-400 text-sm">Nhập thông tin tài khoản để tiếp tục</p>
+            <h2 className="text-3xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('auth.login.title')}</h2>
+            <p className="mt-2 text-gray-500 dark:text-slate-400 text-sm">{t('auth.login.subtitle')}</p>
           </div>
 
           {/* Error */}
@@ -143,7 +147,7 @@ export const LoginPage = () => {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                Tên đăng nhập hoặc Email
+                {t('auth.login.usernameLabel')}
               </label>
               <input
                 id="email"
@@ -152,7 +156,7 @@ export const LoginPage = () => {
                 required
                 value={emailOrUsername}
                 onChange={e => setEmailOrUsername(e.target.value)}
-                placeholder="Tên đăng nhập hoặc email..."
+                placeholder={t('auth.login.usernamePlaceholder')}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                            dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                            focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
@@ -163,7 +167,7 @@ export const LoginPage = () => {
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                Mật khẩu
+                {t('auth.login.passwordLabel')}
               </label>
               <div className="relative">
                 <input
@@ -173,7 +177,7 @@ export const LoginPage = () => {
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu..."
+                  placeholder={t('auth.login.passwordPlaceholder')}
                   className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
@@ -184,7 +188,7 @@ export const LoginPage = () => {
                   tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-primary-500 dark:text-slate-500 dark:hover:text-primary-400 transition-colors"
-                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                  aria-label={showPassword ? t('auth.login.hidePassword') : t('auth.login.showPassword')}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -209,12 +213,12 @@ export const LoginPage = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Đang đăng nhập...
+                  {t('auth.login.submitting')}
                 </>
               ) : (
                 <>
                   <LogIn className="w-4 h-4" />
-                  Đăng nhập
+                  {t('auth.login.submit')}
                 </>
               )}
             </button>
@@ -222,13 +226,13 @@ export const LoginPage = () => {
 
           {/* Footer note */}
           <p className="mt-8 text-center text-sm text-gray-500">
-            Chưa có tài khoản?{' '}
+            {t('auth.login.noAccount')}{' '}
             <Link to="/register" className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
-              Đăng ký ngay
+              {t('auth.login.registerNow')}
             </Link>
           </p>
           <p className="mt-2 text-center text-xs text-gray-400">
-            Liên hệ giáo viên nếu quên mật khẩu.
+            {t('auth.login.forgotPassword')}
           </p>
         </div>
       </div>

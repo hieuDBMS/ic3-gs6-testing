@@ -1,4 +1,5 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { Trash2, Eye, Pencil, CheckCircle2, XCircle, RotateCcw, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { ImageUploader } from './ImageUploader';
 import { useTheme } from '../../context/ThemeContext';
@@ -40,6 +41,7 @@ export const HotspotEditor = ({
   multiMode,
   onMultiModeChange,
 }) => {
+  const { t } = useTranslation();
   const { isDark } = useTheme();
   const imgRef    = useRef(null);
   const overlayRef = useRef(null);
@@ -113,8 +115,8 @@ export const HotspotEditor = ({
   const onTouchStart = useCallback((e) => {
     if (mode !== 'draw') return;
     e.preventDefault();
-    const t = e.touches[0];
-    const { x, y } = toPercent(t.clientX, t.clientY);
+    const touch = e.touches[0];
+    const { x, y } = toPercent(touch.clientX, touch.clientY);
     setDrawing({ startX: x, startY: y, x, y, w: 0, h: 0 });
     setSelected(null);
   }, [mode, toPercent]);
@@ -122,8 +124,8 @@ export const HotspotEditor = ({
   const onTouchMove = useCallback((e) => {
     if (!drawing) return;
     e.preventDefault();
-    const t = e.touches[0];
-    const { x, y } = toPercent(t.clientX, t.clientY);
+    const touch = e.touches[0];
+    const { x, y } = toPercent(touch.clientX, touch.clientY);
     setDrawing(d => ({
       ...d,
       x: Math.min(d.startX, x),
@@ -157,11 +159,11 @@ export const HotspotEditor = ({
         <div className="flex items-start gap-3 px-4 py-3.5 bg-amber-50 border border-amber-200 rounded-2xl dark:bg-amber-950/40 dark:border-amber-800/60">
           <span className="text-2xl flex-shrink-0">🎯</span>
           <div>
-            <p className="text-sm font-bold text-amber-800 mb-1 dark:text-amber-300">Chọn vùng ảnh (Hotspot)</p>
+            <p className="text-sm font-bold text-amber-800 mb-1 dark:text-amber-300">{t('hotspotEditor.title')}</p>
             <ol className="text-xs text-amber-700 space-y-1 list-decimal list-inside dark:text-amber-300">
-              <li>Upload ảnh bên dưới</li>
-              <li>Kéo chuột trên ảnh để vẽ vùng</li>
-              <li>Chọn màu và đánh dấu <strong>Đúng / Sai</strong> cho mỗi vùng</li>
+              <li>{t('hotspotEditor.step1')}</li>
+              <li>{t('hotspotEditor.step2')}</li>
+              <li>{t('hotspotEditor.step3Pre')} <strong>{t('hotspotEditor.step3Strong')}</strong> {t('hotspotEditor.step3Post')}</li>
             </ol>
           </div>
         </div>
@@ -169,7 +171,7 @@ export const HotspotEditor = ({
           bucket="question-images"
           value={imageUrl}
           onChange={onImageChange}
-          label="Upload ảnh câu hỏi Hotspot (bắt buộc)"
+          label={t('hotspotEditor.uploadRequiredLabel')}
         />
       </div>
     );
@@ -184,30 +186,30 @@ export const HotspotEditor = ({
         <div className="flex rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white dark:border-slate-700 dark:bg-slate-800">
           <button type="button" onClick={() => setMode('draw')}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-all ${mode === 'draw' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50 dark:text-slate-500 dark:hover:bg-slate-700'}`}>
-            <Pencil className="w-3.5 h-3.5" /> Vẽ vùng
+            <Pencil className="w-3.5 h-3.5" /> {t('hotspotEditor.drawMode')}
           </button>
           <button type="button" onClick={() => setMode('preview')}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-l border-gray-200 transition-all dark:border-slate-700 ${mode === 'preview' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50 dark:text-slate-500 dark:hover:bg-slate-700'}`}>
-            <Eye className="w-3.5 h-3.5" /> Xem trước
+            <Eye className="w-3.5 h-3.5" /> {t('hotspotEditor.previewMode')}
           </button>
         </div>
 
         {/* Multi-select toggle */}
         <button type="button" onClick={() => onMultiModeChange(!multiMode)}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all shadow-sm ${multiMode ? 'bg-violet-100 border-violet-300 text-violet-700 dark:bg-violet-950/40 dark:border-violet-800/60 dark:text-violet-300' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500 dark:hover:border-slate-600'}`}>
-          {multiMode ? '☑ Nhiều vùng đúng' : '🔘 Một vùng đúng'}
+          {multiMode ? `☑ ${t('hotspotEditor.multiModeOn')}` : `🔘 ${t('hotspotEditor.multiModeOff')}`}
         </button>
 
         {/* Stats */}
         {regions.length > 0 && (
           <div className="flex items-center gap-2 ml-auto">
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg dark:text-emerald-400 dark:bg-emerald-950/40">✓ {correctCount} đúng</span>
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg dark:text-emerald-400 dark:bg-emerald-950/40">✓ {t('hotspotEditor.correctCount', { count: correctCount })}</span>
             {regions.length - correctCount > 0 && (
-              <span className="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-lg dark:text-red-400 dark:bg-red-950/40">✗ {regions.length - correctCount} sai</span>
+              <span className="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-lg dark:text-red-400 dark:bg-red-950/40">✗ {t('hotspotEditor.incorrectCount', { count: regions.length - correctCount })}</span>
             )}
             <button type="button" onClick={() => { onRegionsChange([]); setSelected(null); }}
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-red-400 hover:text-red-600 border border-red-200 hover:border-red-300 rounded-lg transition-all dark:hover:text-red-300 dark:border-red-800/60 dark:hover:border-red-700">
-              <RotateCcw className="w-3 h-3" /> Xóa tất cả
+              <RotateCcw className="w-3 h-3" /> {t('hotspotEditor.clearAll')}
             </button>
           </div>
         )}
@@ -229,7 +231,7 @@ export const HotspotEditor = ({
         <img
           ref={imgRef}
           src={imageUrl}
-          alt="Hotspot"
+          alt={t('hotspotEditor.imageAlt')}
           className="w-full h-auto block"
           draggable={false}
         />
@@ -312,7 +314,7 @@ export const HotspotEditor = ({
           {mode === 'preview' && regions.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="bg-black/55 text-white text-xs px-4 py-2 rounded-xl">
-                Chưa có vùng nào — chuyển sang Vẽ vùng để thêm
+                {t('hotspotEditor.noRegionsYet')}
               </div>
             </div>
           )}
@@ -325,8 +327,8 @@ export const HotspotEditor = ({
           <Info className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
           <p className="text-xs text-indigo-600 dark:text-indigo-300">
             {regions.length === 0
-              ? 'Kéo chuột trên ảnh để vẽ vùng đầu tiên. Bấm vào vùng đã vẽ để chỉnh sửa.'
-              : 'Kéo chuột để thêm vùng mới. Bấm vào vùng để chỉnh sửa màu và đáp án.'}
+              ? t('hotspotEditor.drawTipEmpty')
+              : t('hotspotEditor.drawTipHasRegions')}
           </p>
         </div>
       )}
@@ -334,7 +336,7 @@ export const HotspotEditor = ({
       {/* ── Region list (below the image) ── */}
       {regions.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 dark:text-slate-500">Danh sách vùng ({regions.length})</p>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 dark:text-slate-500">{t('hotspotEditor.regionListHeader', { count: regions.length })}</p>
           {regions.map((r, idx) => {
             const color = r.color || COLORS[0];
             const isSel = selected === r.id;
@@ -364,14 +366,14 @@ export const HotspotEditor = ({
 
                   {/* Label / coordinates */}
                   <span className="flex-1 min-w-0 text-sm font-semibold text-gray-700 truncate dark:text-slate-300">
-                    {r.label || `Vùng ${idx + 1}`}
+                    {r.label || t('hotspotEditor.regionDefaultLabel', { index: idx + 1 })}
                   </span>
 
                   {/* Correct badge */}
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
                     r.is_correct ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-300'
                   }`}>
-                    {r.is_correct ? '✔ Đúng' : '✘ Sai'}
+                    {r.is_correct ? `✔ ${t('hotspotEditor.correctLabel')}` : `✘ ${t('hotspotEditor.incorrectLabel')}`}
                   </span>
 
                   {/* Delete */}
@@ -392,19 +394,19 @@ export const HotspotEditor = ({
                   <div className="px-4 pb-4 pt-1 bg-white border-t border-gray-100 space-y-4 dark:bg-slate-800 dark:border-slate-700/60">
                     {/* Label input */}
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 dark:text-slate-500">Mô tả vùng</label>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 dark:text-slate-500">{t('hotspotEditor.regionLabelField')}</label>
                       <input
                         type="text"
                         value={r.label || ''}
                         onChange={e => updateRegion(r.id, 'label', e.target.value)}
-                        placeholder="Ví dụ: Nút Save, Thanh công cụ... (tuỳ chọn)"
+                        placeholder={t('hotspotEditor.regionLabelPlaceholder')}
                         className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                       />
                     </div>
 
                     {/* Color picker */}
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 dark:text-slate-500">Màu viền vùng</label>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 dark:text-slate-500">{t('hotspotEditor.borderColorLabel')}</label>
                       <div className="flex gap-2 flex-wrap">
                         {COLORS.map(hex => (
                           <button
@@ -424,7 +426,7 @@ export const HotspotEditor = ({
 
                     {/* Correct / Incorrect */}
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 dark:text-slate-500">Đáp án</label>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 dark:text-slate-500">{t('hotspotEditor.answerLabel')}</label>
                       <div className="flex gap-2">
                         <button type="button" onClick={() => updateRegion(r.id, 'is_correct', true)}
                           className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-bold transition-all ${
@@ -432,7 +434,7 @@ export const HotspotEditor = ({
                               ? 'border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-100'
                               : 'border-gray-200 text-gray-400 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50 dark:border-slate-600 dark:text-slate-500 dark:hover:border-emerald-700 dark:hover:text-emerald-400 dark:hover:bg-emerald-950/40'
                           }`}>
-                          <CheckCircle2 className="w-4 h-4" /> Đúng
+                          <CheckCircle2 className="w-4 h-4" /> {t('hotspotEditor.correctLabel')}
                         </button>
                         <button type="button" onClick={() => updateRegion(r.id, 'is_correct', false)}
                           className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-bold transition-all ${
@@ -440,14 +442,14 @@ export const HotspotEditor = ({
                               ? 'border-red-500 bg-red-500 text-white shadow-lg shadow-red-100'
                               : 'border-gray-200 text-gray-400 hover:border-red-300 hover:text-red-600 hover:bg-red-50 dark:border-slate-600 dark:text-slate-500 dark:hover:border-red-700 dark:hover:text-red-400 dark:hover:bg-red-950/40'
                           }`}>
-                          <XCircle className="w-4 h-4" /> Sai
+                          <XCircle className="w-4 h-4" /> {t('hotspotEditor.incorrectLabel')}
                         </button>
                       </div>
                     </div>
 
                     {/* Position & size (read-only) */}
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 dark:text-slate-500">Vị trí &amp; kích thước</label>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 dark:text-slate-500">{t('hotspotEditor.positionSizeLabel')}</label>
                       <div className="grid grid-cols-4 gap-1.5">
                         {[['X', r.x], ['Y', r.y], ['W', r.width], ['H', r.height]].map(([lbl, val]) => (
                           <div key={lbl} className="bg-gray-50 rounded-lg px-2 py-2 text-center dark:bg-slate-700/50">
@@ -469,14 +471,14 @@ export const HotspotEditor = ({
       <button type="button"
         onClick={() => { onImageChange(null); onRegionsChange([]); setSelected(null); }}
         className="text-xs text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 dark:text-slate-500 dark:hover:text-red-400">
-        <Trash2 className="w-3 h-3" /> Xóa ảnh và vẽ lại từ đầu
+        <Trash2 className="w-3 h-3" /> {t('hotspotEditor.resetImage')}
       </button>
 
       {/* ── Warning: no correct region ── */}
       {regions.filter(r => r.is_correct).length === 0 && (
         <div className="flex items-center gap-2.5 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl dark:bg-amber-950/40 dark:border-amber-800/60">
           <span>⚠️</span>
-          <p className="text-xs text-amber-700 font-semibold dark:text-amber-300">Cần ít nhất 1 vùng đúng. Kéo chuột trên ảnh để vẽ.</p>
+          <p className="text-xs text-amber-700 font-semibold dark:text-amber-300">{t('hotspotEditor.needCorrectRegionWarning')}</p>
         </div>
       )}
     </div>

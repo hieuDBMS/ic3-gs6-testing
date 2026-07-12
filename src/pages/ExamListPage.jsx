@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { supabase } from '../lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
-import { Book, Clock, ChevronDown, ChevronRight, Monitor, Search, BookOpen, Zap, Lock, CheckCircle, ShoppingCart, Trash2, X, Loader2, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Clock, ChevronDown, Monitor, BookOpen, Zap, Lock, CheckCircle, ShoppingCart, Trash2, X, Loader2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PaymentModal } from '../components/shared/PaymentModal';
 import { useExamStructure } from '../hooks/useExamStructure';
@@ -16,14 +17,17 @@ const DEFAULT_STYLE = { from: 'from-gray-600', to: 'to-gray-400', ring: 'ring-gr
 const getStyle = (v) => VERSION_STYLES[v] || DEFAULT_STYLE;
 
 /* ── Exam Type Badge ── */
-const TypeBadge = ({ type }) => (
-  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
-    ${type === 'testing'
-      ? 'bg-blue-100 text-blue-700 border border-blue-200'
-      : 'bg-purple-100 text-purple-700 border border-purple-200'}`}>
-    {type === 'testing' ? '📝 Testing' : '🎯 Gmetrix'}
-  </span>
-);
+const TypeBadge = ({ type }) => {
+  const { t } = useTranslation();
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
+      ${type === 'testing'
+        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+        : 'bg-purple-100 text-purple-700 border border-purple-200'}`}>
+      {type === 'testing' ? `📝 ${t('examList.typeTesting')}` : `🎯 ${t('examList.typeGmetrix')}`}
+    </span>
+  );
+};
 
 /* ─── Skeleton loader ───────────────────────────── */
 const Skeleton = () => (
@@ -36,6 +40,7 @@ const Skeleton = () => (
 
 /* ─── Inline Cancel Sheet ────────────────────────────────── */
 const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [err,  setErr]  = useState('');
   const confirm = async () => {
@@ -63,16 +68,16 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">Huỷ giao dịch?</h3>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Thao tác này không thể hoàn tác</p>
+              <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">{t('examList.cancelSheet.title')}</h3>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{t('examList.cancelSheet.subtitle')}</p>
             </div>
             <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition">
               <X className="w-3.5 h-3.5 text-gray-500 dark:text-slate-400" />
             </button>
           </div>
           <div className="p-3.5 bg-gray-50 dark:bg-slate-700/50 rounded-2xl text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-            Giao dịch <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{txCode}</code> sẽ bị xoá.
-            Bạn có thể mua lại bất kỳ lúc nào.
+            {t('examList.cancelSheet.transactionPrefix')} <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{txCode}</code> {t('examList.cancelSheet.transactionSuffix')}
+            {t('examList.cancelSheet.rebuyHint')}
           </div>
           {err && (
             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 rounded-xl text-xs text-red-700 dark:text-red-300">
@@ -82,11 +87,11 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
           <div className="flex gap-2.5">
             <button onClick={onClose}
               className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 transition active:scale-[.98]">
-              Giữ lại
+              {t('examList.cancelSheet.keep')}
             </button>
             <button onClick={confirm} disabled={busy}
               className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[.98]">
-              {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang huỷ...</> : <><Trash2 className="w-4 h-4" /> Xác nhận huỷ</>}
+              {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('examList.cancelSheet.cancelling')}</> : <><Trash2 className="w-4 h-4" /> {t('examList.cancelSheet.confirm')}</>}
             </button>
           </div>
         </div>
@@ -96,6 +101,7 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
 };
 
 export const ExamListPage = () => {
+  const { t } = useTranslation();
   const { isSelfRegistered, user } = useAuth();
   const navigate = useNavigate();
   const { levels, exams, loading } = useExamStructure();
@@ -161,7 +167,7 @@ export const ExamListPage = () => {
         data.purchases.forEach(p => { map[p.exam_id] = p; });
         setPurchases(map);
       }
-    } catch {}
+    } catch { /* non-critical: exam list still renders without purchase status */ }
     finally { setPurchasesLoaded(true); }
   }, []);
 
@@ -212,25 +218,25 @@ export const ExamListPage = () => {
                 <span className="text-accent-300 text-xs font-semibold tracking-wide">IC3 Certification</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                Chọn bài thi
+                {t('examList.hero.title')}
               </h1>
               <p className="mt-2 text-white/50 text-sm max-w-md">
-                Chọn phiên bản IC3, sau đó chọn cấp độ và bài thi phù hợp để bắt đầu.
+                {t('examList.hero.subtitle')}
               </p>
             </div>
 
             {selectedVersion && (
               <div className="hidden sm:flex flex-col items-end gap-1">
-                <div className="text-white/40 text-xs font-medium uppercase tracking-wider">Đang chọn</div>
+                <div className="text-white/40 text-xs font-medium uppercase tracking-wider">{t('examList.hero.selected')}</div>
                 <div className="text-2xl font-black text-white">{selectedVersion}</div>
-                <div className="text-white/50 text-xs">{filteredLevels.length} cấp · {totalExams} bài thi</div>
+                <div className="text-white/50 text-xs">{t('examList.hero.levelsAndExams', { levels: filteredLevels.length, exams: totalExams })}</div>
               </div>
             )}
           </div>
 
           {/* ── Version selector ── */}
           <div className="mt-8">
-            <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-3">Phiên bản IC3</p>
+            <p className="text-white/40 text-xs font-semibold uppercase tracking-wider mb-3">{t('examList.hero.versionLabel')}</p>
             <div className="flex flex-wrap gap-3">
               {availableVersions.map(v => {
                 const s = getStyle(v);
@@ -272,9 +278,9 @@ export const ExamListPage = () => {
             <div className="w-20 h-20 rounded-3xl bg-primary-50 dark:bg-primary-950/30 border-2 border-primary-100 dark:border-primary-900/40 flex items-center justify-center mb-5">
               <Monitor className="w-9 h-9 text-primary-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 dark:text-slate-200 mb-2">Chọn phiên bản để bắt đầu</h3>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-slate-200 mb-2">{t('examList.emptyState.chooseVersionTitle')}</h3>
             <p className="text-gray-400 dark:text-slate-500 text-sm max-w-xs">
-              Chọn một phiên bản IC3 (GS6, GS7, GS8) ở trên để xem danh sách cấp độ và bài thi.
+              {t('examList.emptyState.chooseVersionSubtitle')}
             </p>
           </div>
         )}
@@ -282,7 +288,7 @@ export const ExamListPage = () => {
         {!loading && selectedVersion && (
           <div className="space-y-4 animate-fade-in">
             {filteredLevels.length === 0 && (
-              <p className="text-gray-400 dark:text-slate-500 text-sm italic py-8 text-center">Không có cấp độ nào.</p>
+              <p className="text-gray-400 dark:text-slate-500 text-sm italic py-8 text-center">{t('examList.noLevels')}</p>
             )}
 
             {filteredLevels.map((level, idx) => {
@@ -315,10 +321,10 @@ export const ExamListPage = () => {
                       </div>
                       <div className="flex items-center gap-3 mt-1">
                         {testingCount > 0 && (
-                          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">📝 {testingCount} Testing</span>
+                          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">📝 {t('examList.countTesting', { count: testingCount })}</span>
                         )}
                         {gmetrixCount > 0 && (
-                          <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">🎯 {gmetrixCount} Gmetrix</span>
+                          <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">🎯 {t('examList.countGmetrix', { count: gmetrixCount })}</span>
                         )}
                       </div>
                     </div>
@@ -353,10 +359,10 @@ export const ExamListPage = () => {
                                 <TypeBadge type={exam.exam_type} />
                                 {isSelfRegistered && !showSkeleton && (
                                   isPurchased
-                                    ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60"><CheckCircle className="w-3 h-3" /> Đã mua</span>
+                                    ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60"><CheckCircle className="w-3 h-3" /> {t('examList.status.purchased')}</span>
                                     : isPending
-                                      ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60"><Clock className="w-3 h-3" /> Chờ TT</span>
-                                      : <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold border border-gray-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600"><Lock className="w-3 h-3" /> Chưa mua</span>
+                                      ? <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60"><Clock className="w-3 h-3" /> {t('examList.status.pending')}</span>
+                                      : <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-bold border border-gray-200 dark:bg-slate-700 dark:text-slate-400 dark:border-slate-600"><Lock className="w-3 h-3" /> {t('examList.status.notPurchased')}</span>
                                 )}
                                 {showSkeleton && <div className="w-14 h-5 bg-gray-100 dark:bg-slate-700 rounded-full animate-pulse" />}
                               </div>
@@ -364,7 +370,7 @@ export const ExamListPage = () => {
 
                             <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500">
                               <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                              <span>{Math.floor(exam.duration_seconds / 60)} phút</span>
+                              <span>{t('examList.durationMinutes', { minutes: Math.floor(exam.duration_seconds / 60) })}</span>
                             </div>
 
                             {/* Action button — render only after purchases confirmed */}
@@ -379,17 +385,17 @@ export const ExamListPage = () => {
                                   transition-all duration-150 shadow-sm mt-auto`}
                               >
                                 <Zap className="w-3.5 h-3.5" />
-                                Bắt đầu làm bài
+                                {t('examList.startExam')}
                               </Link>
                             ) : isPending ? (
                               <div className="flex gap-2 mt-auto">
                                 <button onClick={() => setPaymentExam(exam)}
                                   className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-400 hover:opacity-90 active:scale-[.97] transition-all shadow-sm">
-                                  <Clock className="w-3.5 h-3.5" /> Tiếp tục TT
+                                  <Clock className="w-3.5 h-3.5" /> {t('examList.continuePayment')}
                                 </button>
                                 <button onClick={() => setCancelExam({ purchaseId: purchase.id, txCode: purchase.transaction_code })}
                                   className="flex items-center justify-center px-3 py-2.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 active:scale-[.97] transition-all border border-red-100"
-                                  title="Huỷ giao dịch">
+                                  title={t('examList.cancelSheet.title')}>
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
@@ -402,7 +408,7 @@ export const ExamListPage = () => {
                                   transition-all duration-150 shadow-sm mt-auto"
                               >
                                 <ShoppingCart className="w-3.5 h-3.5" />
-                                Mua ngay — {new Intl.NumberFormat('vi-VN').format(exam.required_amount || 100000)}đ
+                                {t('examList.buyNow', { amount: new Intl.NumberFormat('vi-VN').format(exam.required_amount || 100000) })}
                               </button>
                             )}
                            </div>
@@ -411,7 +417,7 @@ export const ExamListPage = () => {
 
                         {level.exams.length === 0 && (
                           <div className="col-span-full py-6 text-center text-sm text-gray-400 dark:text-slate-500 italic">
-                            Chưa có bài thi nào trong cấp độ này.
+                            {t('examList.noExamsInLevel')}
                           </div>
                         )}
                       </div>

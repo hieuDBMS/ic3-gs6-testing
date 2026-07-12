@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import {
-  Plus, Edit2, Trash2, Search, Filter, ChevronLeft,
+  Plus, Edit2, Trash2, Search, ChevronLeft,
   ChevronRight, Image as ImageIcon, BookOpen, X, Loader2, Layers,
   ArrowUpDown, ArrowUp, ArrowDown, Hash, FileSpreadsheet,
 } from 'lucide-react';
@@ -11,15 +12,16 @@ import { useExamStructure } from '../hooks/useExamStructure';
 import { Toast, useToast } from '../components/shared/Toast';
 import { ConfirmDialog } from '../components/shared/ConfirmDialog';
 import { EmptyState } from '../components/shared/EmptyState';
+import { sanitizeHtml } from '../utils/sanitizeHtml';
 
 const PAGE_SIZE = 20;
 
-const QUESTION_TYPE_LABELS = {
-  choice:     { label: 'Chọn một',      color: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'    },
-  multi:      { label: 'Chọn nhiều',    color: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' },
-  dragdrop:   { label: 'Kéo thả',       color: 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300' },
-  truefalse:  { label: 'Đúng / Sai',    color: 'bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300'    },
-  hotspot:    { label: 'Chọn vùng ảnh', color: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'   },
+const QUESTION_TYPE_COLORS = {
+  choice:     'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
+  multi:      'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300',
+  dragdrop:   'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300',
+  truefalse:  'bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300',
+  hotspot:    'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
 };
 
 /* ─── sessionStorage helpers ─── */
@@ -33,7 +35,7 @@ const loadSavedState = () => {
 };
 
 const saveState = (state) => {
-  try { sessionStorage.setItem(SS_KEY, JSON.stringify(state)); } catch {}
+  try { sessionStorage.setItem(SS_KEY, JSON.stringify(state)); } catch { /* sessionStorage unavailable (e.g. private mode) */ }
 };
 
 const DEFAULT_FILTERS = {
@@ -49,6 +51,8 @@ const DEFAULT_FILTERS = {
 };
 
 export const QuestionsPage = () => {
+  const { t } = useTranslation();
+
   /* ── Restore persisted state ── */
   const saved = loadSavedState();
 
@@ -56,13 +60,21 @@ export const QuestionsPage = () => {
   const [sortOption,  setSortOption]  = useState(saved?.sortOption  ?? 'created_at:desc');
   const [filters,     setFilters]     = useState(saved?.filters     ?? DEFAULT_FILTERS);
 
+  const QUESTION_TYPE_LABELS = {
+    choice:    t('questionsAdmin.typeLabels.choice'),
+    multi:     t('questionsAdmin.typeLabels.multi'),
+    dragdrop:  t('questionsAdmin.typeLabels.dragdrop'),
+    truefalse: t('questionsAdmin.typeLabels.truefalse'),
+    hotspot:   t('questionsAdmin.typeLabels.hotspot'),
+  };
+
   const SORT_OPTIONS = [
-    { value: 'created_at:desc',  label: 'Mới nhất trước',     icon: 'desc' },
-    { value: 'created_at:asc',   label: 'Cũ nhất trước',      icon: 'asc'  },
-    { value: 'order_index:asc',  label: 'Thứ tự tăng dần',    icon: 'asc'  },
-    { value: 'order_index:desc', label: 'Thứ tự giảm dần',    icon: 'desc' },
-    { value: 'content:asc',      label: 'Nội dung A → Z',     icon: 'asc'  },
-    { value: 'content:desc',     label: 'Nội dung Z → A',     icon: 'desc' },
+    { value: 'created_at:desc',  label: t('questionsAdmin.sort.newestFirst'),  icon: 'desc' },
+    { value: 'created_at:asc',   label: t('questionsAdmin.sort.oldestFirst'),  icon: 'asc'  },
+    { value: 'order_index:asc',  label: t('questionsAdmin.sort.orderAsc'),     icon: 'asc'  },
+    { value: 'order_index:desc', label: t('questionsAdmin.sort.orderDesc'),    icon: 'desc' },
+    { value: 'content:asc',      label: t('questionsAdmin.sort.contentAsc'),   icon: 'asc'  },
+    { value: 'content:desc',     label: t('questionsAdmin.sort.contentDesc'),  icon: 'desc' },
   ];
 
   const navigate = useNavigate();
@@ -120,7 +132,7 @@ export const QuestionsPage = () => {
   );
 
   useEffect(() => {
-    if (error) showToast('Lỗi khi tải câu hỏi: ' + error.message, 'error');
+    if (error) showToast(t('questionsAdmin.loadErrorToast', { message: error.message }), 'error');
   }, [error]);
 
   /* Reset page when filters/sort change */
@@ -139,10 +151,10 @@ export const QuestionsPage = () => {
       const { error } = await supabase.from('questions').delete().eq('id', q.id);
       if (error) throw error;
       await reorderQuestions(q.exam_id);
-      showToast('Đã xoá câu hỏi và cập nhật thứ tự');
+      showToast(t('questionsAdmin.deletedToast'));
       fetchQuestions();
     } catch (err) {
-      showToast('Lỗi khi xoá: ' + err.message, 'error');
+      showToast(t('questionsAdmin.deleteErrorToast', { message: err.message }), 'error');
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
@@ -173,14 +185,6 @@ export const QuestionsPage = () => {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  /* ─── Render question content as HTML ─── */
-  const QuestionContent = ({ html, className = '' }) => (
-    <div
-      className={className}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -190,8 +194,8 @@ export const QuestionsPage = () => {
       {/* Delete confirm */}
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Xoá câu hỏi"
-        message={deleteTarget ? `"${deleteTarget.content.replace(/<[^>]*>/g, '').slice(0, 80)}..." — Thao tác này sẽ xoá cả đáp án và lịch sử trả lời của câu hỏi này. Không thể hoàn tác.` : ''}
+        title={t('questionsAdmin.deleteConfirmTitle')}
+        message={deleteTarget ? t('questionsAdmin.deleteConfirmMessage', { content: deleteTarget.content.replace(/<[^>]*>/g, '').slice(0, 80) }) : ''}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}
         loading={deleting}
@@ -202,11 +206,11 @@ export const QuestionsPage = () => {
         <div>
           <h1 className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-2">
             <BookOpen className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
-            Ngân hàng Câu hỏi
+            {t('questionsAdmin.title')}
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-gray-500 dark:text-slate-500">
-            {loading ? 'Đang tải...' : `${totalCount} câu hỏi`}
-            {activeFilterCount > 0 && ` · ${activeFilterCount} bộ lọc đang áp dụng`}
+            {loading ? t('common.loading') : t('questionsAdmin.countLabel', { count: totalCount })}
+            {activeFilterCount > 0 && ` · ${t('questionsAdmin.activeFilters', { count: activeFilterCount })}`}
           </p>
         </div>
         <div className="w-full sm:w-auto flex gap-2">
@@ -214,13 +218,13 @@ export const QuestionsPage = () => {
             onClick={() => navigate('/questions/import')}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 border-2 border-indigo-200 dark:border-indigo-700/60 text-indigo-700 dark:text-indigo-300 text-sm font-semibold rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
           >
-            <FileSpreadsheet className="w-4 h-4" /> Import Excel
+            <FileSpreadsheet className="w-4 h-4" /> {t('questionsAdmin.importExcel')}
           </button>
           <button
             onClick={handleAdd}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors"
           >
-            <Plus className="w-4 h-4" /> Thêm câu hỏi
+            <Plus className="w-4 h-4" /> {t('questionsAdmin.addQuestion')}
           </button>
         </div>
       </div>
@@ -233,7 +237,7 @@ export const QuestionsPage = () => {
           <Search className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
           <input
             type="text"
-            placeholder="Tìm kiếm nội dung câu hỏi..."
+            placeholder={t('questionsAdmin.searchPlaceholder')}
             value={filters.search}
             onChange={e => setFilter('search', e.target.value)}
             className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400 dark:placeholder-slate-500 dark:text-slate-100 min-w-0"
@@ -266,13 +270,13 @@ export const QuestionsPage = () => {
           {/* Order index filter: exact OR range */}
           <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 flex-wrap">
             <Hash className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-            <span className="text-xs text-gray-500 dark:text-slate-500 font-semibold whitespace-nowrap">Câu số</span>
+            <span className="text-xs text-gray-500 dark:text-slate-500 font-semibold whitespace-nowrap">{t('questionsAdmin.orderNumberLabel')}</span>
 
             {/* Exact */}
             <input
               type="number"
               min="1"
-              placeholder="Cụ thể"
+              placeholder={t('questionsAdmin.exactPlaceholder')}
               value={filters.order_exact}
               onChange={e => {
                 setFilter('order_exact', e.target.value);
@@ -287,13 +291,13 @@ export const QuestionsPage = () => {
             />
 
             {/* Divider */}
-            <span className="text-[10px] text-gray-300 dark:text-slate-600 font-medium px-0.5">hoặc</span>
+            <span className="text-[10px] text-gray-300 dark:text-slate-600 font-medium px-0.5">{t('questionsAdmin.orLabel')}</span>
 
             {/* Range from */}
             <input
               type="number"
               min="1"
-              placeholder="Từ"
+              placeholder={t('questionsAdmin.fromPlaceholder')}
               value={filters.order_from}
               disabled={!!filters.order_exact}
               onChange={e => setFilter('order_from', e.target.value)}
@@ -306,7 +310,7 @@ export const QuestionsPage = () => {
             <input
               type="number"
               min="1"
-              placeholder="Đến"
+              placeholder={t('questionsAdmin.toPlaceholder')}
               value={filters.order_to}
               disabled={!!filters.order_exact}
               onChange={e => setFilter('order_to', e.target.value)}
@@ -321,7 +325,7 @@ export const QuestionsPage = () => {
               onClick={clearFilters}
               className="flex items-center gap-1.5 px-3 py-2.5 text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 rounded-xl transition-colors whitespace-nowrap"
             >
-              <X className="w-3.5 h-3.5" /> Xoá ({activeFilterCount})
+              <X className="w-3.5 h-3.5" /> {t('questionsAdmin.clearFilters', { count: activeFilterCount })}
             </button>
           )}
         </div>
@@ -331,27 +335,27 @@ export const QuestionsPage = () => {
           {/* Version */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1 flex items-center gap-1">
-              <Layers className="w-3 h-3" /> Phiên bản
+              <Layers className="w-3 h-3" /> {t('questionsAdmin.filterLabels.version')}
             </label>
             <select
               value={filters.version}
               onChange={e => { setFilter('version', e.target.value); setFilter('level_id', ''); setFilter('exam_id', ''); }}
               className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
-              <option value="">Tất cả</option>
+              <option value="">{t('questionsAdmin.allOption')}</option>
               {versions.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
           </div>
 
           {/* Level */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">Level</label>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">{t('questionsAdmin.filterLabels.level')}</label>
             <select
               value={filters.level_id}
               onChange={e => { setFilter('level_id', e.target.value); setFilter('exam_id', ''); }}
               className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
-              <option value="">Tất cả</option>
+              <option value="">{t('questionsAdmin.allOption')}</option>
               {filteredLevels.map(l => (
                 <option key={l.id} value={l.id}>{l.version} — {l.label}</option>
               ))}
@@ -360,30 +364,30 @@ export const QuestionsPage = () => {
 
           {/* Exam type */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">Loại bài</label>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">{t('questionsAdmin.filterLabels.examType')}</label>
             <select
               value={filters.exam_type}
               onChange={e => { setFilter('exam_type', e.target.value); setFilter('exam_id', ''); }}
               className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
-              <option value="">Tất cả</option>
-              <option value="testing">Testing</option>
-              <option value="gmetrix">Gmetrix</option>
+              <option value="">{t('questionsAdmin.allOption')}</option>
+              <option value="testing">{t('questionsAdmin.examTypeTesting')}</option>
+              <option value="gmetrix">{t('questionsAdmin.examTypeGmetrix')}</option>
             </select>
           </div>
 
           {/* Specific exam */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">Bài thi cụ thể</label>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">{t('questionsAdmin.filterLabels.specificExam')}</label>
             <select
               value={filters.exam_id}
               onChange={e => setFilter('exam_id', e.target.value)}
               className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
-              <option value="">Tất cả</option>
+              <option value="">{t('questionsAdmin.allOption')}</option>
               {filteredLevelExams.map(e => (
                 <option key={e.id} value={e.id}>
-                  {e.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {e.exam_number}
+                  {e.exam_type === 'testing' ? t('questionsAdmin.examTypeTesting') : t('questionsAdmin.examTypeGmetrix')} {e.exam_number}
                 </option>
               ))}
             </select>
@@ -391,18 +395,18 @@ export const QuestionsPage = () => {
 
           {/* Question type */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">Loại câu hỏi</label>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">{t('questionsAdmin.filterLabels.questionType')}</label>
             <select
               value={filters.question_type}
               onChange={e => setFilter('question_type', e.target.value)}
               className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
-              <option value="">Tất cả</option>
-              <option value="choice">Chọn một</option>
-              <option value="multi">Chọn nhiều</option>
-              <option value="dragdrop">Kéo thả</option>
-              <option value="truefalse">Đúng / Sai</option>
-              <option value="hotspot">Chọn vùng ảnh</option>
+              <option value="">{t('questionsAdmin.allOption')}</option>
+              <option value="choice">{t('questionsAdmin.typeLabels.choice')}</option>
+              <option value="multi">{t('questionsAdmin.typeLabels.multi')}</option>
+              <option value="dragdrop">{t('questionsAdmin.typeLabels.dragdrop')}</option>
+              <option value="truefalse">{t('questionsAdmin.typeLabels.truefalse')}</option>
+              <option value="hotspot">{t('questionsAdmin.typeLabels.hotspot')}</option>
             </select>
           </div>
         </div>
@@ -416,17 +420,18 @@ export const QuestionsPage = () => {
           {loading ? (
             <div className="px-4 py-14 text-center">
               <Loader2 className="w-6 h-6 text-indigo-400 animate-spin mx-auto mb-2" />
-              <p className="text-sm text-gray-400 dark:text-slate-500">Đang tải dữ liệu...</p>
+              <p className="text-sm text-gray-400 dark:text-slate-500">{t('questionsAdmin.loadingData')}</p>
             </div>
           ) : questions.length === 0 ? (
             <EmptyState
               icon={BookOpen}
-              title="Không có câu hỏi nào"
-              description={activeFilterCount > 0 ? 'Thử thay đổi bộ lọc' : 'Bấm "Thêm câu hỏi" để bắt đầu'}
+              title={t('questionsAdmin.noQuestions')}
+              description={activeFilterCount > 0 ? t('questionsAdmin.tryDifferentFilter') : t('questionsAdmin.clickToAddHint')}
             />
           ) : questions.map((q, rowIdx) => {
             const rowNumber   = (page - 1) * PAGE_SIZE + rowIdx + 1;
-            const typeInfo    = QUESTION_TYPE_LABELS[q.question_type] || {};
+            const typeLabel   = QUESTION_TYPE_LABELS[q.question_type] || '';
+            const typeColor   = QUESTION_TYPE_COLORS[q.question_type] || '';
             const correctCount = q.answers?.filter(a => a.is_correct).length || 0;
             const totalAnswers = q.answers?.length || 0;
             const pairsCount  = q.dragdrop_pairs?.length || 0;
@@ -443,28 +448,28 @@ export const QuestionsPage = () => {
                       {/* Render HTML content */}
                       <div
                         className="text-sm font-medium text-gray-900 dark:text-slate-100 line-clamp-3 flex-1 leading-snug"
-                        dangerouslySetInnerHTML={{ __html: q.content }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.content) }}
                       />
                       <span className="text-xs text-gray-300 dark:text-slate-600 font-mono flex-shrink-0">#{q.order_index ?? rowNumber}</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${typeInfo.color}`}>
-                        {typeInfo.label}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${typeColor}`}>
+                        {typeLabel}
                       </span>
                       {levelLabel && <span className="text-xs text-gray-500 dark:text-slate-500">{levelLabel}</span>}
                       <span className="text-xs text-gray-400 dark:text-slate-500">
-                        {q.exams?.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {q.exams?.exam_number}
+                        {q.exams?.exam_type === 'testing' ? t('questionsAdmin.examTypeTesting') : t('questionsAdmin.examTypeGmetrix')} {q.exams?.exam_number}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-500 dark:text-slate-500">
                         {q.question_type === 'dragdrop'
-                          ? `🔀 ${pairsCount} cặp`
+                          ? `🔀 ${t('questionsAdmin.pairsCount', { count: pairsCount })}`
                           : q.question_type === 'truefalse'
-                            ? `✅ ${q.truefalse_statements?.length || 0} nhận định`
+                            ? `✅ ${t('questionsAdmin.statementsCount', { count: q.truefalse_statements?.length || 0 })}`
                           : q.question_type === 'hotspot'
-                            ? `🎯 ${q.hotspot_regions?.filter(r => r.is_correct).length || 0} vùng đúng`
-                          : <>{totalAnswers} đáp án · <span className="text-emerald-600 dark:text-emerald-400 font-medium">{correctCount} đúng</span></>
+                            ? `🎯 ${t('questionsAdmin.correctRegionsCount', { count: q.hotspot_regions?.filter(r => r.is_correct).length || 0 })}`
+                          : <>{totalAnswers} {t('questionsAdmin.answersUnit')} · <span className="text-emerald-600 dark:text-emerald-400 font-medium">{correctCount} {t('questionsAdmin.correctUnit')}</span></>
                         }
                       </span>
                       <div className="flex items-center gap-0.5">
@@ -495,23 +500,23 @@ export const QuestionsPage = () => {
                   className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group"
                 >
                   <span className="flex items-center gap-1">
-                    Nội dung câu hỏi
+                    {t('questionsAdmin.tableHeaders.content')}
                     <ArrowUpDown className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
                   </span>
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider">Loại</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider">Bài thi</th>
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider">Đáp án</th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider">{t('questionsAdmin.tableHeaders.type')}</th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider">{t('questionsAdmin.tableHeaders.exam')}</th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider">{t('questionsAdmin.tableHeaders.answers')}</th>
                 <th
                   onClick={() => setSortOption(s => s === 'order_index:asc' ? 'order_index:desc' : 'order_index:asc')}
                   className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group"
                 >
                   <span className="flex items-center gap-1">
-                    #
+                    {t('questionsAdmin.tableHeaders.order')}
                     <ArrowUpDown className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
                   </span>
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider">Thao tác</th>
+                <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider">{t('questionsAdmin.tableHeaders.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-slate-700/60">
@@ -519,7 +524,7 @@ export const QuestionsPage = () => {
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center">
                     <Loader2 className="w-6 h-6 text-indigo-400 animate-spin mx-auto mb-2" />
-                    <p className="text-sm text-gray-400 dark:text-slate-500">Đang tải dữ liệu...</p>
+                    <p className="text-sm text-gray-400 dark:text-slate-500">{t('questionsAdmin.loadingData')}</p>
                   </td>
                 </tr>
               ) : questions.length === 0 ? (
@@ -527,14 +532,15 @@ export const QuestionsPage = () => {
                   <td colSpan={6}>
                     <EmptyState
                       icon={BookOpen}
-                      title="Không có câu hỏi nào"
-                      description={activeFilterCount > 0 ? 'Thử thay đổi bộ lọc' : 'Bấm "Thêm câu hỏi" để bắt đầu'}
+                      title={t('questionsAdmin.noQuestions')}
+                      description={activeFilterCount > 0 ? t('questionsAdmin.tryDifferentFilter') : t('questionsAdmin.clickToAddHint')}
                     />
                   </td>
                 </tr>
               ) : (
-                questions.map((q, rowIdx) => {
-                  const typeInfo     = QUESTION_TYPE_LABELS[q.question_type] || {};
+                questions.map((q) => {
+                  const typeLabel    = QUESTION_TYPE_LABELS[q.question_type] || '';
+                  const typeColor    = QUESTION_TYPE_COLORS[q.question_type] || '';
                   const correctCount = q.answers?.filter(a => a.is_correct).length || 0;
                   const totalAnswers = q.answers?.length || 0;
                   const pairsCount   = q.dragdrop_pairs?.length || 0;
@@ -553,11 +559,11 @@ export const QuestionsPage = () => {
                           <div className="min-w-0">
                             <div
                               className="text-sm font-medium text-gray-900 dark:text-slate-100 line-clamp-2 leading-snug"
-                              dangerouslySetInnerHTML={{ __html: q.content }}
+                              dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.content) }}
                             />
                             {q.image_url && (
                               <p className="text-xs text-indigo-400 mt-0.5">
-                                <ImageIcon className="w-3 h-3 inline" /> Có ảnh
+                                <ImageIcon className="w-3 h-3 inline" /> {t('questionsAdmin.hasImage')}
                               </p>
                             )}
                           </div>
@@ -566,8 +572,8 @@ export const QuestionsPage = () => {
 
                       {/* Type badge */}
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${typeInfo.color}`}>
-                          {typeInfo.label}
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${typeColor}`}>
+                          {typeLabel}
                         </span>
                       </td>
 
@@ -575,23 +581,23 @@ export const QuestionsPage = () => {
                       <td className="px-4 py-4">
                         <p className="text-sm text-gray-700 dark:text-slate-300 font-medium">{levelLabel}</p>
                         <p className="text-xs text-gray-400 dark:text-slate-500">
-                          {q.exams?.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {q.exams?.exam_number}
+                          {q.exams?.exam_type === 'testing' ? t('questionsAdmin.examTypeTesting') : t('questionsAdmin.examTypeGmetrix')} {q.exams?.exam_number}
                         </p>
                       </td>
 
                       {/* Answer count */}
                       <td className="px-4 py-4 whitespace-nowrap">
                         {q.question_type === 'dragdrop' ? (
-                          <span className="text-xs text-gray-500 dark:text-slate-500">🔀 {pairsCount} cặp</span>
+                          <span className="text-xs text-gray-500 dark:text-slate-500">🔀 {t('questionsAdmin.pairsCount', { count: pairsCount })}</span>
                         ) : q.question_type === 'truefalse' ? (
-                          <span className="text-xs text-gray-500 dark:text-slate-500">✅ {q.truefalse_statements?.length || 0} nhận định</span>
+                          <span className="text-xs text-gray-500 dark:text-slate-500">✅ {t('questionsAdmin.statementsCount', { count: q.truefalse_statements?.length || 0 })}</span>
                         ) : q.question_type === 'hotspot' ? (
-                          <span className="text-xs text-gray-500 dark:text-slate-500">🎯 {q.hotspot_regions?.filter(r => r.is_correct).length || 0} vùng đúng</span>
+                          <span className="text-xs text-gray-500 dark:text-slate-500">🎯 {t('questionsAdmin.correctRegionsCount', { count: q.hotspot_regions?.filter(r => r.is_correct).length || 0 })}</span>
                         ) : (
                           <div className="text-xs">
                             <span className="text-gray-700 dark:text-slate-300 font-medium">{totalAnswers}</span>
-                            <span className="text-gray-400 dark:text-slate-500"> đáp án · </span>
-                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">{correctCount} đúng</span>
+                            <span className="text-gray-400 dark:text-slate-500"> {t('questionsAdmin.answersUnit')} · </span>
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">{correctCount} {t('questionsAdmin.correctUnit')}</span>
                           </div>
                         )}
                       </td>
@@ -607,14 +613,14 @@ export const QuestionsPage = () => {
                           <button
                             onClick={() => handleEdit(q)}
                             className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors"
-                            title="Chỉnh sửa"
+                            title={t('questionsAdmin.editTitle')}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(q)}
                             className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
-                            title="Xoá"
+                            title={t('questionsAdmin.deleteTitle')}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -638,21 +644,21 @@ export const QuestionsPage = () => {
                 disabled={page === 1}
                 className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 rounded-xl hover:bg-white dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" /> Trước
+                <ChevronLeft className="w-4 h-4" /> {t('questionsAdmin.prevPage')}
               </button>
-              <span className="text-sm text-gray-500 dark:text-slate-500">Trang <strong>{page}</strong> / {totalPages}</span>
+              <span className="text-sm text-gray-500 dark:text-slate-500">{t('questionsAdmin.pagePrefix')} <strong>{page}</strong> / {totalPages}</span>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
                 className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600 rounded-xl hover:bg-white dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                Sau <ChevronRight className="w-4 h-4" />
+                {t('questionsAdmin.nextPage')} <ChevronRight className="w-4 h-4" />
               </button>
             </div>
             {/* Desktop */}
             <div className="hidden sm:flex items-center justify-between px-6 py-4">
               <p className="text-sm text-gray-500 dark:text-slate-500">
-                Hiển thị {((page - 1) * PAGE_SIZE) + 1}–{Math.min(page * PAGE_SIZE, totalCount)} trong {totalCount} câu hỏi
+                {t('questionsAdmin.showingRange', { from: ((page - 1) * PAGE_SIZE) + 1, to: Math.min(page * PAGE_SIZE, totalCount), total: totalCount })}
               </p>
               <div className="flex items-center gap-1">
                 <button

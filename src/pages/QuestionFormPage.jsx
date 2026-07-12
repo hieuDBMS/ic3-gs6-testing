@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import {
   ChevronLeft, Save, Loader2, Plus, Trash2, ArrowLeftRight,
@@ -20,22 +21,23 @@ const DEF_PAIR      = (o = 0) => ({ id: uid(), drag_content: '', drag_image_url:
 const DEF_STMT      = (o = 0) => ({ id: uid(), content: '', is_true: true, order_index: o });
 const INIT_FORM     = { level_id: '', exam_type: 'testing', exam_id: '', question_type: 'choice', content: '', image_url: null, order_index: 0 };
 
-/* ─── Question type options ─── */
-const Q_TYPES = [
-  { value: 'choice',    label: 'Chọn một',       desc: 'Single choice',   icon: '🔘' },
-  { value: 'multi',     label: 'Chọn nhiều',      desc: 'Multiple choice', icon: '☑️' },
-  { value: 'dragdrop',  label: 'Kéo thả',         desc: 'Drag & Drop',     icon: '🔀' },
-  { value: 'truefalse', label: 'Đúng / Sai',      desc: 'True / False',    icon: '✅' },
-  { value: 'hotspot',   label: 'Chọn vùng ảnh',   desc: 'Click on image',  icon: '🎯' },
-];
-
 /* ═══════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
 export const QuestionFormPage = () => {
+  const { t } = useTranslation();
   const { id } = useParams();          // undefined = new, else = edit
   const navigate  = useNavigate();
   const isEdit    = !!id;
+
+  /* ─── Question type options ─── */
+  const Q_TYPES = [
+    { value: 'choice',    label: t('questionForm.typeLabels.choice'),    desc: 'Single choice',   icon: '🔘' },
+    { value: 'multi',     label: t('questionForm.typeLabels.multi'),     desc: 'Multiple choice', icon: '☑️' },
+    { value: 'dragdrop',  label: t('questionForm.typeLabels.dragdrop'),  desc: 'Drag & Drop',     icon: '🔀' },
+    { value: 'truefalse', label: t('questionForm.typeLabels.truefalse'), desc: 'True / False',    icon: '✅' },
+    { value: 'hotspot',   label: t('questionForm.typeLabels.hotspot'),   desc: 'Click on image',  icon: '🎯' },
+  ];
 
   const { levels, exams, loading: structureLoading } = useExamStructure();
   const [filteredExams,  setFilteredExams]  = useState([]);
@@ -108,22 +110,22 @@ export const QuestionFormPage = () => {
   /* ── Validation ── */
   const validate = () => {
     const e = {};
-    if (!form.level_id)             e.level_id = 'Chọn level';
-    if (!form.exam_id)              e.exam_id  = 'Chọn bài thi';
-    if (!stripHtml(form.content))   e.content  = 'Nhập nội dung câu hỏi';
+    if (!form.level_id)             e.level_id = t('questionForm.errors.selectLevel');
+    if (!form.exam_id)              e.exam_id  = t('questionForm.errors.selectExam');
+    if (!stripHtml(form.content))   e.content  = t('questionForm.errors.enterContent');
     if (form.question_type === 'truefalse') {
-      if (statements.length < 2)                         e.statements = 'Cần ít nhất 2 nhận định';
-      if (statements.some(s => !stripHtml(s.content)))   e.statements = 'Mỗi nhận định phải có nội dung';
+      if (statements.length < 2)                         e.statements = t('questionForm.errors.minStatements');
+      if (statements.some(s => !stripHtml(s.content)))   e.statements = t('questionForm.errors.statementContent');
     } else if (form.question_type === 'hotspot') {
-      if (!hotspotImg)                                         e.regions = 'Phải upload ảnh';
-      else if (!regions.some(r => r.is_correct))               e.regions = 'Cần ít nhất 1 vùng đúng';
+      if (!hotspotImg)                                         e.regions = t('questionForm.errors.mustUploadImage');
+      else if (!regions.some(r => r.is_correct))               e.regions = t('questionForm.errors.minCorrectRegion');
     } else if (form.question_type !== 'dragdrop') {
-      if (answers.length < 2)                                  e.answers = 'Cần ít nhất 2 đáp án';
-      if (!answers.some(a => a.is_correct))                    e.answers = 'Phải có ít nhất 1 đáp án đúng';
-      if (answers.some(a => !stripHtml(a.content)))            e.answers = 'Mỗi đáp án phải có nội dung';
+      if (answers.length < 2)                                  e.answers = t('questionForm.errors.minAnswers');
+      if (!answers.some(a => a.is_correct))                    e.answers = t('questionForm.errors.needCorrectAnswer');
+      if (answers.some(a => !stripHtml(a.content)))            e.answers = t('questionForm.errors.answerContent');
     } else {
-      if (!pairs.length)                                         e.pairs = 'Cần ít nhất 1 cặp';
-      if (pairs.some(p => !p.drag_content.trim() || !p.drop_content.trim())) e.pairs = 'Mỗi cặp phải đủ nội dung';
+      if (!pairs.length)                                         e.pairs = t('questionForm.errors.minPairs');
+      if (pairs.some(p => !p.drag_content.trim() || !p.drop_content.trim())) e.pairs = t('questionForm.errors.pairContent');
     }
     setErrors(e);
     return !Object.keys(e).length;
@@ -132,7 +134,7 @@ export const QuestionFormPage = () => {
   /* ── Save ── */
   const doSave = async (andAddNext = false) => {
     if (!validate()) {
-      showToast('Vui lòng kiểm tra lại thông tin', 'error');
+      showToast(t('questionForm.checkInfoToast'), 'error');
       // Scroll to first error
       document.querySelector('[data-error]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
@@ -190,7 +192,7 @@ export const QuestionFormPage = () => {
       await supabase.rpc('reorder_questions_in_exam', { p_exam_id: form.exam_id });
 
       if (andAddNext) {
-        showToast('Đã lưu! Sẵn sàng thêm câu tiếp theo ✨');
+        showToast(t('questionForm.savedNextToast'));
         // Keep exam info, reset rest
         const saved = { level_id: form.level_id, exam_type: form.exam_type, exam_id: form.exam_id };
         lastExamRef.current = saved;
@@ -207,7 +209,7 @@ export const QuestionFormPage = () => {
         navigate('/questions');
       }
     } catch (err) {
-      showToast(err.message || 'Lỗi khi lưu', 'error');
+      showToast(err.message || t('questionForm.saveErrorToast'), 'error');
     } finally {
       setSaving(false);
     }
@@ -232,7 +234,6 @@ export const QuestionFormPage = () => {
 
   /* ── Derived ── */
   const versions = [...new Set(levels.map(l => l.version))].sort();
-  const filteredLevels = form.version ? levels.filter(l => l.version === form.version) : levels;
   const selectedExam = filteredExams.find(e => e.id === form.exam_id);
   const selectedLevel = levels.find(l => l.id === form.level_id);
 
@@ -260,7 +261,7 @@ export const QuestionFormPage = () => {
             className="flex items-center gap-1.5 text-gray-500 dark:text-slate-500 hover:text-gray-800 dark:hover:text-slate-300 transition-colors text-sm font-medium flex-shrink-0"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Ngân hàng câu hỏi</span>
+            <span className="hidden sm:inline">{t('questionForm.backToQuestions')}</span>
           </button>
 
           <div className="w-px h-5 bg-gray-200 dark:bg-slate-700 flex-shrink-0" />
@@ -271,18 +272,18 @@ export const QuestionFormPage = () => {
               <BookOpen className="w-3.5 h-3.5 text-white" />
             </div>
             <h1 className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate">
-              {isEdit ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới'}
+              {isEdit ? t('questionForm.editTitle') : t('questionForm.addTitle')}
             </h1>
             {form.exam_id && selectedExam && (
               <span className="hidden sm:inline text-xs text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
-                {selectedLevel?.label} · {selectedExam.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {selectedExam.exam_number}
+                {selectedLevel?.label} · {selectedExam.exam_type === 'testing' ? t('questionForm.examTypeTesting') : t('questionForm.examTypeGmetrix')} {selectedExam.exam_number}
               </span>
             )}
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="hidden lg:inline text-[11px] text-gray-400 dark:text-slate-500">Ctrl+S để lưu</span>
+            <span className="hidden lg:inline text-[11px] text-gray-400 dark:text-slate-500">{t('questionForm.ctrlSHint')}</span>
 
             {/* Save & add next (only in add mode) */}
             {!isEdit && (
@@ -292,7 +293,7 @@ export const QuestionFormPage = () => {
                 className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 border-indigo-300 dark:border-indigo-700/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all disabled:opacity-50"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Lưu &amp; Thêm tiếp
+                {t('questionForm.saveAndNext')}
               </button>
             )}
 
@@ -303,7 +304,7 @@ export const QuestionFormPage = () => {
               style={{ background: saving ? '#94a3b8' : 'linear-gradient(135deg, #6366F1, #8B5CF6)', boxShadow: saving ? 'none' : '0 4px 14px rgba(99,102,241,0.35)' }}
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {isEdit ? 'Cập nhật' : 'Lưu câu hỏi'}
+              {isEdit ? t('questionForm.updateButton') : t('questionForm.saveButton')}
             </button>
           </div>
         </div>
@@ -321,18 +322,18 @@ export const QuestionFormPage = () => {
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden">
                 <div className="px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700/60 flex items-center gap-2">
                   <LayoutList className="w-4 h-4 text-gray-400 dark:text-slate-500" />
-                  <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">1. Thuộc về bài thi</h2>
+                  <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">1. {t('questionForm.sectionExamTitle')}</h2>
                 </div>
                 <div className="p-4 space-y-3">
                   {/* Level */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">Level <span className="text-red-500">*</span></label>
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">{t('questionForm.levelLabel')} <span className="text-red-500">*</span></label>
                     <select
                       value={form.level_id}
                       onChange={e => { set('level_id', e.target.value); set('exam_id', ''); }}
                       className={`w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${errors.level_id ? 'border-red-400 dark:border-red-700' : 'border-gray-200 dark:border-slate-600'}`}
                     >
-                      <option value="">-- Chọn Level --</option>
+                      <option value="">{t('questionForm.selectLevelPlaceholder')}</option>
                       {versions.map(v => (
                         <optgroup key={v} label={`── IC3 ${v} ──`}>
                           {levels.filter(l => l.version === v).map(l => (
@@ -346,12 +347,12 @@ export const QuestionFormPage = () => {
 
                   {/* Exam type */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">Loại bài</label>
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">{t('questionForm.examTypeLabel')}</label>
                     <div className="flex gap-2">
-                      {['testing','gmetrix'].map(t => (
-                        <button key={t} type="button" onClick={() => set('exam_type', t)}
-                          className={`flex-1 py-2 text-xs rounded-xl border-2 font-bold capitalize transition-all ${form.exam_type === t ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-500 hover:border-gray-300 dark:hover:border-slate-500'}`}>
-                          {t === 'testing' ? 'Testing' : 'Gmetrix'}
+                      {['testing','gmetrix'].map(ty => (
+                        <button key={ty} type="button" onClick={() => set('exam_type', ty)}
+                          className={`flex-1 py-2 text-xs rounded-xl border-2 font-bold capitalize transition-all ${form.exam_type === ty ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-500 hover:border-gray-300 dark:hover:border-slate-500'}`}>
+                          {ty === 'testing' ? t('questionForm.examTypeTesting') : t('questionForm.examTypeGmetrix')}
                         </button>
                       ))}
                     </div>
@@ -359,16 +360,16 @@ export const QuestionFormPage = () => {
 
                   {/* Specific exam */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">Số bài <span className="text-red-500">*</span></label>
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">{t('questionForm.examNumberLabel')} <span className="text-red-500">*</span></label>
                     <select
                       value={form.exam_id}
                       onChange={e => set('exam_id', e.target.value)}
                       disabled={!form.level_id}
                       className={`w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-40 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${errors.exam_id ? 'border-red-400 dark:border-red-700' : 'border-gray-200 dark:border-slate-600'}`}
                     >
-                      <option value="">-- Chọn bài --</option>
+                      <option value="">{t('questionForm.selectExamPlaceholder')}</option>
                       {filteredExams.map(e => (
-                        <option key={e.id} value={e.id}>{e.exam_type === 'testing' ? 'Testing' : 'Gmetrix'} {e.exam_number}</option>
+                        <option key={e.id} value={e.id}>{e.exam_type === 'testing' ? t('questionForm.examTypeTesting') : t('questionForm.examTypeGmetrix')} {e.exam_number}</option>
                       ))}
                     </select>
                     {errors.exam_id && <p data-error className="text-xs text-red-500 mt-1">{errors.exam_id}</p>}
@@ -376,7 +377,7 @@ export const QuestionFormPage = () => {
 
                   {/* Order index */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">Thứ tự câu</label>
+                    <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">{t('questionForm.orderIndexLabel')}</label>
                     <input type="number" min={0} value={form.order_index}
                       onChange={e => set('order_index', e.target.value)}
                       className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
@@ -389,7 +390,7 @@ export const QuestionFormPage = () => {
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden">
                 <div className="px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700/60 flex items-center gap-2">
                   <CheckSquare className="w-4 h-4 text-gray-400 dark:text-slate-500" />
-                  <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">2. Loại câu hỏi</h2>
+                  <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">2. {t('questionForm.sectionTypeTitle')}</h2>
                 </div>
                 <div className="p-3 grid grid-cols-1 gap-1.5">
                   {Q_TYPES.map(t => (
@@ -416,7 +417,7 @@ export const QuestionFormPage = () => {
               {!isEdit && (
                 <button onClick={() => doSave(true)} disabled={saving}
                   className="sm:hidden w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-indigo-300 dark:border-indigo-700/60 text-indigo-700 dark:text-indigo-300 text-sm font-bold hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-all disabled:opacity-50">
-                  <Plus className="w-4 h-4" /> Lưu &amp; Thêm câu tiếp theo
+                  <Plus className="w-4 h-4" /> {t('questionForm.saveAndNextMobile')}
                 </button>
               )}
             </div>
@@ -429,18 +430,18 @@ export const QuestionFormPage = () => {
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden">
               <div className="px-5 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700/60 flex items-center gap-2">
                 <Type className="w-4 h-4 text-gray-400 dark:text-slate-500" />
-                <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">3. Nội dung câu hỏi</h2>
+                <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">3. {t('questionForm.sectionContentTitle')}</h2>
               </div>
               <div className="p-5 space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1.5">
-                    Câu hỏi <span className="text-red-500">*</span>
-                    <span className="ml-1.5 text-gray-300 dark:text-slate-600 font-normal">(hỗ trợ in đậm, màu sắc, gạch dưới)</span>
+                    {t('questionForm.questionLabel')} <span className="text-red-500">*</span>
+                    <span className="ml-1.5 text-gray-300 dark:text-slate-600 font-normal">{t('questionForm.richTextHint')}</span>
                   </label>
                   <RichTextEditor
                     value={form.content}
                     onChange={html => set('content', html)}
-                    placeholder={isHotspot ? 'Ví dụ: "Click vào nút nào dùng để lưu file?"' : 'Nhập nội dung câu hỏi...'}
+                    placeholder={isHotspot ? t('questionForm.hotspotContentPlaceholder') : t('questionForm.contentPlaceholder')}
                     minHeight={100}
                     hasError={!!errors.content}
                   />
@@ -453,7 +454,7 @@ export const QuestionFormPage = () => {
                     bucket="question-images"
                     value={form.image_url}
                     onChange={url => set('image_url', url)}
-                    label="Ảnh câu hỏi (tuỳ chọn)"
+                    label={t('questionForm.questionImageLabel')}
                   />
                 )}
               </div>
@@ -463,10 +464,10 @@ export const QuestionFormPage = () => {
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden">
               <div className="px-5 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700/60">
                 <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">
-                  4. {form.question_type === 'dragdrop' ? 'Cặp kéo-thả'
-                    : form.question_type === 'truefalse' ? 'Nhận định Đúng / Sai'
-                    : form.question_type === 'hotspot' ? 'Vùng chọn trên ảnh'
-                    : 'Đáp án'}
+                  4. {form.question_type === 'dragdrop' ? t('questionForm.sectionPairsTitle')
+                    : form.question_type === 'truefalse' ? t('questionForm.sectionStatementsTitle')
+                    : form.question_type === 'hotspot' ? t('questionForm.sectionRegionsTitle')
+                    : t('questionForm.sectionAnswersTitle')}
                 </h2>
               </div>
               <div className="p-5">
@@ -495,26 +496,26 @@ export const QuestionFormPage = () => {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 px-3 py-2.5 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 rounded-xl">
                       <span>✅</span>
-                      <p className="text-xs text-teal-700 dark:text-teal-300">Nhập từng nhận định và chọn <strong>Đúng</strong> hoặc <strong>Sai</strong>.</p>
+                      <p className="text-xs text-teal-700 dark:text-teal-300">{t('questionForm.trueFalseHint')}</p>
                     </div>
                     {statements.map((stmt, i) => (
                       <div key={stmt.id} className={`rounded-xl border-2 overflow-hidden ${stmt.is_true ? 'border-emerald-300 dark:border-emerald-800/60' : 'border-red-300 dark:border-red-800/60'}`}>
                         <div className={`flex items-center gap-2 px-3 py-2 border-b ${stmt.is_true ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60' : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/60'}`}>
                           <span className="w-5 h-5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-xs font-bold flex items-center justify-center flex-shrink-0">{i+1}</span>
-                          <span className={`text-xs font-semibold flex-1 ${stmt.is_true ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>{stmt.is_true ? '✔ Đúng' : '✘ Sai'}</span>
+                          <span className={`text-xs font-semibold flex-1 ${stmt.is_true ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>{stmt.is_true ? `✔ ${t('questionForm.trueLabel')}` : `✘ ${t('questionForm.falseLabel')}`}</span>
                           <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-slate-600 flex-shrink-0">
-                            <button type="button" onClick={() => updateStmt(i,'is_true',true)} className={`px-3 py-1 text-xs font-bold transition-all ${stmt.is_true ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-slate-800 text-gray-400 dark:text-slate-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'}`}>Đúng</button>
-                            <button type="button" onClick={() => updateStmt(i,'is_true',false)} className={`px-3 py-1 text-xs font-bold border-l border-gray-200 dark:border-slate-600 transition-all ${!stmt.is_true ? 'bg-red-500 text-white' : 'bg-white dark:bg-slate-800 text-gray-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-950/40'}`}>Sai</button>
+                            <button type="button" onClick={() => updateStmt(i,'is_true',true)} className={`px-3 py-1 text-xs font-bold transition-all ${stmt.is_true ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-slate-800 text-gray-400 dark:text-slate-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'}`}>{t('questionForm.trueLabel')}</button>
+                            <button type="button" onClick={() => updateStmt(i,'is_true',false)} className={`px-3 py-1 text-xs font-bold border-l border-gray-200 dark:border-slate-600 transition-all ${!stmt.is_true ? 'bg-red-500 text-white' : 'bg-white dark:bg-slate-800 text-gray-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-950/40'}`}>{t('questionForm.falseLabel')}</button>
                           </div>
                           <button type="button" onClick={() => removeStmt(i)} disabled={statements.length <= 2} className="text-gray-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 disabled:opacity-30 flex-shrink-0"><Trash2 className="w-4 h-4"/></button>
                         </div>
                         <div className="p-3 bg-white dark:bg-slate-800">
-                          <RichTextEditor value={stmt.content} onChange={html => updateStmt(i,'content',html)} placeholder={`Nhận định ${i+1}...`} minHeight={44} />
+                          <RichTextEditor value={stmt.content} onChange={html => updateStmt(i,'content',html)} placeholder={t('questionForm.statementPlaceholder', { index: i + 1 })} minHeight={44} />
                         </div>
                       </div>
                     ))}
                     <button type="button" onClick={addStmt} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-teal-600 dark:text-teal-400 font-semibold border-2 border-dashed border-teal-300 dark:border-teal-700/60 hover:border-teal-500 dark:hover:border-teal-500 rounded-xl transition-colors">
-                      <Plus className="w-4 h-4"/> Thêm nhận định
+                      <Plus className="w-4 h-4"/> {t('questionForm.addStatement')}
                     </button>
                   </div>
                 )}
@@ -525,26 +526,26 @@ export const QuestionFormPage = () => {
                     {pairs.map((pair, i) => (
                       <div key={pair.id} className="border border-gray-200 dark:border-slate-600 rounded-xl overflow-hidden bg-gray-50 dark:bg-slate-700/50">
                         <div className="flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600">
-                          <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">Cặp {i+1}</span>
+                          <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wide">{t('questionForm.pairLabel', { index: i + 1 })}</span>
                           <button type="button" onClick={() => removePair(i)} className="text-gray-300 dark:text-slate-500 hover:text-red-400 dark:hover:text-red-400"><Trash2 className="w-4 h-4"/></button>
                         </div>
                         <div className="flex flex-col sm:grid sm:grid-cols-[1fr_32px_1fr] gap-0">
                           <div className="p-4 space-y-2 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-slate-600">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">🔵 Kéo (Drag)</span>
-                            <textarea value={pair.drag_content} onChange={e => updatePair(i,'drag_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={`Nội dung kéo ${i+1}...`} rows={2} className="w-full text-sm border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
-                            <ImageUploader bucket="question-images" value={pair.drag_image_url} onChange={url => updatePair(i,'drag_image_url',url)} label="Ảnh (tuỳ chọn)"/>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">🔵 {t('questionForm.dragBadge')}</span>
+                            <textarea value={pair.drag_content} onChange={e => updatePair(i,'drag_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={t('questionForm.dragContentPlaceholder', { index: i + 1 })} rows={2} className="w-full text-sm border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
+                            <ImageUploader bucket="question-images" value={pair.drag_image_url} onChange={url => updatePair(i,'drag_image_url',url)} label={t('questionForm.optionalImageLabel')}/>
                           </div>
                           <div className="hidden sm:flex items-center justify-center bg-gray-50 dark:bg-slate-700/50"><ArrowLeftRight className="w-4 h-4 text-gray-300 dark:text-slate-600"/></div>
                           <div className="p-4 space-y-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300">🟣 Thả (Drop)</span>
-                            <textarea value={pair.drop_content} onChange={e => updatePair(i,'drop_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={`Nội dung thả ${i+1}...`} rows={2} className="w-full text-sm border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
-                            <ImageUploader bucket="answer-images" value={pair.drop_image_url} onChange={url => updatePair(i,'drop_image_url',url)} label="Ảnh (tuỳ chọn)"/>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300">🟣 {t('questionForm.dropBadge')}</span>
+                            <textarea value={pair.drop_content} onChange={e => updatePair(i,'drop_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={t('questionForm.dropContentPlaceholder', { index: i + 1 })} rows={2} className="w-full text-sm border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
+                            <ImageUploader bucket="answer-images" value={pair.drop_image_url} onChange={url => updatePair(i,'drop_image_url',url)} label={t('questionForm.optionalImageLabel')}/>
                           </div>
                         </div>
                       </div>
                     ))}
                     <button type="button" onClick={addPair} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm text-indigo-600 dark:text-indigo-400 font-semibold border-2 border-dashed border-indigo-300 dark:border-indigo-700/60 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-xl">
-                      <Plus className="w-4 h-4"/> Thêm cặp kéo-thả
+                      <Plus className="w-4 h-4"/> {t('questionForm.addPair')}
                     </button>
                   </div>
                 )}
@@ -559,19 +560,19 @@ export const QuestionFormPage = () => {
             {/* Bottom action bar */}
             <div className="flex items-center justify-between gap-3 pt-2 pb-8">
               <button onClick={() => navigate('/questions')} className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-500 dark:text-slate-500 hover:text-gray-800 dark:hover:text-slate-300 border border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500 rounded-xl transition-all">
-                <ChevronLeft className="w-4 h-4" /> Huỷ
+                <ChevronLeft className="w-4 h-4" /> {t('questionForm.cancelButton')}
               </button>
               <div className="flex items-center gap-2">
                 {!isEdit && (
                   <button onClick={() => doSave(true)} disabled={saving} className="flex items-center gap-2 px-4 py-2.5 text-sm text-indigo-700 dark:text-indigo-300 font-bold border-2 border-indigo-300 dark:border-indigo-700/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-xl transition-all disabled:opacity-50">
-                    <Plus className="w-4 h-4" /> Lưu &amp; Thêm tiếp
+                    <Plus className="w-4 h-4" /> {t('questionForm.saveAndNext')}
                   </button>
                 )}
                 <button onClick={() => doSave(false)} disabled={saving}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-bold transition-all disabled:opacity-50"
                   style={{ background: saving ? '#94a3b8' : 'linear-gradient(135deg, #6366F1, #8B5CF6)', boxShadow: saving ? 'none' : '0 4px 14px rgba(99,102,241,0.35)' }}>
                   {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
-                  {isEdit ? 'Cập nhật' : 'Lưu câu hỏi'}
+                  {isEdit ? t('questionForm.updateButton') : t('questionForm.saveButton')}
                 </button>
               </div>
             </div>

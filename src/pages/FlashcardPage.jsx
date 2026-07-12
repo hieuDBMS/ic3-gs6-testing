@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
   ArrowRight, Shuffle, CheckCircle2, XCircle,
-  Brain, BookOpen, ChevronLeft, Keyboard, Trophy,
+  BookOpen, ChevronLeft, Keyboard, Trophy,
   RefreshCw, Home, Sparkles, RotateCcw, SkipForward,
 } from 'lucide-react';
+import { sanitizeHtml } from '../utils/sanitizeHtml';
 
 /* ─── Fisher-Yates ─── */
 const shuffleArr = a => {
@@ -21,11 +23,11 @@ const shuffleArr = a => {
 
 /* ─── TYPE config ─── */
 const TYPE_CFG = {
-  choice:    { label: 'Chọn một',   bar: '#3b82f6', badge: 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/60' },
-  multi:     { label: 'Chọn nhiều', bar: '#8b5cf6', badge: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800/60' },
-  dragdrop:  { label: 'Nối cặp',    bar: '#f97316', badge: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/60' },
-  truefalse: { label: 'Đúng / Sai', bar: '#14b8a6', badge: 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800/60' },
-  hotspot:   { label: 'Chọn vùng', bar: '#f59e0b', badge: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60' },
+  choice:    { bar: '#3b82f6', badge: 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/60' },
+  multi:     { bar: '#8b5cf6', badge: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800/60' },
+  dragdrop:  { bar: '#f97316', badge: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800/60' },
+  truefalse: { bar: '#14b8a6', badge: 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800/60' },
+  hotspot:   { bar: '#f59e0b', badge: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60' },
 };
 
 /* ─── Score logic ─── */
@@ -53,11 +55,11 @@ const AnswerBtn = ({ idx, isSelected, ansCorrect, isWrong, revealed, disabled, o
   const { isDark } = useTheme();
   const letter = String.fromCharCode(65 + idx);
 
-  let wrapClass = '';
+  let wrapClass;
   let wrapStyle = {};
-  let letterClass = '';
+  let letterClass;
   let letterStyle = {};
-  let textClass = '';
+  let textClass;
 
   if (!revealed) {
     if (isSelected) {
@@ -135,7 +137,7 @@ const ChoicePanel = ({ answers, revealed, selection, onSelect }) => (
         onClick={() => onSelect(ans.id)}>
         <div className="flex items-center gap-3">
           {ans.image_url && <img src={ans.image_url} alt="" className="h-14 w-20 object-contain rounded-lg border border-gray-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800" />}
-          <div dangerouslySetInnerHTML={{ __html: ans.content }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(ans.content) }} />
         </div>
       </AnswerBtn>
     ))}
@@ -145,6 +147,7 @@ const ChoicePanel = ({ answers, revealed, selection, onSelect }) => (
 /* ── Multi ── */
 const MultiPanel = ({ answers, revealed, selection, onSelect }) => {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   const sel = selection || [];
   const toggle = id => { if (revealed) return; onSelect(sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id]); };
   return (
@@ -153,7 +156,7 @@ const MultiPanel = ({ answers, revealed, selection, onSelect }) => {
       <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-semibold"
         style={{ background: isDark ? 'linear-gradient(135deg,#2e1065,#1e1b4b)' : 'linear-gradient(135deg,#f5f3ff,#ede9fe)', border: `1px solid ${isDark ? '#5b21b6' : '#c4b5fd'}`, color: isDark ? '#c4b5fd' : '#6d28d9' }}>
         <span className="w-4 h-4 rounded flex items-center justify-center text-xs" style={{ background: '#7c3aed', color: '#fff' }}>✓</span>
-        Chọn tất cả đáp án đúng
+        {t('flashcard.multi.hint')}
       </div>
       {answers.map((ans, i) => {
         const isS = sel.includes(ans.id);
@@ -166,7 +169,7 @@ const MultiPanel = ({ answers, revealed, selection, onSelect }) => {
             onClick={() => toggle(ans.id)}>
             <div className="flex items-center gap-3">
               {ans.image_url && <img src={ans.image_url} alt="" className="h-14 w-20 object-contain rounded-lg border border-gray-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800" />}
-              <div dangerouslySetInnerHTML={{ __html: ans.content }} />
+              <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(ans.content) }} />
             </div>
           </AnswerBtn>
         );
@@ -178,6 +181,7 @@ const MultiPanel = ({ answers, revealed, selection, onSelect }) => {
 /* ── TrueFalse ── */
 const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   const sel = selection || {};
   return (
     <div className="space-y-2.5">
@@ -201,7 +205,7 @@ const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
               </span>
               <p
                 className={`text-sm flex-1 leading-relaxed ${!revealed ? 'text-slate-700 dark:text-slate-300' : correct ? 'text-emerald-900 dark:text-emerald-300' : 'text-red-900 dark:text-red-300'}`}
-                dangerouslySetInnerHTML={{ __html: stmt.content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(stmt.content) }}
               />
               {revealed && correct && <CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400 flex-shrink-0 mt-0.5" />}
               {revealed && !correct && <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />}
@@ -219,14 +223,14 @@ const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
                     <button disabled={revealed} onClick={() => !revealed && onSelect({ ...sel, [stmt.id]: val })}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all"
                       style={{ background: bg2, color: tc }}>
-                      {val ? <><CheckCircle2 className="w-3.5 h-3.5" />Đúng</> : <><XCircle className="w-3.5 h-3.5" />Sai</>}
+                      {val ? <><CheckCircle2 className="w-3.5 h-3.5" />{t('flashcard.trueFalse.true')}</> : <><XCircle className="w-3.5 h-3.5" />{t('flashcard.trueFalse.false')}</>}
                     </button>
                   </React.Fragment>
                 );
               })}
             </div>
             {revealed && !correct && (
-              <p className="px-4 pb-2 text-xs font-semibold text-red-600 dark:text-red-400">✦ Đáp án: {stmt.is_true ? 'Đúng' : 'Sai'}</p>
+              <p className="px-4 pb-2 text-xs font-semibold text-red-600 dark:text-red-400">✦ {t('flashcard.trueFalse.answerLabel')}: {stmt.is_true ? t('flashcard.trueFalse.true') : t('flashcard.trueFalse.false')}</p>
             )}
           </div>
         );
@@ -238,6 +242,7 @@ const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
 /* ── DragDrop — thực kéo-thả + click-to-place ── */
 const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   const pairs = [...(question.dragdrop_pairs||[])].sort((a,b) => a.order_index - b.order_index);
   const [dragging,     setDragging]     = useState(null);
   const [dragOverZone, setDragOverZone] = useState(null);
@@ -288,8 +293,8 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
   if (revealed) {
     return (
       <div className="space-y-2.5">
-        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kết quả nối cặp</p>
-        {pairs.map((pair, i) => {
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('flashcard.dragDrop.resultTitle')}</p>
+        {pairs.map((pair) => {
           const chosen    = placed[pair.id];
           const isCorrect = chosen === pair.drop_content;
           return (
@@ -311,10 +316,10 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
               {/* answer zone */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold" style={{ color: isDark ? (isCorrect ? '#86efac' : '#fca5a5') : (isCorrect ? '#166534' : '#991b1b') }}>
-                  {chosen || <span className="italic opacity-60">Chưa chọn</span>}
+                  {chosen || <span className="italic opacity-60">{t('flashcard.dragDrop.notSelected')}</span>}
                 </p>
                 {!isCorrect && (
-                  <p className="text-xs mt-0.5" style={{ color: isDark ? '#86efac' : '#166534' }}>✦ Đúng: {pair.drop_content}</p>
+                  <p className="text-xs mt-0.5" style={{ color: isDark ? '#86efac' : '#166534' }}>✦ {t('flashcard.dragDrop.correctAnswer', { value: pair.drop_content })}</p>
                 )}
               </div>
               <div className="flex-shrink-0">
@@ -337,8 +342,8 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
         style={{ background: isDark ? 'linear-gradient(135deg,#0c2340,#0a1f33)' : 'linear-gradient(135deg,#eff6ff,#f0f9ff)', border: `1px solid ${isDark ? '#1e40af' : '#bfdbfe'}` }}>
         <span className="text-base flex-shrink-0">🔀</span>
         <div>
-          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">Kéo &amp; Thả</p>
-          <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">Kéo các thẻ vào ô tương ứng. Trên điện thoại: <strong>bấm thẻ</strong> rồi <strong>bấm ô</strong> để đặt.</p>
+          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">{t('flashcard.dragDrop.instructionTitle')}</p>
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">{t('flashcard.dragDrop.instructionPrefix')} <strong>{t('flashcard.dragDrop.tapCard')}</strong> {t('flashcard.dragDrop.instructionMiddle')} <strong>{t('flashcard.dragDrop.tapZone')}</strong> {t('flashcard.dragDrop.instructionSuffix')}</p>
         </div>
       </div>
 
@@ -350,14 +355,14 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
            style={{ borderColor: dragOverZone==='pool' ? '#60a5fa' : (isDark ? '#1e40af' : '#bfdbfe'), background: dragOverZone==='pool' ? (isDark ? 'rgba(59,130,246,0.12)' : '#eff6ff') : (isDark ? '#1e293b' : '#f8fbff') }}>
         <div className="flex items-center gap-2 mb-3">
           <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-          <p className="text-[11px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest">Kho thẻ</p>
-          <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500 font-medium">{poolItems.length} thẻ còn lại</span>
+          <p className="text-[11px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-widest">{t('flashcard.dragDrop.poolLabel')}</p>
+          <span className="ml-auto text-[11px] text-slate-400 dark:text-slate-500 font-medium">{t('flashcard.dragDrop.cardsRemaining', { count: poolItems.length })}</span>
         </div>
         <div className="flex flex-wrap gap-2.5 min-h-[56px]">
           {poolItems.length === 0 ? (
             <div className="w-full flex items-center justify-center gap-2 py-3">
               <span className="text-green-500">✅</span>
-              <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">Tất cả đã xếp vào ô!</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">{t('flashcard.dragDrop.allPlaced')}</p>
             </div>
           ) : poolItems.map(pair => {
             const isSelected = touchSel?.id === pair.id;
@@ -385,7 +390,7 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
                 </div>
                 {isSelected && (
                   <div className="flex items-center gap-0.5 text-[9px] text-amber-600 dark:text-amber-400 font-bold mt-1">
-                    <span className="animate-bounce">👆</span> Chọn ô
+                    <span className="animate-bounce">👆</span> {t('flashcard.dragDrop.selectZoneHint')}
                   </div>
                 )}
               </div>
@@ -425,7 +430,7 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
                   {zone.label}
                 </span>
                 {zoneItems.length > 0 && (
-                  <span className="ml-auto text-[10px] font-semibold text-slate-400 dark:text-slate-500">{zoneItems.length} thẻ</span>
+                  <span className="ml-auto text-[10px] font-semibold text-slate-400 dark:text-slate-500">{t('flashcard.dragDrop.zoneCardCount', { count: zoneItems.length })}</span>
                 )}
               </div>
               {/* Items in zone */}
@@ -433,13 +438,13 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
                 {zoneItems.length === 0 ? (
                   <div className="w-full flex flex-col items-center justify-center gap-1 py-3 text-slate-300 dark:text-slate-600">
                     <span className="text-2xl">{isOver ? '⬇️' : '📥'}</span>
-                    <span className="text-xs font-medium">{isOver ? 'Thả vào đây!' : 'Kéo thẻ vào đây'}</span>
+                    <span className="text-xs font-medium">{isOver ? t('flashcard.dragDrop.dropHereActive') : t('flashcard.dragDrop.dropHerePlaceholder')}</span>
                   </div>
                 ) : zoneItems.map(pair => {
                   const hasImg = !!pair.drag_image_url;
                   const hasTxt = !!pair.drag_content;
                   return (
-                    <div key={pair.id} title="Bấm để trả về kho"
+                    <div key={pair.id} title={t('flashcard.dragDrop.tapToReturn')}
                       onClick={e => { e.stopPropagation(); returnToPool(pair.id); }}>
                       <div draggable onDragStart={() => onDragStart(pair)} onDragEnd={onDragEnd}
                         style={{
@@ -471,11 +476,11 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
             <div className="h-full rounded-full bg-indigo-400 transition-all duration-500"
               style={{ width: `${pairs.length > 0 ? (Object.keys(placed).length/pairs.length)*100 : 0}%` }} />
           </div>
-          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{Object.keys(placed).length}/{pairs.length} thẻ</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{t('flashcard.dragDrop.progressCount', { done: Object.keys(placed).length, total: pairs.length })}</span>
         </div>
         {Object.keys(placed).length > 0 && (
           <button onClick={() => onSelect({})} className="text-xs text-red-400 hover:text-red-600 dark:hover:text-red-300 font-semibold hover:underline transition-colors">
-            🔄 Làm lại
+            🔄 {t('flashcard.dragDrop.resetButton')}
           </button>
         )}
       </div>
@@ -486,6 +491,7 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
 /* ── Hotspot ── */
 const HotspotPanel = ({ question, revealed, selection, onSelect }) => {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   const regions   = [...(question.hotspot_regions||[])].sort((a,b) => a.order_index - b.order_index);
   const [hovered, setHovered] = useState(null);
   const sel = selection || [];
@@ -509,13 +515,13 @@ const HotspotPanel = ({ question, revealed, selection, onSelect }) => {
     <div className="space-y-3">
       {!revealed && (
         <p className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-1.5 inline-flex items-center gap-1.5 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800/60">
-          🎯 {isSingleSelect ? 'Click vào 1 vùng đúng trên ảnh' : `Click vào ${correctCount} vùng đúng trên ảnh`}
-          {sel.length > 0 && <span className="ml-1 text-amber-600 dark:text-amber-400">· Đã chọn {sel.length}</span>}
+          🎯 {isSingleSelect ? t('flashcard.hotspot.hintSingle') : t('flashcard.hotspot.hintMulti', { count: correctCount })}
+          {sel.length > 0 && <span className="ml-1 text-amber-600 dark:text-amber-400">{t('flashcard.hotspot.selectedCount', { count: sel.length })}</span>}
         </p>
       )}
       {question.image_url && (
         <div className="relative rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 select-none shadow-sm">
-          <img src={question.image_url} alt="Hotspot" className="w-full h-auto block" draggable={false} />
+          <img src={question.image_url} alt={t('flashcard.hotspot.imageAlt')} className="w-full h-auto block" draggable={false} />
           {regions.map(r => {
             const isS = sel.includes(r.id);
             let borderC, bgC;
@@ -554,9 +560,9 @@ const HotspotPanel = ({ question, revealed, selection, onSelect }) => {
       {revealed && (
         <div className="flex flex-wrap gap-2 text-[11px]">
           {[
-            { k: 'correct-sel', bg: '#22c55e', label: 'Đúng & đã chọn', tc: '#14532d', darkTc: '#86efac', border: '#86efac' },
-            { k: 'correct-miss', bg: null, label: 'Đúng nhưng bỏ qua', tc: '#15803d', darkTc: '#6ee7b7', border: '#86efac' },
-            { k: 'wrong-sel', bg: '#ef4444', label: 'Sai mà chọn', tc: '#7f1d1d', darkTc: '#fca5a5', border: '#fca5a5' },
+            { k: 'correct-sel', bg: '#22c55e', label: t('flashcard.hotspot.legend.correctSelected'), tc: '#14532d', darkTc: '#86efac', border: '#86efac' },
+            { k: 'correct-miss', bg: null, label: t('flashcard.hotspot.legend.correctMissed'), tc: '#15803d', darkTc: '#6ee7b7', border: '#86efac' },
+            { k: 'wrong-sel', bg: '#ef4444', label: t('flashcard.hotspot.legend.wrongSelected'), tc: '#7f1d1d', darkTc: '#fca5a5', border: '#fca5a5' },
           ].map(s => (
             <span key={s.k} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold border"
               style={{ background: s.bg ? `${s.bg}15` : 'transparent', color: isDark ? s.darkTc : s.tc, borderColor: s.border }}>
@@ -575,6 +581,7 @@ const HotspotPanel = ({ question, revealed, selection, onSelect }) => {
 ══════════════════════════════════════ */
 const ResultBanner = ({ correct }) => {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   return (
   <div className="flex items-center gap-3.5 px-5 py-4 rounded-2xl border"
     style={{
@@ -587,10 +594,10 @@ const ResultBanner = ({ correct }) => {
     </div>
     <div>
       <p className="text-sm font-bold" style={{ color: isDark ? (correct ? '#86efac' : '#fca5a5') : (correct ? '#14532d' : '#7f1d1d') }}>
-        {correct ? '🎉 Chính xác!' : '❌ Chưa đúng'}
+        {correct ? t('flashcard.result.correctTitle') : t('flashcard.result.wrongTitle')}
       </p>
       <p className="text-xs mt-0.5" style={{ color: isDark ? (correct ? '#4ade80' : '#f87171') : (correct ? '#16a34a' : '#dc2626') }}>
-        {correct ? 'Tuyệt vời, tiếp tục nhé!' : 'Xem đáp án đúng bên trên, cố lên!'}
+        {correct ? t('flashcard.result.correctSubtitle') : t('flashcard.result.wrongSubtitle')}
       </p>
     </div>
   </div>
@@ -602,12 +609,13 @@ const ResultBanner = ({ correct }) => {
 ══════════════════════════════════════ */
 const SessionSummary = ({ total, correct, wrong, skipped, onRetryWrong, onRetryAll, onBack }) => {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
   const grade = pct >= 80
-    ? { emoji: '🏆', title: 'Xuất sắc!',    sub: 'Bạn đã nắm vững kiến thức!', barColor: '#f59e0b', glowColor: 'rgba(245,158,11,0.2)' }
+    ? { emoji: '🏆', title: t('flashcard.summary.grades.excellent.title'), sub: t('flashcard.summary.grades.excellent.sub'), barColor: '#f59e0b', glowColor: 'rgba(245,158,11,0.2)' }
     : pct >= 50
-    ? { emoji: '👍', title: 'Tốt lắm!',     sub: 'Tiếp tục luyện tập nhé!',    barColor: '#6366f1', glowColor: 'rgba(99,102,241,0.15)' }
-    : { emoji: '💪', title: 'Cần ôn thêm!', sub: 'Kiên trì sẽ thành công!',    barColor: '#94a3b8', glowColor: 'rgba(148,163,184,0.15)' };
+    ? { emoji: '👍', title: t('flashcard.summary.grades.good.title'),      sub: t('flashcard.summary.grades.good.sub'),      barColor: '#6366f1', glowColor: 'rgba(99,102,241,0.15)' }
+    : { emoji: '💪', title: t('flashcard.summary.grades.needsWork.title'), sub: t('flashcard.summary.grades.needsWork.sub'), barColor: '#94a3b8', glowColor: 'rgba(148,163,184,0.15)' };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 py-12">
@@ -620,13 +628,13 @@ const SessionSummary = ({ total, correct, wrong, skipped, onRetryWrong, onRetryA
       </div>
 
       <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-1">{grade.title}</h2>
-      <p className="text-slate-400 dark:text-slate-500 text-sm mb-8">{grade.sub} · <span className="text-slate-600 dark:text-slate-400 font-medium">{total} câu</span></p>
+      <p className="text-slate-400 dark:text-slate-500 text-sm mb-8">{grade.sub} · <span className="text-slate-600 dark:text-slate-400 font-medium">{t('flashcard.summary.totalQuestions', { count: total })}</span></p>
 
       <div className="grid grid-cols-3 gap-3 w-full max-w-xs mb-6">
         {[
-          { val: correct, label: 'Đúng',   icon: '✓', bg: '#f0fdf4', darkBg: 'rgba(34,197,94,0.12)', border: '#86efac', darkBorder: '#15803d', tc: '#14532d', darkTc: '#86efac' },
-          { val: wrong,   label: 'Sai',    icon: '✗', bg: '#fef2f2', darkBg: 'rgba(239,68,68,0.12)', border: '#fca5a5', darkBorder: '#991b1b', tc: '#7f1d1d', darkTc: '#fca5a5' },
-          { val: skipped, label: 'Bỏ qua', icon: '⦺', bg: '#f8fafc', darkBg: 'rgba(148,163,184,0.1)', border: '#e2e8f0', darkBorder: '#334155', tc: '#475569', darkTc: '#94a3b8' },
+          { val: correct, label: t('flashcard.summary.correctLabel'), icon: '✓', bg: '#f0fdf4', darkBg: 'rgba(34,197,94,0.12)', border: '#86efac', darkBorder: '#15803d', tc: '#14532d', darkTc: '#86efac' },
+          { val: wrong,   label: t('flashcard.summary.wrongLabel'),   icon: '✗', bg: '#fef2f2', darkBg: 'rgba(239,68,68,0.12)', border: '#fca5a5', darkBorder: '#991b1b', tc: '#7f1d1d', darkTc: '#fca5a5' },
+          { val: skipped, label: t('flashcard.summary.skippedLabel'), icon: '⦺', bg: '#f8fafc', darkBg: 'rgba(148,163,184,0.1)', border: '#e2e8f0', darkBorder: '#334155', tc: '#475569', darkTc: '#94a3b8' },
         ].map(s => (
           <div key={s.label} className="rounded-2xl border p-4 text-center"
             style={{ background: isDark ? s.darkBg : s.bg, borderColor: isDark ? s.darkBorder : s.border }}>
@@ -638,7 +646,7 @@ const SessionSummary = ({ total, correct, wrong, skipped, onRetryWrong, onRetryA
 
       <div className="w-full max-w-xs mb-8">
         <div className="flex justify-between text-xs font-medium text-slate-400 dark:text-slate-500 mb-1.5">
-          <span>Chính xác</span>
+          <span>{t('flashcard.summary.accuracyLabel')}</span>
           <span className="text-slate-700 dark:text-slate-300 font-semibold">{pct}%</span>
         </div>
         <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
@@ -652,13 +660,13 @@ const SessionSummary = ({ total, correct, wrong, skipped, onRetryWrong, onRetryA
           <button onClick={onRetryWrong}
             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-semibold text-sm text-white transition-all active:scale-[0.97]"
             style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 4px 20px rgba(99,102,241,0.3)' }}>
-            <RefreshCw className="w-4 h-4" /> Ôn câu sai ({wrong})
+            <RefreshCw className="w-4 h-4" /> {t('flashcard.summary.retryWrongButton', { count: wrong })}
           </button>
         )}
         <button onClick={onRetryAll}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl border font-semibold text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-[0.97]"
           style={{ borderColor: isDark ? '#334155' : '#e2e8f0' }}>
-          <RotateCcw className="w-4 h-4" /> Làm lại
+          <RotateCcw className="w-4 h-4" /> {t('flashcard.summary.retryAllButton')}
         </button>
         <button onClick={onBack}
           className="flex items-center justify-center px-4 py-3 rounded-2xl border text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
@@ -673,13 +681,15 @@ const SessionSummary = ({ total, correct, wrong, skipped, onRetryWrong, onRetryA
 /* ══════════════════════════════════════
    QUIZ CARD
 ══════════════════════════════════════ */
-const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions, onResult, onSkip, isReviewPhase }) => {
+const QuizCard = ({ question, index, total, shuffledAnswers, onResult, onSkip, isReviewPhase }) => {
   const { isDark } = useTheme();
+  const { t } = useTranslation();
   const [selection, setSelection] = useState(null);
   const [revealed,  setRevealed]  = useState(false);
   const [isCorrect, setIsCorrect] = useState(null);
 
-  const typeCfg = TYPE_CFG[question.question_type] || { label: question.question_type, bar: '#94a3b8', badge: 'bg-slate-100 text-slate-600 border-slate-200' };
+  const typeCfg = TYPE_CFG[question.question_type] || { bar: '#94a3b8', badge: 'bg-slate-100 text-slate-600 border-slate-200' };
+  const typeLabel = t(`flashcard.typeLabels.${question.question_type}`, { defaultValue: question.question_type });
 
   const handleChoiceSelect = id => {
     if (revealed) return;
@@ -730,7 +740,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
             <span
               className={`text-[11px] font-bold uppercase tracking-wider ${typeCfg.badge} px-2.5 py-1 rounded-full border`}
             >
-              {typeCfg.label}
+              {typeLabel}
             </span>
             {isReviewPhase && (
               <span
@@ -739,7 +749,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
                   ? { background: 'rgba(245,158,11,0.15)', color: '#fcd34d', border: '1px solid #92400e' }
                   : { background: '#fffbeb', color: '#92400e', border: '1px solid #fcd34d' }}
               >
-                Ôn lại
+                {t('flashcard.quizCard.reviewBadge')}
               </span>
             )}
           </div>
@@ -766,12 +776,12 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
         <div
           className="text-[15.5px] font-semibold text-slate-800 dark:text-slate-100 leading-relaxed"
           style={{ fontFamily: 'Inter, sans-serif', wordBreak: 'break-word' }}
-          dangerouslySetInnerHTML={{ __html: question.content }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(question.content) }}
         />
         {question.image_url && question.question_type !== 'hotspot' && (
           <img
             src={question.image_url}
-            alt="Q"
+            alt={t('flashcard.quizCard.questionImageAlt')}
             className="mt-4 max-h-56 w-full object-contain rounded-2xl border border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/40"
           />
         )}
@@ -812,7 +822,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
               }
             >
               <SkipForward className="w-4 h-4" />
-              {isReviewPhase ? 'Bỏ qua lần 2' : 'Bỏ qua'}
+              {isReviewPhase ? t('flashcard.quizCard.skipTwice') : t('flashcard.quizCard.skip')}
             </button>
           )}
 
@@ -846,7 +856,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
               }
             >
               <Sparkles className="w-4 h-4" />
-              Kiểm tra đáp án
+              {t('flashcard.quizCard.checkAnswer')}
               {canCheck && (
                 <kbd className="hidden sm:inline px-1.5 py-0.5 bg-white/20 rounded text-[10px] font-mono">↵</kbd>
               )}
@@ -872,7 +882,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
               }
             >
               {isCorrect ? <CheckCircle2 className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
-              {index < total - 1 ? 'Câu tiếp theo' : 'Xem kết quả'}
+              {index < total - 1 ? t('flashcard.quizCard.nextQuestion') : t('flashcard.quizCard.viewResults')}
               <kbd className="hidden sm:inline px-1.5 py-0.5 bg-white/20 rounded text-[10px] font-mono">→</kbd>
             </button>
           )}
@@ -886,6 +896,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, shuffledDropOptions
    MAIN PAGE
 ══════════════════════════════════════ */
 export const FlashcardPage = () => {
+  const { t } = useTranslation();
   const { examId } = useParams();
   const navigate   = useNavigate();
   const { user, isSelfRegistered } = useAuth();
@@ -1008,7 +1019,7 @@ export const FlashcardPage = () => {
     <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
       <div className="flex flex-col items-center gap-3">
         <div className="w-14 h-14 rounded-2xl bg-indigo-100 dark:bg-indigo-950/40 animate-pulse" />
-        <p className="text-sm text-slate-400 dark:text-slate-500">Đang tải flashcards...</p>
+        <p className="text-sm text-slate-400 dark:text-slate-500">{t('flashcard.loading')}</p>
       </div>
     </div>
   );
@@ -1017,8 +1028,8 @@ export const FlashcardPage = () => {
     <div className="min-h-screen flex items-center justify-center" style={{ background: BG }}>
       <div className="text-center space-y-3">
         <BookOpen className="w-14 h-14 text-slate-200 dark:text-slate-700 mx-auto" />
-        <p className="text-slate-500 dark:text-slate-400 font-medium">Bài thi này chưa có câu hỏi.</p>
-        <Link to="/flashcard" className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline">← Chọn bài khác</Link>
+        <p className="text-slate-500 dark:text-slate-400 font-medium">{t('flashcard.noQuestions')}</p>
+        <Link to="/flashcard" className="text-indigo-600 dark:text-indigo-400 text-sm hover:underline">← {t('flashcard.chooseAnother')}</Link>
       </div>
     </div>
   );
@@ -1056,7 +1067,7 @@ export const FlashcardPage = () => {
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all
                 ${isShuffled ? 'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/60' : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700'}`}>
               <Shuffle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Xáo trộn</span>
+              <span className="hidden sm:inline">{t('flashcard.shuffleButton')}</span>
             </button>
             <button onClick={() => setShowKeyHint(v => !v)}
               className={`p-2 rounded-xl border transition-all ${showKeyHint ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600' : 'border-slate-200 text-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-500 dark:hover:bg-slate-700'}`}>
@@ -1067,7 +1078,7 @@ export const FlashcardPage = () => {
         {showKeyHint && (
           <div className="border-t border-slate-100 bg-slate-50 px-4 py-2.5 dark:border-slate-700 dark:bg-slate-700/40">
             <div className="max-w-2xl mx-auto flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400">
-              {[['Enter / →','Kiểm tra / Câu kế'],['S','Bỏ qua']].map(([k,d]) => (
+              {[['Enter / →', t('flashcard.keyHints.checkNext')],['S', t('flashcard.keyHints.skip')]].map(([k,d]) => (
                 <div key={k} className="flex items-center gap-2">
                   <kbd className="px-2 py-0.5 bg-white border border-slate-200 rounded font-mono text-[10px] text-slate-600 shadow-sm dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300">{k}</kbd>
                   <span>{d}</span>
@@ -1094,7 +1105,7 @@ export const FlashcardPage = () => {
                 <span><span className="text-slate-800 dark:text-slate-200 font-bold text-sm">{currentIdx + 1}</span> / {deck.length}</span>
                 {phase === 'main' && pendingCount > 0 && (
                   <span className="text-amber-700 font-semibold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full text-[11px] dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800/60">
-                    ⦺ {pendingCount} chờ ôn
+                    ⦺ {t('flashcard.pendingReview', { count: pendingCount })}
                   </span>
                 )}
               </div>
@@ -1104,7 +1115,7 @@ export const FlashcardPage = () => {
                 {skippedCount > 0 && <span className="text-slate-400 dark:text-slate-500">⦺ {skippedCount}</span>}
                 <button onClick={() => setShowSummary(true)}
                   className="text-slate-400 hover:text-slate-600 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-all">
-                  Kết thúc
+                  {t('flashcard.finishButton')}
                 </button>
               </div>
             </div>
@@ -1116,8 +1127,8 @@ export const FlashcardPage = () => {
                   <RotateCcw className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">Ôn lại câu đã bỏ qua</p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400">Còn {deck.length - currentIdx} câu cần làm</p>
+                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">{t('flashcard.reviewBanner.title')}</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">{t('flashcard.reviewBanner.remaining', { count: deck.length - currentIdx })}</p>
                 </div>
               </div>
             )}

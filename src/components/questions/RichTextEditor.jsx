@@ -1,7 +1,8 @@
-import React, { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from "react";
 import {
   Bold, Italic, Underline, Strikethrough, Eraser, Palette,
 } from 'lucide-react';
+import { sanitizeHtml } from '../../utils/sanitizeHtml';
 
 /**
  * RichTextEditor — Mini contenteditable editor with formatting toolbar.
@@ -66,7 +67,7 @@ export const RichTextEditor = ({
     // Avoid re-setting HTML during user typing (causes cursor jump)
     if (el.innerHTML !== value) {
       isInternalChange.current = true;
-      el.innerHTML = value;
+      el.innerHTML = sanitizeHtml(value);
       isInternalChange.current = false;
     }
   }, [value]);

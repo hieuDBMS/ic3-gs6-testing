@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
-  CreditCard, Clock, AlertCircle, X,
+  CreditCard, X,
   RefreshCw, Search, Trash2, Zap, ArrowRight,
   TrendingUp, ShieldCheck, Loader2, AlertTriangle,
 } from 'lucide-react';
@@ -15,23 +16,25 @@ const fmtDate = (d) => d ? new Date(d).toLocaleString('vi-VN', { dateStyle: 'sho
 
 /* ─── Status config ─────────────────────────────────────── */
 const S = {
-  PENDING: { label: 'Chờ TT',      dot: 'bg-amber-400',   text: 'text-amber-700 dark:text-amber-300',   bg: 'bg-amber-50 dark:bg-amber-950/40',   border: 'border-amber-200 dark:border-amber-800/60'  },
-  PARTIAL: { label: 'Một phần',    dot: 'bg-orange-400',  text: 'text-orange-700 dark:text-orange-300',  bg: 'bg-orange-50 dark:bg-orange-950/40',  border: 'border-orange-200 dark:border-orange-800/60' },
-  SUCCESS: { label: 'Đã mở khoá', dot: 'bg-emerald-500', text: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-950/40', border: 'border-emerald-200 dark:border-emerald-800/60'},
-  FAILED:  { label: 'Thất bại',   dot: 'bg-red-400',     text: 'text-red-700 dark:text-red-300',     bg: 'bg-red-50 dark:bg-red-950/40',     border: 'border-red-200 dark:border-red-800/60'    },
+  PENDING: { dot: 'bg-amber-400',   text: 'text-amber-700 dark:text-amber-300',   bg: 'bg-amber-50 dark:bg-amber-950/40',   border: 'border-amber-200 dark:border-amber-800/60'  },
+  PARTIAL: { dot: 'bg-orange-400',  text: 'text-orange-700 dark:text-orange-300',  bg: 'bg-orange-50 dark:bg-orange-950/40',  border: 'border-orange-200 dark:border-orange-800/60' },
+  SUCCESS: { dot: 'bg-emerald-500', text: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-950/40', border: 'border-emerald-200 dark:border-emerald-800/60'},
+  FAILED:  { dot: 'bg-red-400',     text: 'text-red-700 dark:text-red-300',     bg: 'bg-red-50 dark:bg-red-950/40',     border: 'border-red-200 dark:border-red-800/60'    },
 };
 const Badge = ({ status }) => {
+  const { t } = useTranslation();
   const c = S[status] ?? S.PENDING;
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap ${c.bg} ${c.text} ${c.border}`}>
       <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${c.dot}`} />
-      {c.label}
+      {t(`paymentHistory.status.${status}`)}
     </span>
   );
 };
 
 /* ─── Confirm Cancel Sheet ──────────────────────────────── */
 const CancelSheet = ({ purchase, onClose, onDone }) => {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [err,  setErr]  = useState('');
 
@@ -64,8 +67,8 @@ const CancelSheet = ({ purchase, onClose, onDone }) => {
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 dark:text-slate-100">Huỷ giao dịch?</h3>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">Thao tác này không thể hoàn tác</p>
+              <h3 className="font-bold text-gray-900 dark:text-slate-100">{t('paymentHistory.cancelSheet.title')}</h3>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{t('paymentHistory.cancelSheet.subtitle')}</p>
             </div>
             <button onClick={onClose} className="ml-auto w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition">
               <X className="w-3.5 h-3.5 text-gray-500 dark:text-slate-400" />
@@ -74,8 +77,8 @@ const CancelSheet = ({ purchase, onClose, onDone }) => {
 
           {/* Info */}
           <div className="p-3.5 bg-gray-50 dark:bg-slate-700/50 rounded-2xl text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-            Giao dịch <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{purchase?.transaction_code}</code> sẽ bị xoá.
-            Bạn có thể mở lại và tạo giao dịch mới sau.
+            {t('paymentHistory.cancelSheet.infoPrefix')} <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{purchase?.transaction_code}</code>{' '}
+            {t('paymentHistory.cancelSheet.infoSuffix')}
           </div>
 
           {err && (
@@ -88,11 +91,11 @@ const CancelSheet = ({ purchase, onClose, onDone }) => {
           <div className="flex gap-2.5">
             <button onClick={onClose}
               className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 transition active:scale-[.98]">
-              Giữ lại
+              {t('paymentHistory.cancelSheet.keep')}
             </button>
             <button onClick={confirm} disabled={busy}
               className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[.98]">
-              {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang huỷ...</> : <><Trash2 className="w-4 h-4" /> Xác nhận huỷ</>}
+              {busy ? <><Loader2 className="w-4 h-4 animate-spin" /> {t('paymentHistory.cancelSheet.cancelling')}</> : <><Trash2 className="w-4 h-4" /> {t('paymentHistory.cancelSheet.confirm')}</>}
             </button>
           </div>
         </div>
@@ -103,6 +106,7 @@ const CancelSheet = ({ purchase, onClose, onDone }) => {
 
 /* ─── Purchase row (live updating via realtime) ─────────── */
 const PurchaseRow = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUpdated }) => {
+  const { t } = useTranslation();
   const [p, setP] = useState(initial);
 
   /* Realtime: update this row live when status changes (student view) */
@@ -177,18 +181,18 @@ const PurchaseRow = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUpd
         <div className="flex items-center gap-2 justify-end">
           {isTeacher && p.status === 'SUCCESS' && (
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-800/60">
-              <Zap className="w-3 h-3" /> Auto
+              <Zap className="w-3 h-3" /> {t('paymentHistory.row.auto')}
             </span>
           )}
           {!isTeacher && p.status !== 'SUCCESS' && (
             <>
               <button onClick={() => onResume(p)}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50 transition active:scale-95">
-                <ArrowRight className="w-3.5 h-3.5" /> Tiếp tục
+                <ArrowRight className="w-3.5 h-3.5" /> {t('paymentHistory.row.resume')}
               </button>
               <button onClick={() => onCancel(p)}
                 className="p-1.5 rounded-xl bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/40 transition active:scale-95"
-                title="Huỷ giao dịch">
+                title={t('paymentHistory.row.cancelTitle')}>
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </>
@@ -201,6 +205,7 @@ const PurchaseRow = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUpd
 
 /* ─── Mobile purchase card (also live-updating) ─────────── */
 const PurchaseCard = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUpdated }) => {
+  const { t } = useTranslation();
   const [p, setP] = useState(initial);
 
   useEffect(() => {
@@ -247,7 +252,7 @@ const PurchaseCard = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUp
       {p.status === 'PARTIAL' && (
         <div className="px-4 pb-2">
           <div className="flex justify-between text-[10px] text-gray-400 dark:text-slate-500 mb-1">
-            <span>Đã TT: {fmtVND(paid)}</span><span>{pct}%</span>
+            <span>{t('paymentHistory.card.paidPrefix', { amount: fmtVND(paid) })}</span><span>{pct}%</span>
           </div>
           <div className="h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
             <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -258,15 +263,15 @@ const PurchaseCard = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUp
       {/* amounts */}
       <div className="flex divide-x divide-gray-100 dark:divide-slate-700 border-t border-gray-50 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-700/30">
         <div className="flex-1 px-3.5 py-2.5">
-          <p className="text-[10px] text-gray-400 dark:text-slate-500">Cần TT</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">{t('paymentHistory.card.required')}</p>
           <p className="text-sm font-bold text-gray-700 dark:text-slate-300">{fmtVND(amt)}</p>
         </div>
         <div className="flex-1 px-3.5 py-2.5">
-          <p className="text-[10px] text-gray-400 dark:text-slate-500">Đã nhận</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">{t('paymentHistory.card.received')}</p>
           <p className={`text-sm font-bold ${paid >= amt ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400'}`}>{fmtVND(paid)}</p>
         </div>
         <div className="flex-1 px-3.5 py-2.5">
-          <p className="text-[10px] text-gray-400 dark:text-slate-500">Ngày tạo</p>
+          <p className="text-[10px] text-gray-400 dark:text-slate-500">{t('paymentHistory.card.createdDate')}</p>
           <p className="text-[11px] text-gray-500 dark:text-slate-400 leading-tight">{fmtDate(p.created_at)}</p>
         </div>
       </div>
@@ -276,7 +281,7 @@ const PurchaseCard = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUp
         <div className="flex gap-2 px-4 py-3 border-t border-gray-100 dark:border-slate-700">
           <button onClick={() => onResume(p)}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50 transition active:scale-95">
-            <ArrowRight className="w-3.5 h-3.5" /> Tiếp tục thanh toán
+            <ArrowRight className="w-3.5 h-3.5" /> {t('paymentHistory.card.resume')}
           </button>
           <button onClick={() => onCancel(p)}
             className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-50 text-red-500 text-xs font-semibold hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/40 transition active:scale-95">
@@ -287,7 +292,7 @@ const PurchaseCard = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUp
       {isTeacher && p.status === 'SUCCESS' && (
         <div className="px-4 py-2.5 border-t border-gray-100 dark:border-slate-700">
           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-            <Zap className="w-3 h-3" /> Tự động qua SePay
+            <Zap className="w-3 h-3" /> {t('paymentHistory.card.autoViaSePay')}
           </span>
         </div>
       )}
@@ -299,6 +304,7 @@ const PurchaseCard = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUp
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
 export const PaymentHistoryPage = () => {
+  const { t } = useTranslation();
   const { isTeacher, isSelfRegistered } = useAuth();
 
   const [purchases,   setPurchases]   = useState([]);
@@ -316,19 +322,19 @@ export const PaymentHistoryPage = () => {
       const { data, error: fe } = await supabase.functions.invoke('manage-purchase', { body: { action } });
       if (fe || data?.error) throw new Error(fe?.message || data?.error);
       setPurchases(data?.purchases || []);
-    } catch (e) { showToast('Lỗi tải dữ liệu: ' + e.message, 'error'); }
+    } catch (e) { showToast(t('paymentHistory.toast.loadError', { message: e.message }), 'error'); }
     finally { setLoading(false); }
-  }, [isTeacher, showToast]);
+  }, [isTeacher, showToast, t]);
 
   useEffect(() => { fetchPurchases(); }, [fetchPurchases]);
 
   const liveAmt = (p) => p.exams?.required_amount || p.required_amount || 100_000;
 
   const FILTERS = [
-    { key: 'all',     label: 'Tất cả' },
-    { key: 'PENDING', label: 'Chờ TT' },
-    { key: 'PARTIAL', label: 'Một phần' },
-    { key: 'SUCCESS', label: 'Đã mở' },
+    { key: 'all',     label: t('paymentHistory.filters.all') },
+    { key: 'PENDING', label: t('paymentHistory.filters.pending') },
+    { key: 'PARTIAL', label: t('paymentHistory.filters.partial') },
+    { key: 'SUCCESS', label: t('paymentHistory.filters.success') },
   ];
 
   const filtered = purchases.filter(p => {
@@ -347,7 +353,7 @@ export const PaymentHistoryPage = () => {
   const handleCancelled = () => {
     setCancelP(null);
     fetchPurchases(true);
-    showToast('Đã huỷ giao dịch', 'info');
+    showToast(t('paymentHistory.toast.cancelled'), 'info');
   };
 
   const handleResume = (p) => {
@@ -355,7 +361,7 @@ export const PaymentHistoryPage = () => {
   };
 
   const handleRowUpdated = () => {
-    showToast('🎉 Thanh toán thành công!', 'success');
+    showToast(t('paymentHistory.toast.paymentSuccess'), 'success');
     fetchPurchases(true);
   };
 
@@ -380,18 +386,18 @@ export const PaymentHistoryPage = () => {
               </div>
               <div>
                 <h1 className="text-xl font-extrabold text-white tracking-tight">
-                  {isTeacher ? 'Quản lý thanh toán' : 'Lịch sử thanh toán'}
+                  {isTeacher ? t('paymentHistory.header.titleTeacher') : t('paymentHistory.header.titleStudent')}
                 </h1>
                 <p className="text-white/50 text-xs mt-0.5 flex items-center gap-1">
                   <Zap className="w-3 h-3 text-emerald-400" />
-                  {isTeacher ? 'Tự động xử lý qua SePay' : 'Mua bài và theo dõi trạng thái'}
+                  {isTeacher ? t('paymentHistory.header.subtitleTeacher') : t('paymentHistory.header.subtitleStudent')}
                 </p>
               </div>
             </div>
             {isTeacher && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/20 border border-emerald-400/25">
                 <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                <span className="text-emerald-200 text-xs font-semibold">Tự động mở khi đủ tiền</span>
+                <span className="text-emerald-200 text-xs font-semibold">{t('paymentHistory.header.autoUnlockBadge')}</span>
               </div>
             )}
           </div>
@@ -399,11 +405,11 @@ export const PaymentHistoryPage = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2.5 mt-6">
             {[
-              { val: nSuccess,             label: 'Đã mở khoá',  color: 'text-emerald-300' },
-              { val: nPending,             label: 'Chờ thanh toán', color: 'text-amber-300' },
+              { val: nSuccess,             label: t('paymentHistory.stats.unlocked'),  color: 'text-emerald-300' },
+              { val: nPending,             label: t('paymentHistory.stats.pending'), color: 'text-amber-300' },
               isTeacher
-                ? { val: fmtVND(revenue),  label: 'Doanh thu',   color: 'text-blue-300' }
-                : { val: purchases.length, label: 'Tổng GD',     color: 'text-blue-300' },
+                ? { val: fmtVND(revenue),  label: t('paymentHistory.stats.revenue'),   color: 'text-blue-300' }
+                : { val: purchases.length, label: t('paymentHistory.stats.totalTransactions'),     color: 'text-blue-300' },
             ].map((s, i) => (
               <div key={i} className="bg-white/10 border border-white/15 rounded-2xl px-4 py-3 text-center">
                 <p className={`text-xl font-extrabold ${s.color} truncate`}>{s.val}</p>
@@ -424,8 +430,8 @@ export const PaymentHistoryPage = () => {
               <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">Thanh toán tự động (SePay Webhook)</p>
-              <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">Khi học sinh chuyển đúng mã, bài thi sẽ <strong>tự mở khoá ngay lập tức</strong> — không cần xác nhận thủ công.</p>
+              <p className="text-sm font-bold text-emerald-800 dark:text-emerald-300">{t('paymentHistory.teacherBanner.title')}</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">{t('paymentHistory.teacherBanner.descPrefix')} <strong>{t('paymentHistory.teacherBanner.descStrong')}</strong> {t('paymentHistory.teacherBanner.descSuffix')}</p>
             </div>
           </div>
         )}
@@ -436,7 +442,7 @@ export const PaymentHistoryPage = () => {
             <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2.5 flex-1 sm:flex-none sm:w-60 shadow-sm">
               <Search className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
               <input value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Tìm tên, bài thi, mã..."
+                placeholder={t('paymentHistory.toolbar.searchPlaceholder')}
                 className="flex-1 outline-none text-sm text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 bg-transparent" />
               {search && (
                 <button onClick={() => setSearch('')}>
@@ -470,7 +476,7 @@ export const PaymentHistoryPage = () => {
           <button onClick={() => fetchPurchases()} disabled={loading}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs text-gray-500 hover:border-indigo-300 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:border-indigo-500 dark:hover:text-indigo-400 transition ml-auto shadow-sm disabled:opacity-40 active:scale-95">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Làm mới</span>
+            <span className="hidden sm:inline">{t('paymentHistory.toolbar.refresh')}</span>
           </button>
         </div>
 
@@ -500,12 +506,12 @@ export const PaymentHistoryPage = () => {
               <CreditCard className="w-8 h-8 text-gray-300 dark:text-slate-600" />
             </div>
             <p className="font-semibold text-gray-700 dark:text-slate-300">
-              {purchases.length === 0 ? 'Chưa có giao dịch nào' : 'Không tìm thấy giao dịch'}
+              {purchases.length === 0 ? t('paymentHistory.empty.noneTitle') : t('paymentHistory.empty.notFoundTitle')}
             </p>
             <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">
               {purchases.length === 0
-                ? (isSelfRegistered ? 'Mua nội dung để bắt đầu học.' : 'Chưa có học sinh nào thanh toán.')
-                : 'Thử thay đổi bộ lọc.'}
+                ? (isSelfRegistered ? t('paymentHistory.empty.noneSelfRegistered') : t('paymentHistory.empty.noneOther'))
+                : t('paymentHistory.empty.tryFilter')}
             </p>
           </div>
         ) : (
@@ -516,13 +522,13 @@ export const PaymentHistoryPage = () => {
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b border-gray-100 dark:border-slate-700 bg-gray-50/80 dark:bg-slate-700/30">
-                    {isTeacher && <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Người dùng</th>}
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Bài thi</th>
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Cần TT</th>
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Đã nhận</th>
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Trạng thái</th>
-                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Ngày tạo</th>
-                    <th className="px-5 py-3.5 text-right text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Thao tác</th>
+                    {isTeacher && <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentHistory.table.user')}</th>}
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentHistory.table.exam')}</th>
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentHistory.table.required')}</th>
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentHistory.table.received')}</th>
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentHistory.table.status')}</th>
+                    <th className="px-5 py-3.5 text-left text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentHistory.table.createdDate')}</th>
+                    <th className="px-5 py-3.5 text-right text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentHistory.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-slate-700">
@@ -533,7 +539,7 @@ export const PaymentHistoryPage = () => {
                 </tbody>
               </table>
               <div className="px-5 py-3 border-t border-gray-50 dark:border-slate-700 bg-gray-50/40 dark:bg-slate-700/20 flex items-center justify-between">
-                <p className="text-xs text-gray-400 dark:text-slate-500">{filtered.length} giao dịch{search && ` · tìm "${search}"`}</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">{t('paymentHistory.resultsCount', { count: filtered.length })}{search && ` · ${t('paymentHistory.searchFor', { query: search })}`}</p>
                 {isTeacher && nSuccess > 0 && (
                   <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                     <TrendingUp className="w-3 h-3" /> {fmtVND(revenue)}
@@ -548,7 +554,7 @@ export const PaymentHistoryPage = () => {
                 <PurchaseCard key={p.id} p={p} isTeacher={isTeacher} liveAmt={liveAmt}
                   onResume={handleResume} onCancel={setCancelP} onUpdated={handleRowUpdated} />
               ))}
-              <p className="text-center text-xs text-gray-400 dark:text-slate-500 pb-2">{filtered.length} giao dịch</p>
+              <p className="text-center text-xs text-gray-400 dark:text-slate-500 pb-2">{t('paymentHistory.resultsCount', { count: filtered.length })}</p>
             </div>
           </>
         )}
@@ -562,7 +568,7 @@ export const PaymentHistoryPage = () => {
         <PaymentModal
           exam={resumeExam}
           onClose={() => setResumeExam(null)}
-          onSuccess={() => { setResumeExam(null); fetchPurchases(true); showToast('🎉 Thanh toán thành công!', 'success'); }}
+          onSuccess={() => { setResumeExam(null); fetchPurchases(true); showToast(t('paymentHistory.toast.paymentSuccess'), 'success'); }}
         />
       )}
     </div>

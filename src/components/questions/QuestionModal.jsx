@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from "react";
 import { X, Plus, Trash2, Save, Loader2, Eye, EyeOff, ArrowLeftRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ImageUploader } from './ImageUploader';
@@ -802,7 +802,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {pairs.map((p, i) => (
+                      {pairs.map((p) => (
                         <div key={p.id} className="flex items-center gap-3 text-sm">
                           {/* Drag item */}
                           <div className="flex flex-col items-center gap-1.5 px-3 py-2 bg-blue-900/50 border border-blue-500 rounded-lg min-w-[90px]">

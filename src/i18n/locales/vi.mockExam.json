@@ -1,0 +1,231 @@
+{
+  "mockExam": {
+    "confirmModal": {
+      "title": "Xác nhận nộp bài",
+      "unansweredPrefix": "Còn",
+      "unansweredCount": "{{count}} câu chưa trả lời",
+      "unansweredSuffix": "Bạn vẫn muốn nộp?",
+      "allAnsweredMessage": "Bạn đã trả lời tất cả câu hỏi. Xác nhận nộp bài?",
+      "reviewButton": "Kiểm tra lại",
+      "submitButton": "Nộp bài"
+    },
+    "refreshModal": {
+      "title": "Tải lại trang?",
+      "warningBadge": "Cảnh báo quan trọng",
+      "autoSubmitWarning": "Bài làm sẽ bị nộp tự động!",
+      "dataUnchanged": "Dữ liệu câu hỏi sẽ không bị thay đổi.",
+      "choicesMayBeLost": "Tuy nhiên các lựa chọn có thể sẽ mất nếu bạn tải lại.",
+      "leaveAnyway": "Vẫn tải lại",
+      "stayButton": "Tiếp tục làm bài"
+    },
+    "navigateAwayModal": {
+      "title": "Bạn có chắc muốn rời khỏi bài thi?",
+      "message": "Bài làm đang dở sẽ được lưu lại. Bạn có thể quay lại tiếp tục làm bài sau.",
+      "leaveButton": "Rời khỏi",
+      "stayButton": "Tiếp tục làm bài"
+    },
+    "mobileNavSheet": {
+      "title": "Danh sách câu hỏi"
+    },
+    "errors": {
+      "submitFailed": "Lỗi khi nộp bài! Vui lòng thử lại.",
+      "loadFailed": "Lỗi tải đề thi thử."
+    },
+    "typeLabels": {
+      "choice": "Chọn một",
+      "multi": "Chọn nhiều",
+      "truefalse": "Đúng / Sai",
+      "hotspot": "Chọn vùng ảnh",
+      "dragdrop": "Kéo thả"
+    },
+    "sidebar": {
+      "headerLabel": "THI THỬ (MOCK EXAM)",
+      "mobileTitle": "Thi Thử",
+      "answered": "Đã làm",
+      "unanswered": "Chưa làm",
+      "submitting": "Đang nộp...",
+      "submitButton": "Nộp bài"
+    },
+    "flag": {
+      "flagged": "Đã đánh dấu",
+      "unflagged": "Đánh dấu"
+    },
+    "fullscreen": {
+      "exit": "Thoát toàn màn hình",
+      "enter": "Toàn màn hình",
+      "exitShort": "Thu nhỏ"
+    },
+    "nav": {
+      "prevTitle": "Câu trước (←)",
+      "prev": "Trước",
+      "nextTitle": "Câu tiếp theo (→)",
+      "next": "Tiếp",
+      "submitShort": "Nộp",
+      "keyboardHint": "để chuyển câu"
+    }
+  },
+  "mockExamSetup": {
+    "badge": "Mock Exam",
+    "title": "Thi thử chứng chỉ IC3",
+    "subtitle": "Hệ thống sẽ ngẫu nhiên chọn ra 45 câu hỏi từ tất cả các bài thi trong một Level. Điểm số sẽ được quy đổi theo thang điểm 1000 chuẩn IC3 toàn cầu.",
+    "chooseVersion": "Chọn phiên bản",
+    "noExamsForVersion": "Chưa có bài thi nào cho phiên bản này.",
+    "trialBadge": "Dùng thử",
+    "questionsFull": "45 Câu hỏi",
+    "questionsTrial": "10 Câu hỏi (Dùng thử)",
+    "examMeta": "• 50 Phút • Mức đạt: 700/1000",
+    "paymentRequired": "Thanh toán toàn bộ bài tập của Level này để thi thử đầy đủ 45 câu.",
+    "gmetrixMissing": "Chưa có bài thi GMetrix cho Level này, tạm thời không thể thi thử.",
+    "creating": "Đang tạo...",
+    "gmetrixMissingButton": "Chưa có GMetrix",
+    "startButton": "Bắt đầu thi thử",
+    "errors": {
+      "noQuestions": "Không có câu hỏi nào cho Level này.",
+      "createFailedPrefix": "Không thể tạo đề thi thử: "
+    }
+  },
+  "mockResult": {
+    "loading": "Đang tải kết quả...",
+    "notFound": {
+      "title": "Không tìm thấy kết quả",
+      "message": "Bài thi thử không tồn tại hoặc bạn không có quyền xem."
+    },
+    "backToReview": "Về danh sách ôn tập",
+    "passedTitle": "Chúc mừng bạn!",
+    "failedTitle": "Cần cố gắng thêm!",
+    "subtitle": "Bạn đã hoàn thành bài Thi Thử (Mock Exam)",
+    "stats": {
+      "questionCount": "Số câu hỏi",
+      "time": "Thời gian"
+    },
+    "homeLink": "Về trang chủ"
+  },
+  "flashcardList": {
+    "hero": {
+      "badge": "Flashcard · IC3",
+      "titlePart1": "Ôn tập",
+      "titlePart2": "thông minh",
+      "subtitle": "Luyện tập tương tác — chọn đáp án, xem kết quả ngay, ôn lại câu sai tự động.",
+      "cardsUnit": "thẻ",
+      "levelsUnit": "cấp độ",
+      "versionLabel": "Phiên bản"
+    },
+    "level": {
+      "examCountSuffix": "bài thi",
+      "emptyLevel": "Chưa có câu hỏi nào trong cấp độ này."
+    },
+    "examCard": {
+      "gmetrixLabel": "Gmetrix",
+      "testingLabel": "Testing",
+      "purchased": "Đã mua",
+      "pending": "Chờ TT",
+      "notPurchased": "Chưa mua",
+      "durationUnit": "phút",
+      "studyNow": "Ôn tập ngay",
+      "continuePayment": "Tiếp tục TT",
+      "cancelTransactionTitle": "Huỷ giao dịch",
+      "buyNow": "Mua ngay"
+    },
+    "cancelSheet": {
+      "title": "Huỷ giao dịch?",
+      "subtitle": "Thao tác này không thể hoàn tác",
+      "messagePrefix": "Giao dịch",
+      "messageSuffix": "sẽ bị xoá. Bạn có thể mua lại bất kỳ lúc nào.",
+      "keepButton": "Giữ lại",
+      "cancelling": "Đang huỷ...",
+      "confirmCancelButton": "Xác nhận huỷ"
+    }
+  },
+  "flashcard": {
+    "typeLabels": {
+      "choice": "Chọn một",
+      "multi": "Chọn nhiều",
+      "dragdrop": "Nối cặp",
+      "truefalse": "Đúng / Sai",
+      "hotspot": "Chọn vùng"
+    },
+    "multi": {
+      "hint": "Chọn tất cả đáp án đúng"
+    },
+    "trueFalse": {
+      "true": "Đúng",
+      "false": "Sai",
+      "answerLabel": "Đáp án"
+    },
+    "dragDrop": {
+      "resultTitle": "Kết quả nối cặp",
+      "notSelected": "Chưa chọn",
+      "correctAnswer": "Đúng: {{value}}",
+      "instructionTitle": "Kéo & Thả",
+      "instructionPrefix": "Kéo các thẻ vào ô tương ứng. Trên điện thoại:",
+      "tapCard": "bấm thẻ",
+      "instructionMiddle": "rồi",
+      "tapZone": "bấm ô",
+      "instructionSuffix": "để đặt.",
+      "poolLabel": "Kho thẻ",
+      "cardsRemaining": "{{count}} thẻ còn lại",
+      "allPlaced": "Tất cả đã xếp vào ô!",
+      "selectZoneHint": "Chọn ô",
+      "zoneCardCount": "{{count}} thẻ",
+      "dropHereActive": "Thả vào đây!",
+      "dropHerePlaceholder": "Kéo thẻ vào đây",
+      "tapToReturn": "Bấm để trả về kho",
+      "progressCount": "{{done}}/{{total}} thẻ",
+      "resetButton": "Làm lại"
+    },
+    "hotspot": {
+      "hintSingle": "Click vào 1 vùng đúng trên ảnh",
+      "hintMulti": "Click vào {{count}} vùng đúng trên ảnh",
+      "selectedCount": "· Đã chọn {{count}}",
+      "imageAlt": "Hotspot",
+      "legend": {
+        "correctSelected": "Đúng & đã chọn",
+        "correctMissed": "Đúng nhưng bỏ qua",
+        "wrongSelected": "Sai mà chọn"
+      }
+    },
+    "result": {
+      "correctTitle": "🎉 Chính xác!",
+      "wrongTitle": "❌ Chưa đúng",
+      "correctSubtitle": "Tuyệt vời, tiếp tục nhé!",
+      "wrongSubtitle": "Xem đáp án đúng bên trên, cố lên!"
+    },
+    "summary": {
+      "grades": {
+        "excellent": { "title": "Xuất sắc!", "sub": "Bạn đã nắm vững kiến thức!" },
+        "good": { "title": "Tốt lắm!", "sub": "Tiếp tục luyện tập nhé!" },
+        "needsWork": { "title": "Cần ôn thêm!", "sub": "Kiên trì sẽ thành công!" }
+      },
+      "totalQuestions": "{{count}} câu",
+      "correctLabel": "Đúng",
+      "wrongLabel": "Sai",
+      "skippedLabel": "Bỏ qua",
+      "accuracyLabel": "Chính xác",
+      "retryWrongButton": "Ôn câu sai ({{count}})",
+      "retryAllButton": "Làm lại"
+    },
+    "quizCard": {
+      "reviewBadge": "Ôn lại",
+      "questionImageAlt": "Câu hỏi",
+      "skipTwice": "Bỏ qua lần 2",
+      "skip": "Bỏ qua",
+      "checkAnswer": "Kiểm tra đáp án",
+      "nextQuestion": "Câu tiếp theo",
+      "viewResults": "Xem kết quả"
+    },
+    "loading": "Đang tải flashcards...",
+    "noQuestions": "Bài thi này chưa có câu hỏi.",
+    "chooseAnother": "Chọn bài khác",
+    "shuffleButton": "Xáo trộn",
+    "keyHints": {
+      "checkNext": "Kiểm tra / Câu kế",
+      "skip": "Bỏ qua"
+    },
+    "pendingReview": "{{count}} chờ ôn",
+    "finishButton": "Kết thúc",
+    "reviewBanner": {
+      "title": "Ôn lại câu đã bỏ qua",
+      "remaining": "Còn {{count}} câu cần làm"
+    }
+  }
+}

@@ -19,11 +19,8 @@ jobs:
 
       - run: npm ci
 
-      # Not yet a blocking gate: the repo has ~113 pre-existing lint errors
-      # (see the codebase audit). Flip this to a hard failure once those are cleaned up.
-      - name: Lint (non-blocking for now)
+      - name: Lint
         run: npm run lint
-        continue-on-error: true
 
       - name: Unit tests
         run: npm test

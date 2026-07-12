@@ -387,3 +387,123 @@ const url = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png`
 | RPC params | p_ prefix | `p_attempt_id`, `p_is_auto` |
 | Hook options | camelCase | `withCheatCounts`, `excludeStatus` |
 | Memo impl name | *Impl suffix | `QuestionRendererImpl` |
+
+---
+
+## 22. Resume Session Pattern (ExamPage)
+
+```js
+// initExam(), TRƯỚC khi insert attempt mới:
+const { data: existing } = await supabase
+  .from('exam_attempts')
+  .select('id, started_at, current_question_index')
+  .eq('user_id', user.id).eq('exam_id', examId)
+  .eq('status', 'in_progress').eq('is_mock', false)
+  .order('started_at', { ascending: false })
+  .limit(1).maybeSingle();   // ← maybeSingle(), KHÔNG single() — có thể 0 row
+
+if (existing) setExistingAttempt(existing);  // render chặn bằng ResumeModal, chưa insert gì
+else { /* insert attempt mới như cũ */ }
+
+// Resume: dùng lại attempt cũ, chỉ khôi phục vị trí câu hỏi (không khôi phục answers)
+// Restart: update attempt cũ status='auto_submitted' rồi insert mới
+```
+Mục đích: chặn tạo trùng `exam_attempts` (nhiều card trùng học sinh trên LiveMonitorPage) khi học sinh tắt tab/đổi route giữa chừng rồi quay lại đúng bài thi đó. Không áp dụng cho MockExamPage (attemptId cố định từ URL, không có nguy cơ trùng).
+
+---
+
+## 23. Navigate-Away Guard Pattern (ExamPage, MockExamPage)
+
+App dùng `<BrowserRouter>` (không phải `createBrowserRouter`) → **`useBlocker` không dùng được** (throw ngoài data router). Chặn thủ công bằng DOM interception thay vì migrate toàn bộ router:
+
+```js
+// 1. Click-intercept (capture phase) — bắt <a href> nội bộ VÀ [data-nav-guard]
+//    (vd nút Đăng xuất trong Navbar — button, không phải anchor)
+document.addEventListener('click', (e) => {
+  if (isSubmittingRef.current || bypassNavGuardRef.current) return;
+  const target = e.target.closest('a[href], [data-nav-guard]');
+  if (!target) return;
+  if (target.matches('a[href]')) {
+    const href = target.getAttribute('href');
+    if (!href || href.startsWith('http') || href.startsWith('#') || target.target === '_blank') return;
+  }
+  e.preventDefault(); e.stopPropagation();
+  pendingNavElRef.current = target;
+  setShowNavigateAway(true);
+}, true);
+
+// 2. popstate sentinel — chặn nút Back trình duyệt
+window.history.pushState(null, '', window.location.href);
+window.addEventListener('popstate', () => {
+  window.history.pushState(null, '', window.location.href); // neutralize
+  setShowNavigateAway(true); // pendingNavElRef = null → fallback navigate('/dashboard')
+});
+
+// 3. Xác nhận "Rời khỏi" → re-dispatch CLICK GỐC (không tự đoán route)
+const el = pendingNavElRef.current;
+if (el) { bypassNavGuardRef.current = true; el.click(); setTimeout(() => bypassNavGuardRef.current = false, 0); }
+else navigate('/dashboard'); // trường hợp popstate, không có element cụ thể
+```
+Re-dispatch click gốc (thay vì đoán path rồi gọi `navigate()`) đảm bảo hành vi đúng 100% dù target là Link (điều hướng thật) hay nút Đăng xuất (logout thật) — component không cần biết ngữ nghĩa của từng phần tử nó chặn.
+
+**Không** auto-submit hay đổi `status` khi rời trang — dựa vào Resume Session Pattern (#22) + LiveMonitor zombie filter (#24) để xử lý phần còn lại.
+
+---
+
+## 24. LiveMonitor Zombie Filter Pattern (client-side tick, không polling)
+
+```js
+// LiveMonitorPage.jsx — chỉ dựa vào last_activity_at, KHÔNG dựa vào started_at/duration
+// (resume session giữ nguyên started_at gốc — cutoff theo duration sẽ ẩn nhầm session đang sống)
+const ACTIVITY_TIMEOUT_SECONDS = 60;
+
+// Floor query — cùng ngưỡng với filter client, tránh fetch dữ liệu sẽ bị lọc ngay sau đó
+.gte('last_activity_at', new Date(Date.now() - ACTIVITY_TIMEOUT_SECONDS * 1000).toISOString())
+
+// Zombie tự ẩn KHÔNG cần network — attempts chỉ update qua Realtime event (write DB),
+// nhưng 1 session zombie (đã rời đi) không còn tạo write nào để tự trigger refetch.
+// Dựa vào `now` (state tick 1s có sẵn) để re-filter mỗi giây, độc lập với network:
+const liveAttempts = useMemo(
+  () => attempts.filter(a => now - new Date(a.last_activity_at || a.started_at).getTime() <= ACTIVITY_TIMEOUT_SECONDS * 1000),
+  [attempts, now],
+);
+// Dùng liveAttempts (không phải attempts thô) cho mọi render: badge đếm, empty-state, pagination.
+```
+Đã verify bằng test thật: card biến mất chính xác ở giây thứ 60, **0 request mạng** phát sinh trong lúc chờ — hoàn toàn client-side.
+
+---
+
+## 25. i18n Pattern (react-i18next — toàn bộ app, VI/EN)
+
+**Scope**: toàn bộ app dùng `t()` — public (LandingPage/Navbar/Login/Register) và toàn bộ trang đã đăng nhập (dashboard/exam/mock-exam/flashcard/payment/teacher tools). Ngoại lệ duy nhất: `src/components/questions/QuestionModal.jsx` — dead code, không import ở đâu, cố tình bỏ qua.
+
+**Cấu trúc — mỗi feature area 1 cặp file JSON riêng** (để dịch song song/độc lập không đụng file chung, xem `src/i18n/index.js` merge tất cả lại bằng object spread thành 1 `translation` resource phẳng — **không** dùng cơ chế namespace thật của i18next, `t()` vẫn gọi không tiền tố như `t('dashboard.title')`):
+
+| File | Top-level key(s) |
+|---|---|
+| `vi.json` / `en.json` | `common`, `nav`, `auth.login`, `auth.register`, `landing` |
+| `vi.dashboard.json` / `en.dashboard.json` | `dashboard`, `attemptHistory`, `studentOverview`, `analytics`, `groupBreakdownChart`, `scoreDistributionChart`, `liveMonitor`, `questionStats` |
+| `vi.exam.json` / `en.exam.json` | `exam`, `examList`, `result`, `questionRenderer`, `questionNavigator` |
+| `vi.mockExam.json` / `en.mockExam.json` | `mockExam`, `mockExamSetup`, `mockResult`, `flashcardList`, `flashcard` |
+| `vi.payment.json` / `en.payment.json` | `paymentHistory`, `paymentSettings`, `paymentModal` |
+| `vi.teacherAdmin.json` / `en.teacherAdmin.json` | `questionsAdmin`, `questionForm`, `questionImport`, `hotspotEditor`, `imageUploader`, `studentManagement`, `studentProgress`, `examStructure` |
+
+- `src/i18n/index.js` — khởi tạo `i18next` + `initReactI18next`, import + spread-merge tất cả 12 file JSON trên, đọc ngôn ngữ ban đầu từ `localStorage['ic3_lang']` (fallback `navigator.language`)
+- `src/context/LanguageContext.jsx` — **cùng pattern với `ThemeContext.jsx`** (đọc localStorage lazy-init, `useEffect` persist + gọi `i18next.changeLanguage()`), export `useLanguage()` → `{ lang, toggleLanguage }`
+
+**Dùng trong component**:
+```jsx
+import { useTranslation } from 'react-i18next';
+const { t } = useTranslation();
+t('nav.dashboard')                                    // string đơn giản
+t('landing.footer.copyright', { year: 2026 })         // interpolation {{year}}
+t('landing.features.items', { returnObjects: true })  // trả về array/object (cần returnObjects vì i18next mặc định chỉ trả string)
+```
+
+**Không dịch**: giá trị enum/status dùng trong logic so sánh (`status === 'in_progress'`, `'PENDING'`/`'SUCCESS'`/`'PARTIAL'`, question_type `'choice'`/`'multi'`/`'dragdrop'`/`'truefalse'`/`'hotspot'`, Edge Function `action` string...) — chỉ dịch LABEL hiển thị cho các giá trị đó, không đụng vào chính giá trị. Tên bảng/cột Supabase, RPC name, CSS class, route path, `sessionStorage`/`localStorage` key name cũng giữ nguyên.
+
+**Thêm string mới vào page đã có sẵn**: thêm key vào **cả 2 file** (vi + en) của feature area tương ứng cùng lúc — thiếu 1 bên sẽ fallback về `fallbackLng: 'vi'` khi đang ở `en` (không crash, nhưng lộ tiếng Việt giữa trang tiếng Anh).
+
+**Thêm 1 feature area mới hoàn toàn**: tạo `vi.<area>.json`/`en.<area>.json` mới, import + spread vào `resources` trong `src/i18n/index.js` (cả `vi` lẫn `en`), chọn top-level key mới không trùng với danh sách ở bảng trên.
+
+**Ngôn ngữ mặc định**: `vi` (`fallbackLng`), vì phần lớn user hiện tại là tiếng Việt. Language switcher (icon `Globe`, cạnh nút dark-mode toggle) nằm ở `Navbar.jsx` (desktop + mobile drawer) và `LandingPage.jsx`'s nav riêng.

@@ -1,26 +1,28 @@
-import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import { PASS_THRESHOLD } from '../../utils/scoreUtils';
 
 const PASS_COLOR = '#10b981'; // emerald-500
 const FAIL_COLOR = '#f43f5e'; // rose-500
 
 const CustomTooltip = ({ active, payload, label }) => {
+  const { t } = useTranslation();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-lg px-3 py-2 text-xs space-y-0.5">
       <p className="font-semibold text-gray-700 dark:text-slate-300">{label}</p>
-      <p className="text-gray-500 dark:text-slate-500">Điểm TB: <span className="font-semibold text-gray-700 dark:text-slate-300">{d.avg_score}</span></p>
-      <p className="text-gray-500 dark:text-slate-500">Tỉ lệ đạt: <span className="font-semibold text-gray-700 dark:text-slate-300">{d.pass_pct}%</span></p>
-      <p className="text-gray-500 dark:text-slate-500">{d.total_attempts} lượt làm</p>
+      <p className="text-gray-500 dark:text-slate-500">{t('groupBreakdownChart.avgScoreLabel')} <span className="font-semibold text-gray-700 dark:text-slate-300">{d.avg_score}</span></p>
+      <p className="text-gray-500 dark:text-slate-500">{t('groupBreakdownChart.passRateLabel')} <span className="font-semibold text-gray-700 dark:text-slate-300">{d.pass_pct}%</span></p>
+      <p className="text-gray-500 dark:text-slate-500">{t('groupBreakdownChart.attemptsCount', { count: d.total_attempts })}</p>
     </div>
   );
 };
 
 export const GroupBreakdownChart = ({ data }) => {
+  const { t } = useTranslation();
   if (!data?.length) {
-    return <div className="flex items-center justify-center h-64 text-sm text-gray-400 dark:text-slate-500">Chưa có dữ liệu</div>;
+    return <div className="flex items-center justify-center h-64 text-sm text-gray-400 dark:text-slate-500">{t('groupBreakdownChart.noData')}</div>;
   }
   const height = Math.max(200, data.length * 40);
   return (

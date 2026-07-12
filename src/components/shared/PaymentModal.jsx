@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from "react";
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { X, CheckCircle2, Copy, Check, Zap, AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
@@ -66,6 +67,7 @@ const LiveDot = memo(({ color = 'bg-emerald-500' }) => (
           onSuccess()
 ═══════════════════════════════════════════════════════════ */
 export const PaymentModal = ({ exam, onClose, onSuccess }) => {
+  const { t } = useTranslation();
   const [phase,    setPhase]    = useState('init');
   const [purchase, setPurchase] = useState(null);
   const [config,   setConfig]   = useState(() => _configCache || null);
@@ -88,7 +90,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
       ]);
       setConfig(cfg);
 
-      if (statusR.error) throw new Error(statusR.error.message || 'Không thể kiểm tra trạng thái');
+      if (statusR.error) throw new Error(statusR.error.message || t('paymentModal.error.statusCheckFailed'));
 
       if (statusR.data?.purchase) {
         const p = statusR.data.purchase;
@@ -188,7 +190,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
         {phase === 'init' && (
           <div className="flex flex-col items-center justify-center gap-3 py-20 px-8">
             <Loader2 className="w-7 h-7 text-indigo-400 animate-spin" />
-            <p className="text-sm text-gray-400 dark:text-slate-500">Đang chuẩn bị...</p>
+            <p className="text-sm text-gray-400 dark:text-slate-500">{t('paymentModal.preparing')}</p>
           </div>
         )}
 
@@ -199,12 +201,12 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
               <AlertCircle className="w-6 h-6 text-red-400" />
             </div>
             <div>
-              <p className="font-semibold text-gray-800 dark:text-slate-200">Đã xảy ra lỗi</p>
+              <p className="font-semibold text-gray-800 dark:text-slate-200">{t('paymentModal.error.title')}</p>
               <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{errMsg}</p>
             </div>
             <button onClick={init}
               className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition active:scale-95">
-              Thử lại
+              {t('paymentModal.error.retry')}
             </button>
           </div>
         )}
@@ -214,13 +216,13 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
           <div className="flex flex-col items-center py-12 px-8 gap-4 text-center">
             <AnimatedCheck />
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Thanh toán thành công!</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('paymentModal.success.title')}</h2>
               <p className="text-sm text-gray-400 dark:text-slate-500 mt-1 leading-relaxed max-w-[240px] mx-auto">
-                <strong className="text-gray-700 dark:text-slate-300">{exam?.title}</strong> đã được mở khoá cho bạn.
+                <strong className="text-gray-700 dark:text-slate-300">{exam?.title}</strong> {t('paymentModal.success.subtitleSuffix')}
               </p>
             </div>
             <div className="w-full space-y-2 mt-2">
-              {['Bài thi đã mở khoá', 'Flashcard đã mở khoá'].map(item => (
+              {t('paymentModal.success.unlockedItems', { returnObjects: true }).map(item => (
                 <div key={item} className="flex items-center gap-2.5 px-4 py-3 bg-emerald-50 rounded-2xl border border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800/60">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300">{item}</span>
@@ -230,7 +232,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
             <button onClick={() => { onSuccess?.(); onClose(); }}
               className="w-full mt-2 py-3.5 rounded-2xl font-bold text-white text-sm transition-all active:scale-[.98]"
               style={{ background: 'linear-gradient(135deg,#059669,#10b981)', boxShadow: '0 6px 20px rgba(5,150,105,.3)' }}>
-              Vào học ngay →
+              {t('paymentModal.success.enterNow')}
             </button>
           </div>
         )}
@@ -240,20 +242,20 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
           <>
             {/* Header */}
             <div className="px-5 pt-5 pb-4 pr-12">
-              <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-[.12em]">Thanh toán</p>
+              <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-[.12em]">{t('paymentModal.ready.headerLabel')}</p>
               <h2 className="text-[15px] font-bold text-gray-900 dark:text-slate-100 mt-0.5 leading-snug line-clamp-2">{exam?.title}</h2>
 
               {/* PARTIAL progress */}
               {purchase?.status === 'PARTIAL' && (
                 <div className="mt-3 p-3 rounded-2xl bg-orange-50 border border-orange-100 dark:bg-orange-950/30 dark:border-orange-800/50">
                   <div className="flex justify-between text-[11px] text-orange-700 dark:text-orange-300 mb-1.5">
-                    <span>Đã chuyển {fmt(paid)}</span>
+                    <span>{t('paymentModal.ready.partialPaidPrefix', { amount: fmt(paid) })}</span>
                     <span className="font-bold">{pct}%</span>
                   </div>
                   <div className="h-1.5 bg-orange-100 dark:bg-orange-900/40 rounded-full overflow-hidden">
                     <div className="h-full bg-orange-400 rounded-full" style={{ width: `${pct}%`, transition: 'width .6s ease' }} />
                   </div>
-                  <p className="text-[11px] text-orange-600 dark:text-orange-400 mt-1.5">Còn cần chuyển thêm <strong>{fmt(due)}</strong></p>
+                  <p className="text-[11px] text-orange-600 dark:text-orange-400 mt-1.5">{t('paymentModal.ready.partialRemainingPrefix')} <strong>{fmt(due)}</strong></p>
                 </div>
               )}
             </div>
@@ -266,8 +268,8 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
                 <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl dark:bg-amber-950/30 dark:border-amber-800/50">
                   <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Chưa cấu hình thanh toán</p>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Liên hệ giáo viên để được hỗ trợ.</p>
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">{t('paymentModal.ready.notConfiguredTitle')}</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">{t('paymentModal.ready.notConfiguredDesc')}</p>
                   </div>
                 </div>
               )}
@@ -292,7 +294,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
                         onError={e => { e.currentTarget.style.display = 'none'; setImgOk(true); }}
                       />
                     </div>
-                    <p className="text-[11px] text-gray-400 dark:text-slate-500">Quét bằng app ngân hàng bất kỳ</p>
+                    <p className="text-[11px] text-gray-400 dark:text-slate-500">{t('paymentModal.ready.scanHint')}</p>
                   </div>
 
                   {/* Bank info */}
@@ -306,8 +308,8 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
                   {/* Transfer content / copy */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">Nội dung chuyển khoản</p>
-                      <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 dark:bg-red-950/40 dark:border-red-800/60 dark:text-red-400">Bắt buộc</span>
+                      <p className="text-xs font-semibold text-gray-500 dark:text-slate-400">{t('paymentModal.ready.transferContentLabel')}</p>
+                      <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100 dark:bg-red-950/40 dark:border-red-800/60 dark:text-red-400">{t('paymentModal.ready.required')}</span>
                     </div>
 
                     <button onClick={copy}
@@ -325,7 +327,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
                       </div>
                     </button>
                     <p className="mt-1.5 text-center text-[11px] text-gray-400 dark:text-slate-500">
-                      {copied ? '✓ Đã sao chép' : 'Nhấn để sao chép'}
+                      {copied ? t('paymentModal.ready.copied') : t('paymentModal.ready.copyHint')}
                     </p>
                   </div>
                 </>
@@ -336,12 +338,12 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
             <div className="px-5 pb-6 pt-3 space-y-2">
               <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-emerald-50 border border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800/60">
                 <LiveDot />
-                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 flex-1">Tự động mở khoá khi nhận được tiền</p>
+                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 flex-1">{t('paymentModal.ready.autoUnlock')}</p>
                 <Zap className="w-3.5 h-3.5 text-emerald-500" />
               </div>
               <button onClick={onClose}
                 className="w-full py-3 rounded-2xl text-sm font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-700 transition-all active:scale-[.98]">
-                Đóng
+                {t('paymentModal.ready.close')}
               </button>
             </div>
           </>

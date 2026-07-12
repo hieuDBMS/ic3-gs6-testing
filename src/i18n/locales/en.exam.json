@@ -1,0 +1,208 @@
+{
+  "exam": {
+    "confirmSubmit": {
+      "title": "Confirm submission",
+      "unansweredPre": "You have",
+      "unansweredCount": "{{count}} unanswered question(s)",
+      "unansweredPost": " left. Submit anyway?",
+      "allAnswered": "You've answered every question. Submit the exam?",
+      "reviewAgain": "Review again",
+      "submit": "Submit exam"
+    },
+    "resume": {
+      "title": "Resume your exam?",
+      "unfinishedPre": "You have an unfinished attempt for",
+      "progressPre": "You reached question",
+      "startedAtPre": "Started at",
+      "restart": "Start over",
+      "continue": "Resume exam"
+    },
+    "refreshWarning": {
+      "title": "Reload the page?",
+      "subtitle": "Important warning",
+      "warningTitle": "Your progress will be lost completely!",
+      "bullet1": "All selected answers will disappear",
+      "bullet2": "The running timer will not be saved",
+      "bullet3": "You'll have to start over from the beginning",
+      "stillReload": "Reload anyway",
+      "continueExam": "Continue exam"
+    },
+    "navigateAway": {
+      "title": "Are you sure you want to leave the exam?",
+      "subtitle": "Your in-progress attempt will be saved. You can come back and continue later.",
+      "leave": "Leave",
+      "continueExam": "Continue exam"
+    },
+    "mobileNav": {
+      "title": "Question list"
+    },
+    "accessDenied": "You haven't purchased this exam.",
+    "cheatWarning": "We detected that you left the exam — this has been logged.",
+    "submitError": "Failed to submit! Please try again.",
+    "noQuestions": "This exam doesn't have any questions yet.",
+    "types": {
+      "choice": "Single choice",
+      "multi": "Multiple choice",
+      "truefalse": "True / False",
+      "hotspot": "Image hotspot",
+      "dragdrop": "Drag & drop"
+    },
+    "inProgress": "In progress",
+    "answered": "Answered",
+    "unanswered": "Unanswered",
+    "submitting": "Submitting...",
+    "submit": "Submit exam",
+    "flagged": "Flagged",
+    "flag": "Flag",
+    "exitFullscreenTitle": "Exit fullscreen (F11)",
+    "enterFullscreenTitle": "Fullscreen",
+    "minimize": "Minimize",
+    "fullscreen": "Fullscreen",
+    "prevTitle": "Previous question (←)",
+    "prev": "Previous",
+    "submitShort": "Submit",
+    "navHint": "to move between questions",
+    "nextTitle": "Next question (→)",
+    "next": "Next"
+  },
+  "examList": {
+    "typeTesting": "Testing",
+    "typeGmetrix": "Gmetrix",
+    "cancelSheet": {
+      "title": "Cancel transaction?",
+      "subtitle": "This action cannot be undone",
+      "transactionPrefix": "Transaction",
+      "transactionSuffix": "will be deleted.",
+      "rebuyHint": "You can purchase again anytime.",
+      "keep": "Keep it",
+      "cancelling": "Cancelling...",
+      "confirm": "Confirm cancel"
+    },
+    "hero": {
+      "title": "Choose an exam",
+      "subtitle": "Pick an IC3 version, then choose the level and exam you want to start.",
+      "selected": "Selected",
+      "levelsAndExams": "{{levels}} levels · {{exams}} exams",
+      "versionLabel": "IC3 Version"
+    },
+    "emptyState": {
+      "chooseVersionTitle": "Choose a version to get started",
+      "chooseVersionSubtitle": "Pick an IC3 version (GS6, GS7, GS8) above to see its levels and exams."
+    },
+    "noLevels": "No levels available.",
+    "countTesting": "{{count}} Testing",
+    "countGmetrix": "{{count}} Gmetrix",
+    "status": {
+      "purchased": "Purchased",
+      "pending": "Payment pending",
+      "notPurchased": "Not purchased"
+    },
+    "durationMinutes": "{{minutes}} min",
+    "startExam": "Start exam",
+    "continuePayment": "Continue payment",
+    "buyNow": "Buy now — {{amount}}đ",
+    "noExamsInLevel": "No exams in this level yet."
+  },
+  "result": {
+    "status": {
+      "skipped": "Skipped",
+      "correct": "Correct",
+      "wrong": "Wrong"
+    },
+    "questionNumber": "Question {{number}}",
+    "questionTypes": {
+      "choice": "Single choice",
+      "multi": "Multiple choice",
+      "truefalse": "True / False",
+      "dragdrop": "Drag & drop"
+    },
+    "yourAnswer": "Your answer",
+    "correctAnswer": "Correct answer",
+    "groupingResult": "Grouping result",
+    "yourAnswerColon": "Your answer:",
+    "emptyAnswer": "Left blank",
+    "correctAnswerArrow": "→ Correct answer:",
+    "statementResult": "Result per statement",
+    "notAnswered": "Not answered",
+    "correctAnswerColon": "· Correct answer:",
+    "hotspotResult": "Selected region result",
+    "hotspotImageAlt": "Hotspot",
+    "legend": {
+      "correctSelected": "Correct & selected",
+      "correctNotSelected": "Correct but not selected",
+      "wrongSelected": "Wrong but selected"
+    },
+    "notFound": "Exam result not found.",
+    "defaultExamTitle": "Exam",
+    "filters": {
+      "all": "All ({{count}})",
+      "correct": "✓ Correct ({{count}})",
+      "wrong": "✗ Wrong ({{count}})",
+      "skipped": "— Skipped ({{count}})"
+    },
+    "backToDashboard": "Back to Dashboard",
+    "retakeExam": "Retake this exam",
+    "passed": "PASSED",
+    "notPassed": "NOT PASSED",
+    "congrats": "🎉 Congratulations! You passed.",
+    "sorry": "😔 Sorry, you didn't pass this time.",
+    "correctAnswersCount": "correct answers",
+    "noQuestionsMatch": "No questions match this filter.",
+    "downloadCertificate": "Download certificate"
+  },
+  "questionRenderer": {
+    "multiHint": "☑ You can select multiple correct answers",
+    "questionImageAlt": "Question",
+    "dragdrop": {
+      "title": "Drag & Drop",
+      "hint": "Drag the cards into the matching zones. On mobile: <strong>tap to select a card</strong>, then <strong>tap a zone</strong>.",
+      "poolLabel": "Card pool",
+      "cardsLeft": "{{count}} card(s) left",
+      "allPlaced": "All cards have been placed!",
+      "selectZoneBelow": "Select a zone below",
+      "cardsCount": "{{count}} card(s)",
+      "dropHere": "Drop here!",
+      "dragHere": "Drag a card here",
+      "returnToPool": "Tap to return to pool",
+      "reset": "🔄 Reset"
+    },
+    "truefalse": {
+      "instructionPre": "Select",
+      "true": "True",
+      "instructionOr": "or",
+      "false": "False",
+      "instructionPost": "for each statement",
+      "columnIndex": "#",
+      "columnStatement": "Statement",
+      "allDone": "You've completed all {{total}} statements!"
+    },
+    "hotspot": {
+      "instructionMultiPrefix": "Click all the correct regions",
+      "instructionSuffix": "on the image",
+      "instructionSinglePrefix": "Click the correct region",
+      "imageAlt": "Hotspot image",
+      "imageNotLoaded": "Image not loaded",
+      "selectedCount": "{{count}} region(s) selected",
+      "selectedRequired": " / {{correct}} needed",
+      "reset": "🔄 Reset"
+    }
+  },
+  "questionNavigator": {
+    "questionNumber": "Question {{number}}",
+    "title": "Questions",
+    "flagged": "Flagged",
+    "legend": {
+      "answered": "Answered",
+      "unanswered": "Unanswered",
+      "current": "Current",
+      "flagged": "Flagged"
+    }
+  },
+  "timer": {
+    "label": "Time remaining",
+    "unitLabel": "minutes : seconds",
+    "ariaRemaining": "{{time}} remaining",
+    "dangerBadge": "⚠ Almost out of time!",
+    "warningBadge": "Under 5 minutes left"
+  }
+}

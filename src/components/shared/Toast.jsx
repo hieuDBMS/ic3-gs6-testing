@@ -13,6 +13,7 @@ const STYLES = {
  * a toast that auto-dismisses after 3.5s; `toast` exposes the most recent one
  * for call sites that only ever show one at a time.
  */
+// eslint-disable-next-line react-refresh/only-export-components -- hook is intentionally co-located with the Toast component it drives
 export const useToast = () => {
   const [toasts, setToasts] = useState([]);
 

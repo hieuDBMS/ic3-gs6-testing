@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { X, Image as ImageIcon, Loader2 } from 'lucide-react';
 
@@ -12,20 +13,22 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
  * @param {function} props.onChange - called with new URL or null
  * @param {string} [props.label] - optional label
  */
-export const ImageUploader = ({ bucket, value, onChange, label = 'Ảnh minh hoạ' }) => {
+export const ImageUploader = ({ bucket, value, onChange, label }) => {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const inputRef = useRef();
+  const resolvedLabel = label ?? t('imageUploader.defaultLabel');
 
   const handleFile = async (file) => {
     setError(null);
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError('Chỉ chấp nhận .jpg, .jpeg, .png, .gif, .webp');
+      setError(t('imageUploader.errorFileType'));
       return;
     }
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      setError(`Kích thước tối đa ${MAX_SIZE_MB}MB`);
+      setError(t('imageUploader.errorFileSize', { maxSize: MAX_SIZE_MB }));
       return;
     }
 
@@ -43,7 +46,7 @@ export const ImageUploader = ({ bucket, value, onChange, label = 'Ảnh minh ho�
       const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
       onChange(data.publicUrl);
     } catch (err) {
-      setError('Upload thất bại: ' + (err.message || 'Lỗi không xác định'));
+      setError(t('imageUploader.uploadFailed', { message: err.message || t('imageUploader.unknownError') }));
     } finally {
       setUploading(false);
     }
@@ -62,13 +65,13 @@ export const ImageUploader = ({ bucket, value, onChange, label = 'Ảnh minh ho�
 
   return (
     <div className="space-y-2">
-      <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{label}</span>
+      <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{resolvedLabel}</span>
 
       {value ? (
         <div className="relative inline-block group">
           <img
             src={value}
-            alt="Preview"
+            alt={t('imageUploader.previewAlt')}
             className="h-32 w-auto rounded-lg border border-gray-200 dark:border-slate-600 object-contain bg-gray-50 dark:bg-slate-700/50"
           />
           <button
@@ -91,8 +94,8 @@ export const ImageUploader = ({ bucket, value, onChange, label = 'Ảnh minh ho�
           ) : (
             <>
               <ImageIcon className="w-8 h-8 text-gray-300 dark:text-slate-600 mb-1" />
-              <p className="text-xs text-gray-500 dark:text-slate-500">Kéo thả hoặc <span className="text-indigo-600 dark:text-indigo-400 font-medium">chọn ảnh</span></p>
-              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">JPG, PNG, GIF, WebP · tối đa {MAX_SIZE_MB}MB</p>
+              <p className="text-xs text-gray-500 dark:text-slate-500">{t('imageUploader.dropzonePre')} <span className="text-indigo-600 dark:text-indigo-400 font-medium">{t('imageUploader.dropzoneLink')}</span></p>
+              <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{t('imageUploader.dropzoneFormats', { maxSize: MAX_SIZE_MB })}</p>
             </>
           )}
         </div>

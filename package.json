@@ -13,11 +13,14 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",
+    "dompurify": "^3.4.11",
     "exceljs": "^4.4.0",
+    "i18next": "^26.3.6",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.14.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "react-i18next": "^17.0.9",
     "react-router-dom": "^7.14.2",
     "recharts": "^3.9.2"
   },

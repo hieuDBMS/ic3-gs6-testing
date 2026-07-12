@@ -3,6 +3,7 @@
 ## Route Structure (App.jsx)
 
 ```
+/                    → RootRoute          (public — LandingPage nếu chưa login, redirect /dashboard nếu đã login)
 /login               → LoginPage          (public)
 /register            → RegisterPage       (public)
 --- ProtectedRoute (any authenticated) ---
@@ -28,12 +29,27 @@
 /teacher/question-stats       → QuestionStatsPage
 /teacher/live-monitor         → LiveMonitorPage
 /teacher/analytics            → AnalyticsPage
-/ and *              → redirect /dashboard
+*                    → redirect /dashboard
 ```
 
 Layout: Tất cả protected routes đều wrap trong `<Layout>` (Navbar + main content).
 
 ## Chi tiết từng Page
+
+### RootRoute (`/`)
+- File: `src/components/shared/RootRoute.jsx`
+- Public — không nằm trong `<ProtectedRoute>`, đọc trực tiếp `useAuth()` (giống `ProtectedRoute` dùng)
+- Chưa đăng nhập → render `LandingPage` (lazy-load riêng, không qua `App.jsx`'s lazy block)
+- Đã đăng nhập → `<Navigate to="/dashboard" replace />`
+- **Trước 2026-07-10 route này redirect thẳng `/dashboard` không điều kiện** — giờ có landing page công khai
+
+### LandingPage (`/` khi chưa đăng nhập)
+- File: `src/pages/LandingPage.jsx`
+- Trang giới thiệu công khai, song ngữ (VI/EN qua `react-i18next`, xem PATTERNS_AND_CONVENTIONS.md → i18n Pattern)
+- Nav bar riêng (không phải `Navbar.jsx` — component đó `return null` khi chưa có `profile`), có language + theme toggle
+- Sections: Hero → Trust bar (GS6/GS7/GS8) → Features (6 items) → How it works (4 bước) → For Teachers → CTA band → Footer
+- Không hiển thị giá cụ thể (giá là per-exam do giáo viên tự cấu hình qua `PaymentSettingsPage`, không có mức giá cố định toàn hệ thống) — CTA chỉ dẫn tới `/register`/`/login`
+- Tái dùng design token có sẵn: `bg-ic3-gradient`, `.btn-primary`/`.btn-ghost`, `.card`, `.glass-light` (không thêm màu/animation library mới)
 
 ### LoginPage (`/login`)
 - File: `src/pages/LoginPage.jsx`
@@ -60,13 +76,13 @@ Layout: Tất cả protected routes đều wrap trong `<Layout>` (Navbar + main 
 - Danh sách bài thi nhóm theo Version (GS6, GS7...) → Level → Testing/Gmetrix
 - Self-registered users: hiển thị Lock icon, nút Mua → `PaymentModal`
 - Accordion expand/collapse từng Level
-- Fetch: `exam_levels`, `exams`, `exam_purchases` (user)
+- Fetch: `exam_levels`, `exams`; trạng thái mua qua Edge Function `manage-purchase` (không query bảng `purchases` trực tiếp)
 - VERSION_STYLES: màu cho mỗi version (GS6=primary, GS7=violet, GS8=accent)
 
 ### ExamPage (`/exam/:examId`)
-- File: `src/pages/ExamPage.jsx` (821 lines — file lớn nhất trong pages)
-- **Luồng**: initExam → fetch exam + questions → insert attempt → render
-- **State chính**: exam, questions, currentIndex, answers ({}), flagged ([]), attemptId
+- File: `src/pages/ExamPage.jsx` (1089 lines — file lớn nhất trong pages)
+- **Luồng**: initExam → fetch exam + questions → **check attempt `in_progress` cũ** (xem "Resume session" bên dưới) → insert attempt (nếu không có) → render
+- **State chính**: exam, questions, currentIndex, answers ({}), flagged ([]), attemptId, existingAttempt
 - **Keyboard shortcuts**: ArrowLeft/Right/W/A/S/D để navigate, F5/Ctrl+R → RefreshWarningModal
 - **Fullscreen**: `useExamFullscreen` hook → requestFullscreen trên container (navbar ẩn)
 - **Anti-cheat**: log `tab_switch` và `fullscreen_exit` vào `exam_cheat_events` table
@@ -74,6 +90,21 @@ Layout: Tất cả protected routes đều wrap trong `<Layout>` (Navbar + main 
 - **Submit**: gọi RPC `submit_exam_attempt` → navigate `/exam/${attemptId}/result`
 - **Auto-submit**: Timer callback → doSubmit(true)
 - **Self-registered check**: gọi RPC `user_can_access_exam`, nếu không → redirect /exam
+
+**Resume session (chống trùng session khi thoát giữa chừng):**
+- `initExam()` query `exam_attempts` tìm attempt `status='in_progress' AND is_mock=false` của user cho đúng exam này (`.maybeSingle()`, KHÔNG `.single()`) **trước khi** insert attempt mới.
+- Nếu tìm thấy → set `existingAttempt`, render chặn bằng `ResumeModal` (2 nút):
+  - **"Tiếp tục làm bài"** → dùng lại `existingAttempt.id`, `currentIndex = existingAttempt.current_question_index`. Đáp án đã chọn trước đó **không** được khôi phục (chỉ vị trí câu hỏi), vì `attempt_answers` chỉ ghi lúc submit, không ghi theo từng câu.
+  - **"Bắt đầu lại"** → update attempt cũ `status='auto_submitted', submitted_at=now()` rồi insert attempt mới như bình thường (KHÔNG gọi RPC submit vì chưa có answers).
+- Nếu không có → giữ nguyên flow cũ (insert attempt mới ngay).
+
+**Navigate-away guard (chặn rời trang thi mà không xác nhận):**
+- App dùng `<BrowserRouter>` thường (không phải `createBrowserRouter`) nên **`useBlocker` của react-router-dom v7 không dùng được** (throw nếu gọi ngoài data router). Thay vào đó chặn thủ công ở tầng DOM:
+  - Click-intercept ở `document` (capture phase): bắt mọi `<a href>` nội bộ (navbar/logo) **và** phần tử có attribute `data-nav-guard="true"` (nút Đăng xuất trong `Navbar.jsx` — vì đó là `<button onClick>`, không phải `<a>`, nên href-sniffing không bắt được).
+  - `popstate` sentinel: push 1 history entry rỗng khi có `attemptId`, back-button sẽ pop entry đó thay vì rời trang thật, cho phép chặn lại và hỏi xác nhận.
+  - Khi xác nhận "Rời khỏi" → **re-dispatch click gốc** trên phần tử đã bắt được (`el.click()` với flag bypass tạm) thay vì tự đoán route rồi gọi `navigate()` — đảm bảo hành vi gốc chạy đúng (Link navigate thật, hoặc logout thật), không cần ExamPage biết ngữ nghĩa của từng nút.
+  - Modal: `NavigateAwayModal` (style giống `RefreshWarningModal`).
+- Không auto-submit / không đổi `status` khi unmount hay khi rời trang — attempt cũ vẫn `in_progress`, được xử lý bởi Resume session (ở trên) + LiveMonitorPage zombie filter (xem LiveMonitorPage bên dưới).
 
 **Data fetched khi init exam:**
 ```js
@@ -126,6 +157,8 @@ questions.select(`
 - Pagination: 20/trang
 - CRUD student: tạo, sửa tên, reset password, xóa
 - Gọi Edge Function `manage-student`
+- Gán `school` (text tự do, khớp `schools.name`) + `class_name` cho student qua modal `edit-school`
+- **CRUD trường học** (bảng `schools`) qua Edge Function `manage-school`: action `list`/`create`/`update`/`delete`. `update` có fallback: nếu Edge Function lỗi → gọi trực tiếp `supabase.from('schools').update(...)`
 - Link → `/teacher/students/:studentId` để xem tiến độ
 - Không thể xóa teacher khác
 
@@ -140,8 +173,9 @@ questions.select(`
 - File: `src/pages/AnalyticsPage.jsx`
 - Filter: level, examType, passFilter (all/pass/fail), school, class, dateFrom, dateTo, groupBy
 - Charts: `ScoreDistributionChart`, `GroupBreakdownChart`
-- Fetch từ: `exam_levels`, `schools`, `classes`
-- AI Insight: gọi Edge Function để phân tích
+- Data: 3 RPC song song — `get_exam_score_distribution`, `get_exam_group_breakdown`, `get_question_wrong_stats` (worst 8 câu)
+- Filter options fetch từ: `exam_levels`, `schools`, `profiles.class_name` (distinct, role=student)
+- **AI Insight**: nút "Sparkles" gọi Edge Function `analyze-exam-stats` (teacher-only, body: `{ filters, distribution, breakdown }`) → Gemini 2.5 Flash sinh nhận xét tiếng Việt 3-5 câu. Lỗi nếu thiếu secret `GEMINI_API_KEY` trên server
 
 ### QuestionStatsPage (`/teacher/question-stats`) — Teacher only
 - File: `src/pages/QuestionStatsPage.jsx`
@@ -149,21 +183,37 @@ questions.select(`
 - Hiển thị câu hay sai nhất với % sai màu đỏ/vàng/xanh
 
 ### LiveMonitorPage (`/teacher/live-monitor`) — Teacher only
-- File: `src/pages/LiveMonitorPage.jsx`
+- File: `src/pages/LiveMonitorPage.jsx` (200 lines)
 - Fetch `exam_attempts` status=`in_progress` + `exam_cheat_events`
-- Realtime subscriptions: `exam_attempts` và `exam_cheat_events` tables
-- Cutoff: chỉ lấy attempts trong `MAX_EXAM_DURATION_SECONDS=6000 + GRACE_SECONDS=120`
-- Auto-refresh: setInterval 1000ms cập nhật đồng hồ elapsed
-- Pagination: 12/trang
+- Realtime subscriptions: `exam_attempts` và `exam_cheat_events` tables (event `*`, không filter `status` server-side — filter client-side qua refetch, xem comment trong file)
+- **Cutoff — CHỈ dựa vào `last_activity_at`, KHÔNG dựa vào `started_at`/`duration_seconds`**: `ACTIVITY_TIMEOUT_SECONDS=60`. Floor query (`gte('last_activity_at', now-60s)`) và filter client đều dùng cùng ngưỡng này.
+  - Lý do bỏ cutoff theo `started_at+duration` (từng có trước đây): ExamPage giờ có Resume session (xem trên) — attempt resume giữ nguyên `started_at` gốc, có thể đã trôi qua lâu hơn `duration_seconds` của bài thi. Cutoff theo `started_at` sẽ ẩn nhầm một session **đang thực sự hoạt động** chỉ vì nó khởi tạo từ lâu. `last_activity_at` (ping mỗi ~4s từ ExamPage) là tín hiệu "còn sống" duy nhất đáng tin.
+- **Zombie tự ẩn không cần network**: `liveAttempts` (`useMemo` phụ thuộc `now` — state tick mỗi giây có sẵn) lọc lại `attempts` theo `now - last_activity_at <= ACTIVITY_TIMEOUT_SECONDS`. Card biến mất đúng lúc vượt ngưỡng dù không có write DB mới nào xảy ra (session zombie thì chính nó không tạo ra event nào để tự trigger refetch) — đã verify: 0 request mạng phát sinh trong suốt quá trình 1 card tự ẩn.
+- Ngưỡng "stale" (card mờ, chữ cam) hiển thị ở `ACTIVITY_TIMEOUT_SECONDS/2` = 30s, trước khi card biến mất hẳn ở 60s.
+- Auto-refresh: setInterval 1000ms cập nhật đồng hồ elapsed (đồng thời drive `liveAttempts` re-filter)
+- Pagination: 12/trang, dùng `liveAttempts.length` (không phải `attempts.length` thô) cho badge/empty-state/pagination
 
 ### MockExamSetupPage (`/mock-exam`)
 - File: `src/pages/MockExamSetupPage.jsx`
-- Cấu hình bài thi thử: chọn level, số câu, thời gian
+- Chọn Version (GS6/GS7/GS8, lưu localStorage `ic3_preferred_version`) → chọn Level → "Bắt đầu thi thử"
+- Self-registered: nếu chưa mua đủ **tất cả** exam trong Level → chỉ được 10 câu "Dùng thử" (badge amber); nếu đã mua đủ → 45 câu đầy đủ. Check trạng thái mua qua Edge Function `manage-purchase` action `list-mine`
+- Nếu Level chưa có exam `gmetrix` nào → nút bị disable ("Chưa có GMetrix")
+- Bấm nút → gọi RPC `create_mock_exam_attempt(p_level_id, p_user_id)` → nhận về `attemptId` → navigate `/mock-exam/${attemptId}`
+- 50 phút, mức đạt 700/1000 (hiển thị tĩnh trong UI — logic pass thật nằm ở `MockResultPage`)
 
 ### MockExamPage (`/mock-exam/:attemptId`)
-- File: `src/pages/MockExamPage.jsx` (688 lines)
-- Tương tự ExamPage nhưng KHÔNG có anti-cheat logging
+- File: `src/pages/MockExamPage.jsx` (801 lines)
+- Tương tự ExamPage nhưng KHÔNG có anti-cheat logging (không log `exam_cheat_events`)
 - Dùng chung: Timer, QuestionNavigator, QuestionRenderer
+- Load câu hỏi theo `exam_attempts.mock_question_ids` (đã chốt sẵn lúc `create_mock_exam_attempt`), không phải theo 1 exam cụ thể
+- Submit: gọi RPC `submit_mock_exam_attempt` (cùng chữ ký `submit_exam_attempt`) → trả về thêm `score_1000` → navigate `/mock-exam/${attemptId}/result`
+- Lỗi `already_submitted` khi submit lại → vẫn navigate sang trang kết quả thay vì báo lỗi
+- **Không có Resume session** — `attemptId` truyền qua URL param, tạo sẵn 1 lần ở `MockExamSetupPage` (`create_mock_exam_attempt`), không có nguy cơ tạo trùng attempt như ExamPage.
+- **Có Navigate-away guard** giống ExamPage (click-intercept `<a href>` + `data-nav-guard` + popstate sentinel → `NavigateAwayModal`), guard theo state `attempt` (chỉ set khi `status==='in_progress'`) thay vì theo `attemptId` (vốn luôn có sẵn từ URL param).
+
+### MockResultPage (`/mock-exam/:attemptId/result`)
+- File: `src/pages/MockResultPage.jsx`
+- Đọc `attempt.score_1000`; pass nếu `score_1000 >= 700` (hard-code, KHÔNG dùng `utils/scoreUtils.js`)
 
 ### FlashcardListPage (`/flashcard`)
 - File: `src/pages/FlashcardListPage.jsx`
@@ -178,14 +228,15 @@ questions.select(`
 
 ### PaymentSettingsPage (`/teacher/payment-settings`) — Teacher only
 - File: `src/pages/PaymentSettingsPage.jsx`
-- Cấu hình VietQR: chọn bank (MB, VCB, TCB...), số TK, tên TK
+- Cấu hình VietQR: chọn bank (MB, VCB, TCB...), số TK, tên TK — ghi vào bảng singleton `payment_config` (id=1)
 - `QRPreview`: hiển thị QR code live từ `img.vietqr.io`
-- Quản lý giá bài thi per-exam
+- Quản lý giá bài thi **per-exam** — ghi trực tiếp vào `exams.required_amount` (KHÔNG có bảng giá tập trung/jsonb riêng)
 
 ### PaymentHistoryPage (`/payments`)
 - File: `src/pages/PaymentHistoryPage.jsx`
-- Lịch sử giao dịch của user
-- Hủy giao dịch pending: gọi Edge Function `manage-purchase`
+- Lịch sử giao dịch của user — đọc từ bảng `purchases` (status: PENDING/PARTIAL/SUCCESS/FAILED), qua Edge Function `manage-purchase`
+- Hỗ trợ thanh toán một phần: badge "Một phần" hiển thị `paid_amount`/`required_amount`
+- Hủy giao dịch (PENDING/PARTIAL): `CancelSheet` gọi `manage-purchase` action `cancel`
 
 ### StudentProgressPage (`/teacher/students/:studentId`) — Teacher only
 - File: `src/pages/StudentProgressPage.jsx`
@@ -193,7 +244,7 @@ questions.select(`
 
 ## Redirect Logic
 
-- `/` → `/dashboard`
-- `*` (unknown) → `/dashboard`
-- Unauthenticated → `/login`
+- `/` → `LandingPage` nếu chưa đăng nhập, `/dashboard` nếu đã đăng nhập (qua `RootRoute`)
+- `*` (unknown) → `/dashboard` (rồi `ProtectedRoute` tự bounce `/login` nếu chưa đăng nhập)
+- Unauthenticated trên route protected → `/login`
 - Student truy cập teacher-only → `/dashboard`

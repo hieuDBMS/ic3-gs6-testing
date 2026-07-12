@@ -1,0 +1,178 @@
+{
+  "paymentHistory": {
+    "status": {
+      "PENDING": "Awaiting payment",
+      "PARTIAL": "Partial",
+      "SUCCESS": "Unlocked",
+      "FAILED": "Failed"
+    },
+    "cancelSheet": {
+      "title": "Cancel this transaction?",
+      "subtitle": "This action cannot be undone",
+      "infoPrefix": "Transaction",
+      "infoSuffix": "will be deleted. You can reopen and create a new transaction later.",
+      "keep": "Keep it",
+      "cancelling": "Cancelling...",
+      "confirm": "Confirm cancel"
+    },
+    "row": {
+      "auto": "Auto",
+      "resume": "Resume",
+      "cancelTitle": "Cancel transaction"
+    },
+    "card": {
+      "paidPrefix": "Paid: {{amount}}",
+      "required": "Amount due",
+      "received": "Received",
+      "createdDate": "Created",
+      "resume": "Resume payment",
+      "autoViaSePay": "Automatic via SePay"
+    },
+    "header": {
+      "titleTeacher": "Payment management",
+      "titleStudent": "Payment history",
+      "subtitleTeacher": "Processed automatically via SePay",
+      "subtitleStudent": "Purchase exams and track status",
+      "autoUnlockBadge": "Auto-unlocks once fully paid"
+    },
+    "stats": {
+      "unlocked": "Unlocked",
+      "pending": "Awaiting payment",
+      "revenue": "Revenue",
+      "totalTransactions": "Total transactions"
+    },
+    "teacherBanner": {
+      "title": "Automatic payment (SePay webhook)",
+      "descPrefix": "When a student transfers with the correct code, the exam",
+      "descStrong": "unlocks instantly",
+      "descSuffix": "— no manual confirmation needed."
+    },
+    "toolbar": {
+      "searchPlaceholder": "Search name, exam, code...",
+      "refresh": "Refresh"
+    },
+    "filters": {
+      "all": "All",
+      "pending": "Awaiting",
+      "partial": "Partial",
+      "success": "Unlocked"
+    },
+    "empty": {
+      "noneTitle": "No transactions yet",
+      "notFoundTitle": "No transactions found",
+      "noneSelfRegistered": "Purchase content to start learning.",
+      "noneOther": "No students have paid yet.",
+      "tryFilter": "Try changing the filter."
+    },
+    "table": {
+      "user": "User",
+      "exam": "Exam",
+      "required": "Amount due",
+      "received": "Received",
+      "status": "Status",
+      "createdDate": "Created",
+      "actions": "Actions"
+    },
+    "resultsCount": "{{count}} transactions",
+    "searchFor": "search \"{{query}}\"",
+    "toast": {
+      "loadError": "Failed to load data: {{message}}",
+      "cancelled": "Transaction cancelled",
+      "paymentSuccess": "🎉 Payment successful!"
+    }
+  },
+  "paymentSettings": {
+    "accessDenied": "Only teachers can access this page.",
+    "header": {
+      "title": "Payment settings",
+      "subtitle": "Configure the bank account and pricing for each exam",
+      "configured": "Account configured",
+      "notConfigured": "Account not configured"
+    },
+    "section1": {
+      "title": "Bank account information",
+      "desc": "Applies to all exams. Changes here update the QR code system-wide.",
+      "infoBannerPrefix": "This bank information will be used to generate payment QR codes for",
+      "infoBannerStrong": "all exams",
+      "infoBannerSuffix": ".",
+      "bankLabel": "Bank",
+      "accountNoLabel": "Account number",
+      "accountNoPlaceholder": "e.g. 0123456789",
+      "accountNameLabel": "Account holder name",
+      "accountNamePlaceholder": "e.g. NGUYEN VAN A",
+      "accountNameHint": "Enter the exact name on the bank account (UPPERCASE)",
+      "saving": "Saving...",
+      "saved": "Saved!",
+      "save": "Save information",
+      "hideQR": "Hide QR",
+      "showQR": "View QR",
+      "qrPreviewTitle": "QR preview",
+      "qrPreviewHintLine1": "Enter the information and",
+      "qrPreviewHintLine2": "click \"View QR\""
+    },
+    "errors": {
+      "enterAccountNo": "Enter an account number",
+      "enterAccountName": "Enter the account holder name",
+      "saveConfigFailed": "Failed to save settings",
+      "minAmount": "Minimum 1,000 VND",
+      "generic": "Error"
+    },
+    "section2": {
+      "title": "Price per exam",
+      "descPrefix": "Each exam can have a different price. Click",
+      "descStrong": "Save",
+      "descSuffix": "to apply.",
+      "searchPlaceholder": "Search exams...",
+      "loading": "Loading...",
+      "versionSummary": "{{levels}} levels · {{exams}} exams",
+      "unsavedVersion": "{{count}} unsaved",
+      "unsavedLevel": "{{count}} unsaved",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "columnExam": "Exam",
+      "columnType": "Type",
+      "columnAmount": "Amount (VND)",
+      "rowUnsaved": "● Unsaved",
+      "saved": "Saved",
+      "saving": "Saving...",
+      "save": "Save",
+      "examCountShort": "{{count}} exams",
+      "noExamsInLevel": "No exams in this level",
+      "noExamsAtAll": "No exams yet",
+      "examCount": "{{exams}} exams · {{levels}} levels",
+      "toggleHint": "Click a version/level name to expand or collapse"
+    },
+    "qrPreview": {
+      "alt": "QR Preview",
+      "caption": "QR preview · {{bankId}} · {{accountNo}}"
+    }
+  },
+  "paymentModal": {
+    "preparing": "Preparing...",
+    "error": {
+      "title": "Something went wrong",
+      "retry": "Try again",
+      "statusCheckFailed": "Unable to check status"
+    },
+    "success": {
+      "title": "Payment successful!",
+      "subtitleSuffix": "has been unlocked for you.",
+      "unlockedItems": ["Exam unlocked", "Flashcards unlocked"],
+      "enterNow": "Start learning →"
+    },
+    "ready": {
+      "headerLabel": "Payment",
+      "partialPaidPrefix": "Transferred {{amount}}",
+      "partialRemainingPrefix": "Still need to transfer",
+      "notConfiguredTitle": "Payment not configured",
+      "notConfiguredDesc": "Contact your teacher for help.",
+      "scanHint": "Scan with any banking app",
+      "transferContentLabel": "Transfer note",
+      "required": "Required",
+      "copied": "✓ Copied",
+      "copyHint": "Tap to copy",
+      "autoUnlock": "Unlocks automatically once payment is received",
+      "close": "Close"
+    }
+  }
+}

@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from "react";
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -32,15 +33,16 @@ const formatVND = (n) =>
 
 /* ── VietQR preview ── */
 const QRPreview = ({ bankId, accountNo, accountName, amount }) => {
+  const { t } = useTranslation();
   if (!bankId || !accountNo || !accountName) return null;
   const url = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount || 0}&addInfo=IC3Fighter&accountName=${encodeURIComponent(accountName)}`;
   return (
     <div className="flex flex-col items-center">
       <div className="bg-white p-3 rounded-2xl border-2 border-gray-100 dark:border-slate-700 shadow-sm">
-        <img src={url} alt="QR Preview" className="w-48 h-48 object-contain rounded-xl"
+        <img src={url} alt={t('paymentSettings.qrPreview.alt')} className="w-48 h-48 object-contain rounded-xl"
           onError={e => { e.currentTarget.style.display = 'none'; }} />
       </div>
-      <p className="text-xs text-gray-400 dark:text-slate-500 mt-2 text-center">Preview QR · {bankId} · {accountNo}</p>
+      <p className="text-xs text-gray-400 dark:text-slate-500 mt-2 text-center">{t('paymentSettings.qrPreview.caption', { bankId, accountNo })}</p>
     </div>
   );
 };
@@ -49,6 +51,7 @@ const QRPreview = ({ bankId, accountNo, accountName, amount }) => {
    MAIN PAGE
 ══════════════════════════════════════════════════════ */
 export const PaymentSettingsPage = () => {
+  const { t } = useTranslation();
   const { isTeacher } = useAuth();
 
   // ── Global config state ──
@@ -59,7 +62,6 @@ export const PaymentSettingsPage = () => {
   const [savedGlobal,  setSavedGlobal]  = useState(false);
   const [globalError,  setGlobalError]  = useState('');
   const [showQR,       setShowQR]       = useState(false);
-  const [configLoaded, setConfigLoaded] = useState(false);
 
   // ── Per-exam amount state ──
   const [exams,        setExams]        = useState([]);
@@ -90,7 +92,6 @@ export const PaymentSettingsPage = () => {
       setBankId(cfgRes.data.bank_id || 'MB');
       setAccountNo(cfgRes.data.account_no || '');
       setAccountName(cfgRes.data.account_name || '');
-      setConfigLoaded(true);
     }
 
     const examList = examsRes.data || [];
@@ -115,8 +116,8 @@ export const PaymentSettingsPage = () => {
 
   // ── Save global config ──
   const saveGlobal = async () => {
-    if (!accountNo.trim()) { setGlobalError('Nhập số tài khoản'); return; }
-    if (!accountName.trim()) { setGlobalError('Nhập tên chủ tài khoản'); return; }
+    if (!accountNo.trim()) { setGlobalError(t('paymentSettings.errors.enterAccountNo')); return; }
+    if (!accountName.trim()) { setGlobalError(t('paymentSettings.errors.enterAccountName')); return; }
     setSavingGlobal(true); setGlobalError('');
     try {
       const { error } = await supabase
@@ -132,7 +133,7 @@ export const PaymentSettingsPage = () => {
       setSavedGlobal(true);
       setTimeout(() => setSavedGlobal(false), 2500);
     } catch (e) {
-      setGlobalError(e instanceof Error ? e.message : 'Lỗi lưu cài đặt');
+      setGlobalError(e instanceof Error ? e.message : t('paymentSettings.errors.saveConfigFailed'));
     } finally {
       setSavingGlobal(false);
     }
@@ -142,7 +143,7 @@ export const PaymentSettingsPage = () => {
   const saveAmount = async (examId) => {
     const val = parseInt(amounts[examId] || '0', 10);
     if (!val || val < 1000) {
-      setExamError(prev => ({ ...prev, [examId]: 'Tối thiểu 1.000đ' }));
+      setExamError(prev => ({ ...prev, [examId]: t('paymentSettings.errors.minAmount') }));
       return;
     }
     setSavingExam(prev => ({ ...prev, [examId]: true }));
@@ -156,7 +157,7 @@ export const PaymentSettingsPage = () => {
       setSavedExam(prev => ({ ...prev, [examId]: true }));
       setTimeout(() => setSavedExam(prev => ({ ...prev, [examId]: false })), 2000);
     } catch (e) {
-      setExamError(prev => ({ ...prev, [examId]: e instanceof Error ? e.message : 'Lỗi' }));
+      setExamError(prev => ({ ...prev, [examId]: e instanceof Error ? e.message : t('paymentSettings.errors.generic') }));
     } finally {
       setSavingExam(prev => ({ ...prev, [examId]: false }));
     }
@@ -165,7 +166,7 @@ export const PaymentSettingsPage = () => {
   if (!isTeacher) {
     return (
       <div className="min-h-screen flex items-center justify-center dark:bg-slate-900">
-        <p className="text-gray-400 dark:text-slate-500 font-semibold">Chỉ giáo viên mới có quyền truy cập.</p>
+        <p className="text-gray-400 dark:text-slate-500 font-semibold">{t('paymentSettings.accessDenied')}</p>
       </div>
     );
   }
@@ -188,8 +189,8 @@ export const PaymentSettingsPage = () => {
               <CreditCard className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold text-white">Cài đặt thanh toán</h1>
-              <p className="text-white/50 text-sm">Cấu hình tài khoản ngân hàng & số tiền từng bài thi</p>
+              <h1 className="text-2xl font-extrabold text-white">{t('paymentSettings.header.title')}</h1>
+              <p className="text-white/50 text-sm">{t('paymentSettings.header.subtitle')}</p>
             </div>
           </div>
 
@@ -200,8 +201,8 @@ export const PaymentSettingsPage = () => {
                 : 'bg-amber-500/20 border-amber-400/30 text-amber-200'
             }`}>
               {isGlobalConfigured
-                ? <><CheckCircle className="w-4 h-4" /> Tài khoản đã cấu hình</>
-                : <><AlertTriangle className="w-4 h-4" /> Chưa cấu hình tài khoản</>
+                ? <><CheckCircle className="w-4 h-4" /> {t('paymentSettings.header.configured')}</>
+                : <><AlertTriangle className="w-4 h-4" /> {t('paymentSettings.header.notConfigured')}</>
               }
             </div>
           </div>
@@ -219,8 +220,8 @@ export const PaymentSettingsPage = () => {
               <Building2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Thông tin tài khoản ngân hàng</h2>
-              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Áp dụng cho tất cả bài thi. Thay đổi ở đây sẽ cập nhật QR toàn hệ thống.</p>
+              <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">{t('paymentSettings.section1.title')}</h2>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t('paymentSettings.section1.desc')}</p>
             </div>
           </div>
 
@@ -232,13 +233,13 @@ export const PaymentSettingsPage = () => {
                 {/* Info banner */}
                 <div className="flex items-start gap-2.5 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700 dark:bg-blue-950/40 dark:border-blue-800/60 dark:text-blue-300">
                   <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>Thông tin ngân hàng này sẽ được dùng để tạo mã QR thanh toán cho <strong>tất cả bài thi</strong>.</span>
+                  <span>{t('paymentSettings.section1.infoBannerPrefix')} <strong>{t('paymentSettings.section1.infoBannerStrong')}</strong>{t('paymentSettings.section1.infoBannerSuffix')}</span>
                 </div>
 
                 {/* Bank */}
                 <div>
                   <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" /> Ngân hàng
+                    <Building2 className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" /> {t('paymentSettings.section1.bankLabel')}
                   </label>
                   <div className="relative">
                     <select
@@ -257,13 +258,13 @@ export const PaymentSettingsPage = () => {
                 {/* Account No */}
                 <div>
                   <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                    <Hash className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" /> Số tài khoản
+                    <Hash className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" /> {t('paymentSettings.section1.accountNoLabel')}
                   </label>
                   <input
                     type="text"
                     value={accountNo}
                     onChange={e => setAccountNo(e.target.value.replace(/\D/g, ''))}
-                    placeholder="VD: 0123456789"
+                    placeholder={t('paymentSettings.section1.accountNoPlaceholder')}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                   />
                 </div>
@@ -271,16 +272,16 @@ export const PaymentSettingsPage = () => {
                 {/* Account Name */}
                 <div>
                   <label className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">
-                    <User className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" /> Tên chủ tài khoản
+                    <User className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" /> {t('paymentSettings.section1.accountNameLabel')}
                   </label>
                   <input
                     type="text"
                     value={accountName}
                     onChange={e => setAccountName(e.target.value.toUpperCase())}
-                    placeholder="VD: NGUYEN VAN A"
+                    placeholder={t('paymentSettings.section1.accountNamePlaceholder')}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm uppercase font-medium tracking-wide focus:outline-none focus:ring-2 focus:ring-violet-400 transition dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                   />
-                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Nhập đúng tên trên tài khoản ngân hàng (IN HOA)</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{t('paymentSettings.section1.accountNameHint')}</p>
                 </div>
 
                 {globalError && (
@@ -297,11 +298,11 @@ export const PaymentSettingsPage = () => {
                       hover:bg-violet-700 transition disabled:opacity-50 shadow-sm shadow-violet-200"
                   >
                     {savingGlobal ? (
-                      <><Loader2 className="w-4 h-4 animate-spin" /> Đang lưu...</>
+                      <><Loader2 className="w-4 h-4 animate-spin" /> {t('paymentSettings.section1.saving')}</>
                     ) : savedGlobal ? (
-                      <><CheckCircle className="w-4 h-4 text-emerald-300" /> Đã lưu!</>
+                      <><CheckCircle className="w-4 h-4 text-emerald-300" /> {t('paymentSettings.section1.saved')}</>
                     ) : (
-                      <><Save className="w-4 h-4" /> Lưu thông tin</>
+                      <><Save className="w-4 h-4" /> {t('paymentSettings.section1.save')}</>
                     )}
                   </button>
                   <button
@@ -309,7 +310,7 @@ export const PaymentSettingsPage = () => {
                     className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:border-violet-300 hover:text-violet-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-violet-500 dark:hover:text-violet-400 transition"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
-                    {showQR ? 'Ẩn QR' : 'Xem QR'}
+                    {showQR ? t('paymentSettings.section1.hideQR') : t('paymentSettings.section1.showQR')}
                   </button>
                 </div>
               </div>
@@ -323,8 +324,8 @@ export const PaymentSettingsPage = () => {
                     <div className="w-16 h-16 rounded-2xl bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center mx-auto mb-3">
                       <CreditCard className="w-8 h-8 text-violet-300 dark:text-violet-500" />
                     </div>
-                    <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">Preview QR</p>
-                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Nhập thông tin và<br />nhấn "Xem QR"</p>
+                    <p className="text-sm font-semibold text-gray-500 dark:text-slate-400">{t('paymentSettings.section1.qrPreviewTitle')}</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{t('paymentSettings.section1.qrPreviewHintLine1')}<br />{t('paymentSettings.section1.qrPreviewHintLine2')}</p>
                   </div>
                 )}
               </div>
@@ -344,8 +345,8 @@ export const PaymentSettingsPage = () => {
                 <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Số tiền theo từng bài thi</h2>
-                <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Mỗi bài có thể có giá khác nhau. Nhấn <strong>Lưu</strong> để áp dụng.</p>
+                <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">{t('paymentSettings.section2.title')}</h2>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">{t('paymentSettings.section2.descPrefix')} <strong>{t('paymentSettings.section2.descStrong')}</strong> {t('paymentSettings.section2.descSuffix')}</p>
               </div>
             </div>
 
@@ -357,7 +358,7 @@ export const PaymentSettingsPage = () => {
               <input
                 type="text" value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Tìm bài thi..."
+                placeholder={t('paymentSettings.section2.searchPlaceholder')}
                 className="bg-transparent outline-none text-sm text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 flex-1"
               />
               {search && (
@@ -371,7 +372,7 @@ export const PaymentSettingsPage = () => {
           {loading ? (
             <div className="flex items-center justify-center py-16 text-gray-400 dark:text-slate-500">
               <Loader2 className="w-7 h-7 animate-spin mr-2 text-emerald-400" />
-              <span className="text-sm">Đang tải...</span>
+              <span className="text-sm">{t('paymentSettings.section2.loading')}</span>
             </div>
           ) : (() => {
             // Group levels by version
@@ -429,18 +430,18 @@ export const PaymentSettingsPage = () => {
                           </div>
                           <div>
                             <span className="text-sm font-bold text-gray-800 dark:text-slate-200">
-                              {vLevels.length} level · {vTotalExams} bài thi
+                              {t('paymentSettings.section2.versionSummary', { levels: vLevels.length, exams: vTotalExams })}
                             </span>
                           </div>
                           {totalPending > 0 && (
                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-100 border border-amber-200 px-2.5 py-0.5 rounded-full dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800/60">
-                              ● {totalPending} chưa lưu
+                              ● {t('paymentSettings.section2.unsavedVersion', { count: totalPending })}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-400 dark:text-slate-500 hidden sm:block">
-                            {isVersionOpen ? 'Thu gọn' : 'Mở rộng'}
+                            {isVersionOpen ? t('paymentSettings.section2.collapse') : t('paymentSettings.section2.expand')}
                           </span>
                           <ChevronDown className={`w-4 h-4 text-gray-400 dark:text-slate-500 transition-transform duration-200 ${isVersionOpen ? 'rotate-180' : ''}`} />
                         </div>
@@ -483,11 +484,11 @@ export const PaymentSettingsPage = () => {
                                     </div>
                                     <div>
                                       <span className="text-sm font-semibold text-gray-800 dark:text-slate-200">{lv.label}</span>
-                                      <span className="ml-2 text-xs text-gray-400 dark:text-slate-500">{lvExams.length} bài</span>
+                                      <span className="ml-2 text-xs text-gray-400 dark:text-slate-500">{t('paymentSettings.section2.examCountShort', { count: lvExams.length })}</span>
                                     </div>
                                     {lvPending > 0 && (
                                       <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800/60">
-                                        {lvPending} chưa lưu
+                                        {t('paymentSettings.section2.unsavedLevel', { count: lvPending })}
                                       </span>
                                     )}
                                   </div>
@@ -500,9 +501,9 @@ export const PaymentSettingsPage = () => {
                                     {/* Column labels */}
                                     <div className="grid grid-cols-[auto_1fr_140px_180px_90px] items-center gap-3 pl-16 pr-6 py-2 bg-gray-50/60 dark:bg-slate-700/30">
                                       <span />
-                                      <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Bài</span>
-                                      <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Loại</span>
-                                      <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Số tiền (VND)</span>
+                                      <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentSettings.section2.columnExam')}</span>
+                                      <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentSettings.section2.columnType')}</span>
+                                      <span className="text-[10px] font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-wider">{t('paymentSettings.section2.columnAmount')}</span>
                                       <span />
                                     </div>
 
@@ -524,7 +525,7 @@ export const PaymentSettingsPage = () => {
                                             <p className="text-sm font-semibold text-gray-900 dark:text-slate-100">
                                               {isTest ? 'Testing' : 'Gmetrix'} {exam.exam_number}
                                             </p>
-                                            {dirty && <p className="text-[11px] text-amber-500 dark:text-amber-400 font-medium mt-0.5">● Chưa lưu</p>}
+                                            {dirty && <p className="text-[11px] text-amber-500 dark:text-amber-400 font-medium mt-0.5">{t('paymentSettings.section2.rowUnsaved')}</p>}
                                           </div>
 
                                           {/* Type badge */}
@@ -562,7 +563,7 @@ export const PaymentSettingsPage = () => {
                                           <div className="flex justify-end">
                                             {savedExam[exam.id] ? (
                                               <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1.5 rounded-xl dark:text-emerald-400 dark:bg-emerald-950/40">
-                                                <CheckCircle className="w-3.5 h-3.5" /> Đã lưu
+                                                <CheckCircle className="w-3.5 h-3.5" /> {t('paymentSettings.section2.saved')}
                                               </span>
                                             ) : (
                                               <button
@@ -575,7 +576,7 @@ export const PaymentSettingsPage = () => {
                                                 }`}
                                               >
                                                 {savingExam[exam.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                                                {savingExam[exam.id] ? 'Lưu...' : 'Lưu'}
+                                                {savingExam[exam.id] ? t('paymentSettings.section2.saving') : t('paymentSettings.section2.save')}
                                               </button>
                                             )}
                                           </div>
@@ -585,7 +586,7 @@ export const PaymentSettingsPage = () => {
 
                                     {lvExams.length === 0 && (
                                       <p className="pl-16 pr-6 py-4 text-sm text-gray-400 dark:text-slate-500 border-t border-gray-50 dark:border-slate-700">
-                                        Không có bài thi nào
+                                        {t('paymentSettings.section2.noExamsInLevel')}
                                       </p>
                                     )}
                                   </div>
@@ -600,15 +601,15 @@ export const PaymentSettingsPage = () => {
                 })}
 
                 {exams.length === 0 && (
-                  <EmptyState icon={DollarSign} title="Chưa có bài thi nào" />
+                  <EmptyState icon={DollarSign} title={t('paymentSettings.section2.noExamsAtAll')} />
                 )}
               </div>
             );
           })()}
 
           <div className="px-6 py-3 border-t border-gray-100 dark:border-slate-700 text-xs text-gray-400 dark:text-slate-500 flex items-center justify-between">
-            <span>{exams.length} bài thi · {levels.length} level</span>
-            <span>Click tên version/level để mở-đóng</span>
+            <span>{t('paymentSettings.section2.examCount', { exams: exams.length, levels: levels.length })}</span>
+            <span>{t('paymentSettings.section2.toggleHint')}</span>
           </div>
         </div>
       </div>

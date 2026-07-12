@@ -1,0 +1,178 @@
+{
+  "paymentHistory": {
+    "status": {
+      "PENDING": "Chờ TT",
+      "PARTIAL": "Một phần",
+      "SUCCESS": "Đã mở khoá",
+      "FAILED": "Thất bại"
+    },
+    "cancelSheet": {
+      "title": "Huỷ giao dịch?",
+      "subtitle": "Thao tác này không thể hoàn tác",
+      "infoPrefix": "Giao dịch",
+      "infoSuffix": "sẽ bị xoá. Bạn có thể mở lại và tạo giao dịch mới sau.",
+      "keep": "Giữ lại",
+      "cancelling": "Đang huỷ...",
+      "confirm": "Xác nhận huỷ"
+    },
+    "row": {
+      "auto": "Auto",
+      "resume": "Tiếp tục",
+      "cancelTitle": "Huỷ giao dịch"
+    },
+    "card": {
+      "paidPrefix": "Đã TT: {{amount}}",
+      "required": "Cần TT",
+      "received": "Đã nhận",
+      "createdDate": "Ngày tạo",
+      "resume": "Tiếp tục thanh toán",
+      "autoViaSePay": "Tự động qua SePay"
+    },
+    "header": {
+      "titleTeacher": "Quản lý thanh toán",
+      "titleStudent": "Lịch sử thanh toán",
+      "subtitleTeacher": "Tự động xử lý qua SePay",
+      "subtitleStudent": "Mua bài và theo dõi trạng thái",
+      "autoUnlockBadge": "Tự động mở khi đủ tiền"
+    },
+    "stats": {
+      "unlocked": "Đã mở khoá",
+      "pending": "Chờ thanh toán",
+      "revenue": "Doanh thu",
+      "totalTransactions": "Tổng GD"
+    },
+    "teacherBanner": {
+      "title": "Thanh toán tự động (SePay Webhook)",
+      "descPrefix": "Khi học sinh chuyển đúng mã, bài thi sẽ",
+      "descStrong": "tự mở khoá ngay lập tức",
+      "descSuffix": "— không cần xác nhận thủ công."
+    },
+    "toolbar": {
+      "searchPlaceholder": "Tìm tên, bài thi, mã...",
+      "refresh": "Làm mới"
+    },
+    "filters": {
+      "all": "Tất cả",
+      "pending": "Chờ TT",
+      "partial": "Một phần",
+      "success": "Đã mở"
+    },
+    "empty": {
+      "noneTitle": "Chưa có giao dịch nào",
+      "notFoundTitle": "Không tìm thấy giao dịch",
+      "noneSelfRegistered": "Mua nội dung để bắt đầu học.",
+      "noneOther": "Chưa có học sinh nào thanh toán.",
+      "tryFilter": "Thử thay đổi bộ lọc."
+    },
+    "table": {
+      "user": "Người dùng",
+      "exam": "Bài thi",
+      "required": "Cần TT",
+      "received": "Đã nhận",
+      "status": "Trạng thái",
+      "createdDate": "Ngày tạo",
+      "actions": "Thao tác"
+    },
+    "resultsCount": "{{count}} giao dịch",
+    "searchFor": "tìm \"{{query}}\"",
+    "toast": {
+      "loadError": "Lỗi tải dữ liệu: {{message}}",
+      "cancelled": "Đã huỷ giao dịch",
+      "paymentSuccess": "🎉 Thanh toán thành công!"
+    }
+  },
+  "paymentSettings": {
+    "accessDenied": "Chỉ giáo viên mới có quyền truy cập.",
+    "header": {
+      "title": "Cài đặt thanh toán",
+      "subtitle": "Cấu hình tài khoản ngân hàng & số tiền từng bài thi",
+      "configured": "Tài khoản đã cấu hình",
+      "notConfigured": "Chưa cấu hình tài khoản"
+    },
+    "section1": {
+      "title": "Thông tin tài khoản ngân hàng",
+      "desc": "Áp dụng cho tất cả bài thi. Thay đổi ở đây sẽ cập nhật QR toàn hệ thống.",
+      "infoBannerPrefix": "Thông tin ngân hàng này sẽ được dùng để tạo mã QR thanh toán cho",
+      "infoBannerStrong": "tất cả bài thi",
+      "infoBannerSuffix": ".",
+      "bankLabel": "Ngân hàng",
+      "accountNoLabel": "Số tài khoản",
+      "accountNoPlaceholder": "VD: 0123456789",
+      "accountNameLabel": "Tên chủ tài khoản",
+      "accountNamePlaceholder": "VD: NGUYEN VAN A",
+      "accountNameHint": "Nhập đúng tên trên tài khoản ngân hàng (IN HOA)",
+      "saving": "Đang lưu...",
+      "saved": "Đã lưu!",
+      "save": "Lưu thông tin",
+      "hideQR": "Ẩn QR",
+      "showQR": "Xem QR",
+      "qrPreviewTitle": "Preview QR",
+      "qrPreviewHintLine1": "Nhập thông tin và",
+      "qrPreviewHintLine2": "nhấn \"Xem QR\""
+    },
+    "errors": {
+      "enterAccountNo": "Nhập số tài khoản",
+      "enterAccountName": "Nhập tên chủ tài khoản",
+      "saveConfigFailed": "Lỗi lưu cài đặt",
+      "minAmount": "Tối thiểu 1.000đ",
+      "generic": "Lỗi"
+    },
+    "section2": {
+      "title": "Số tiền theo từng bài thi",
+      "descPrefix": "Mỗi bài có thể có giá khác nhau. Nhấn",
+      "descStrong": "Lưu",
+      "descSuffix": "để áp dụng.",
+      "searchPlaceholder": "Tìm bài thi...",
+      "loading": "Đang tải...",
+      "versionSummary": "{{levels}} level · {{exams}} bài thi",
+      "unsavedVersion": "{{count}} chưa lưu",
+      "unsavedLevel": "{{count}} chưa lưu",
+      "collapse": "Thu gọn",
+      "expand": "Mở rộng",
+      "columnExam": "Bài",
+      "columnType": "Loại",
+      "columnAmount": "Số tiền (VND)",
+      "rowUnsaved": "● Chưa lưu",
+      "saved": "Đã lưu",
+      "saving": "Lưu...",
+      "save": "Lưu",
+      "examCountShort": "{{count}} bài",
+      "noExamsInLevel": "Không có bài thi nào",
+      "noExamsAtAll": "Chưa có bài thi nào",
+      "examCount": "{{exams}} bài thi · {{levels}} level",
+      "toggleHint": "Click tên version/level để mở-đóng"
+    },
+    "qrPreview": {
+      "alt": "QR Preview",
+      "caption": "Preview QR · {{bankId}} · {{accountNo}}"
+    }
+  },
+  "paymentModal": {
+    "preparing": "Đang chuẩn bị...",
+    "error": {
+      "title": "Đã xảy ra lỗi",
+      "retry": "Thử lại",
+      "statusCheckFailed": "Không thể kiểm tra trạng thái"
+    },
+    "success": {
+      "title": "Thanh toán thành công!",
+      "subtitleSuffix": "đã được mở khoá cho bạn.",
+      "unlockedItems": ["Bài thi đã mở khoá", "Flashcard đã mở khoá"],
+      "enterNow": "Vào học ngay →"
+    },
+    "ready": {
+      "headerLabel": "Thanh toán",
+      "partialPaidPrefix": "Đã chuyển {{amount}}",
+      "partialRemainingPrefix": "Còn cần chuyển thêm",
+      "notConfiguredTitle": "Chưa cấu hình thanh toán",
+      "notConfiguredDesc": "Liên hệ giáo viên để được hỗ trợ.",
+      "scanHint": "Quét bằng app ngân hàng bất kỳ",
+      "transferContentLabel": "Nội dung chuyển khoản",
+      "required": "Bắt buộc",
+      "copied": "✓ Đã sao chép",
+      "copyHint": "Nhấn để sao chép",
+      "autoUnlock": "Tự động mở khoá khi nhận được tiền",
+      "close": "Đóng"
+    }
+  }
+}
