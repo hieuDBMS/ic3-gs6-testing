@@ -74,7 +74,20 @@ export const RichTextEditor = ({
 
   const handleInput = useCallback(() => {
     if (!editorRef.current || isInternalChange.current) return;
-    onChange?.(editorRef.current.innerHTML);
+    // Sanitize on every keystroke/paste, not just when an external `value`
+    // flows back in — otherwise raw HTML (e.g. pasted `<img onerror=...>`,
+    // which browsers don't strip the way they strip `<script>`) round-trips
+    // through onChange and gets persisted verbatim by the caller (see
+    // QuestionFormPage's doSave). Any future render path that skips
+    // sanitizeHtml() before dangerouslySetInnerHTML would otherwise be stored XSS.
+    const raw = editorRef.current.innerHTML;
+    const clean = sanitizeHtml(raw);
+    if (clean !== raw) {
+      isInternalChange.current = true;
+      editorRef.current.innerHTML = clean;
+      isInternalChange.current = false;
+    }
+    onChange?.(clean);
   }, [onChange]);
 
   const applyColor = useCallback((hex) => {

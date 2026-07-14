@@ -97,6 +97,7 @@
     "noDataMatch": "Không có dữ liệu phù hợp.",
     "aiTitle": "Phân tích bằng AI",
     "aiRunButton": "Phân tích với dữ liệu đang lọc",
+    "aiCooldown": "Chờ {{seconds}}s...",
     "aiNoInsight": "Không có nhận xét nào được trả về.",
     "aiErrorFallback": "Không thể phân tích lúc này"
   },
@@ -127,7 +128,10 @@
     "elapsedLabel": "Đã làm:",
     "pageInfo": "Trang {{page}}/{{totalPages}} · {{count}} học sinh",
     "prev": "Trước",
-    "next": "Sau"
+    "next": "Sau",
+    "errorTitle": "Không tải được danh sách đang thi — có thể do mất kết nối.",
+    "errorRetry": "Thử lại",
+    "truncatedNotice": "Đang hiển thị 300 học sinh có hoạt động gần nhất — có thể còn học sinh khác đang thi ngoài danh sách này."
   },
   "questionStats": {
     "title": "Câu hỏi hay sai nhất",

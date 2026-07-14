@@ -131,6 +131,7 @@
       "subtitle": "Thao tác này không thể hoàn tác",
       "messagePrefix": "Giao dịch",
       "messageSuffix": "sẽ bị xoá. Bạn có thể mua lại bất kỳ lúc nào.",
+      "closeAriaLabel": "Đóng",
       "keepButton": "Giữ lại",
       "cancelling": "Đang huỷ...",
       "confirmCancelButton": "Xác nhận huỷ"
@@ -178,6 +179,7 @@
       "hintMulti": "Click vào {{count}} vùng đúng trên ảnh",
       "selectedCount": "· Đã chọn {{count}}",
       "imageAlt": "Hotspot",
+      "regionLabel": "Vùng {{number}}",
       "legend": {
         "correctSelected": "Đúng & đã chọn",
         "correctMissed": "Đúng nhưng bỏ qua",
@@ -216,7 +218,10 @@
     "loading": "Đang tải flashcards...",
     "noQuestions": "Bài thi này chưa có câu hỏi.",
     "chooseAnother": "Chọn bài khác",
+    "backToList": "Về danh sách flashcard",
     "shuffleButton": "Xáo trộn",
+    "keyboardHintToggle": "Xem phím tắt",
+    "resumedSession": "Đã khôi phục phiên học dở dang của bạn",
     "keyHints": {
       "checkNext": "Kiểm tra / Câu kế",
       "skip": "Bỏ qua"

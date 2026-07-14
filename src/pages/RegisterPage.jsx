@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, UserPlus, Sword, User, Lock, BadgeCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { Turnstile } from '../components/shared/Turnstile';
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
 export const RegisterPage = () => {
   const { t } = useTranslation();
@@ -18,9 +21,32 @@ export const RegisterPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [touched, setTouched] = useState({ username: false, password: false, confirmPassword: false });
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+
+  const isSubmittingRef = useRef(false);
+  const usernameRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
 
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
+
+  const usernameError = username.length === 0
+    ? ''
+    : username.length < 4
+      ? t('auth.register.errorUsernameLength')
+      : !/^[a-zA-Z0-9_]+$/.test(username)
+        ? t('auth.register.errorUsernameFormat')
+        : '';
+  const passwordError = password.length > 0 && password.length < 6 ? t('auth.register.errorPasswordLength') : '';
+  const confirmError = confirmPassword.length > 0 && confirmPassword !== password ? t('auth.register.errorMismatch') : '';
+
+  const showUsernameError = (touched.username || attemptedSubmit) && usernameError;
+  const showPasswordError = (touched.password || attemptedSubmit) && passwordError;
+  const showConfirmError = (touched.confirmPassword || attemptedSubmit) && confirmError;
+  const markTouched = (field) => setTouched((t) => ({ ...t, [field]: true }));
 
   const featureTexts = t('auth.register.features', { returnObjects: true });
   const featureIcons = [
@@ -32,29 +58,25 @@ export const RegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
     setError('');
+    setAttemptedSubmit(true);
 
-    if (password !== confirmPassword) {
-      setError(t('auth.register.errorMismatch'));
-      return;
-    }
-    if (password.length < 6) {
-      setError(t('auth.register.errorPasswordLength'));
-      return;
-    }
-    if (username.length < 4) {
-      setError(t('auth.register.errorUsernameLength'));
-      return;
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setError(t('auth.register.errorUsernameFormat'));
+    // Focus the first invalid field instead of just showing a generic banner —
+    // lets the user fix the actual problem without hunting for it.
+    if (usernameError) { usernameRef.current?.focus(); return; }
+    if (passwordError) { passwordRef.current?.focus(); return; }
+    if (confirmError) { confirmPasswordRef.current?.focus(); return; }
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError(t('auth.register.errorCaptcha'));
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsLoading(true);
     try {
       const { data, error: fnErr } = await supabase.functions.invoke('register-user', {
-        body: { username, password, fullName },
+        body: { username, password, fullName, turnstileToken },
       });
       if (fnErr) throw new Error(fnErr.message);
       if (data?.error) throw new Error(data.error);
@@ -63,8 +85,10 @@ export const RegisterPage = () => {
       setTimeout(() => navigate('/login'), 2500);
     } catch (err) {
       setError(err.message || t('auth.register.errorGeneric'));
+      setTurnstileToken('');
     } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -162,7 +186,7 @@ export const RegisterPage = () => {
 
           {/* Error */}
           {error && (
-            <div className="mb-5 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-red-50 border border-red-200 dark:bg-red-950/40 dark:border-red-800/60">
+            <div role="alert" className="mb-5 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-red-50 border border-red-200 dark:bg-red-950/40 dark:border-red-800/60">
               <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
@@ -181,6 +205,7 @@ export const RegisterPage = () => {
                 <input
                   id="fullName"
                   type="text"
+                  autoComplete="name"
                   required
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
@@ -202,18 +227,26 @@ export const RegisterPage = () => {
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 text-sm font-mono">@</span>
                 <input
                   id="username"
+                  ref={usernameRef}
                   type="text"
+                  autoComplete="username"
                   required
                   value={username}
                   onChange={e => setUsername(e.target.value.toLowerCase())}
+                  onBlur={() => markTouched('username')}
                   placeholder={t('auth.register.usernamePlaceholder')}
-                  className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
-                             dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
+                  aria-invalid={!!showUsernameError}
+                  aria-describedby="username-hint"
+                  className={`w-full pl-9 pr-4 py-3 rounded-xl border bg-white text-gray-900 text-sm placeholder-gray-400 font-mono
+                             dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-hidden focus:ring-2 focus:ring-violet-400 focus:border-transparent
-                             transition-all duration-150 shadow-xs hover:border-gray-300 dark:hover:border-slate-500 font-mono"
+                             transition-all duration-150 shadow-xs
+                             ${showUsernameError ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'}`}
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">{t('auth.register.usernameHint')}</p>
+              <p id="username-hint" className={`mt-1 text-xs ${showUsernameError ? 'text-red-500 dark:text-red-400' : 'text-gray-400 dark:text-slate-500'}`}>
+                {showUsernameError || t('auth.register.usernameHint')}
+              </p>
             </div>
 
             {/* Password */}
@@ -225,21 +258,31 @@ export const RegisterPage = () => {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <input
                   id="reg-password"
+                  ref={passwordRef}
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
+                  onBlur={() => markTouched('password')}
                   placeholder={t('auth.register.passwordPlaceholder')}
-                  className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
-                             dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
+                  aria-invalid={!!showPasswordError}
+                  aria-describedby="password-hint"
+                  className={`w-full pl-10 pr-12 py-3 rounded-xl border bg-white text-gray-900 text-sm placeholder-gray-400
+                             dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-hidden focus:ring-2 focus:ring-violet-400 focus:border-transparent
-                             transition-all duration-150 shadow-xs hover:border-gray-300 dark:hover:border-slate-500"
+                             transition-all duration-150 shadow-xs
+                             ${showPasswordError ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'}`}
                 />
                 <button type="button" tabIndex={-1} onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t('auth.login.hidePassword') : t('auth.login.showPassword')}
                   className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-violet-500 dark:text-slate-500 dark:hover:text-violet-400 transition-colors">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {showPasswordError && (
+                <p id="password-hint" className="mt-1 text-xs text-red-500 dark:text-red-400">{showPasswordError}</p>
+              )}
             </div>
 
             {/* Confirm password */}
@@ -251,22 +294,37 @@ export const RegisterPage = () => {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <input
                   id="confirmPassword"
+                  ref={confirmPasswordRef}
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   required
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
+                  onBlur={() => markTouched('confirmPassword')}
                   placeholder={t('auth.register.confirmPasswordPlaceholder')}
+                  aria-invalid={!!showConfirmError}
+                  aria-describedby="confirm-password-hint"
                   className={`w-full pl-10 pr-4 py-3 rounded-xl border bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
                              focus:outline-hidden focus:ring-2 focus:ring-violet-400 focus:border-transparent
                              transition-all duration-150 shadow-xs
-                             ${confirmPassword && confirmPassword !== password ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'}`}
+                             ${showConfirmError ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'}`}
                 />
               </div>
-              {confirmPassword && confirmPassword !== password && (
-                <p className="mt-1 text-xs text-red-500 dark:text-red-400">{t('auth.register.passwordMismatchHint')}</p>
+              {showConfirmError && (
+                <p id="confirm-password-hint" className="mt-1 text-xs text-red-500 dark:text-red-400">{t('auth.register.passwordMismatchHint')}</p>
               )}
             </div>
+
+            {TURNSTILE_SITE_KEY && (
+              <div className="flex justify-center">
+                <Turnstile
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onVerify={setTurnstileToken}
+                  onExpire={() => setTurnstileToken('')}
+                />
+              </div>
+            )}
 
             {/* Submit */}
             <button

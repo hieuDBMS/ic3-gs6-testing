@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { Trash2, Loader2 } from 'lucide-react';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /**
  * Shared confirm dialog replacing the near-identical implementations that
@@ -15,6 +17,12 @@ export const ConfirmDialog = ({
   danger = true,
   loading = false,
 }) => {
+  const cancelBtnRef = useRef(null);
+  // Autofocus Cancel (not Confirm) so an accidental Enter/Space never
+  // triggers the destructive action. Escape disabled while loading so an
+  // in-flight request can't be abandoned mid-way.
+  const dialogRef = useFocusTrap(open, { autoFocusRef: cancelBtnRef, onEscape: loading ? undefined : onCancel });
+
   if (!open) return null;
   const accent = danger
     ? { icon: 'bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400', btn: 'bg-red-600 hover:bg-red-700' }
@@ -22,19 +30,30 @@ export const ConfirmDialog = ({
 
   return (
     <div className="fixed inset-0 z-200 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-xs animate-fade-in" onClick={onCancel} />
-      <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-scale-in">
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-xs animate-fade-in"
+        onClick={loading ? undefined : onCancel}
+      />
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-message"
+        className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-scale-in"
+      >
         <div className="flex items-start gap-3 mb-4">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${accent.icon}`}>
             <Trash2 className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-slate-100">{title}</h3>
-            <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{message}</p>
+            <h3 id="confirm-dialog-title" className="text-base font-bold text-gray-900 dark:text-slate-100">{title}</h3>
+            <p id="confirm-dialog-message" className="text-sm text-gray-500 dark:text-slate-400 mt-1">{message}</p>
           </div>
         </div>
         <div className="flex justify-end gap-2">
           <button
+            ref={cancelBtnRef}
             onClick={onCancel}
             disabled={loading}
             className="px-4 py-2 text-sm text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"

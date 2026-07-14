@@ -223,13 +223,14 @@ Dùng tại: `QuestionStatsPage`, `LiveMonitorPage`, `AnalyticsPage`
 
 ## Question Components (`src/components/questions/`)
 
-### QuestionModal (`QuestionModal.jsx`) — 866 lines
-> **Deprecated**: QuestionsPage đã navigate sang `/questions/new` và `/questions/:id/edit`.
-> QuestionModal vẫn tồn tại nhưng không được gọi từ QuestionsPage nữa.
+> `QuestionModal.jsx` (866 dòng, deprecated) đã bị xoá 2026-07-14 — QuestionsPage dùng route
+> `/questions/new` / `/questions/:id/edit` (`QuestionFormPage`) từ trước, component này không
+> còn nơi nào import.
 
 ### AnswerEditor (`AnswerEditor.jsx`)
 ```jsx
-<AnswerEditor answers={answers} onChange={setAnswers} type="choice|multi" />
+<AnswerEditor answers={answers} onChange={setAnswers} multiSelect={boolean} />
+// Nút xoá đáp án tự disable khi còn ≤2 đáp án (tối thiểu bắt buộc lúc validate)
 ```
 
 ### ImageUploader (`ImageUploader.jsx`)

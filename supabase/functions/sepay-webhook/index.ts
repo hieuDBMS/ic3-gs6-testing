@@ -13,6 +13,17 @@ const json = (data: unknown, status = 200) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
+// Avoids leaking SEPAY_WEBHOOK_SECRET one byte at a time via response-time
+// side channel — a naive `!==` short-circuits on the first mismatched byte.
+function timingSafeEqual(a: string, b: string): boolean {
+  const aBytes = new TextEncoder().encode(a);
+  const bBytes = new TextEncoder().encode(b);
+  const len = Math.max(aBytes.length, bBytes.length);
+  let diff = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < len; i++) diff |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  return diff === 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', {
@@ -45,7 +56,7 @@ Deno.serve(async (req) => {
     // (some setups use `Bearer <key>` instead) — strip either prefix.
     const rawAuth = req.headers.get('x-sepay-signature') || req.headers.get('authorization') || '';
     const providedSecret = rawAuth.replace(/^(Bearer|Apikey)\s+/i, '').trim();
-    if (providedSecret !== WEBHOOK_SECRET) {
+    if (!timingSafeEqual(providedSecret, WEBHOOK_SECRET)) {
       console.warn('[sepay-webhook] Invalid signature');
       return json({ error: 'Unauthorized' }, 401);
     }
@@ -120,38 +131,46 @@ Deno.serve(async (req) => {
       return json({ success: true, message: 'Already unlocked' });
     }
 
-    // Use live exam required_amount
-    const liveRequired: number =
-      (matchedPurchase.exams as { required_amount?: number } | null)?.required_amount
-      ?? (matchedPurchase.required_amount as number)
-      ?? 100000;
-
-    const newPaid   = ((matchedPurchase.paid_amount as number) || 0) + amount;
-    const newStatus = newPaid >= liveRequired ? 'SUCCESS' : 'PARTIAL';
-    const remaining = Math.max(0, liveRequired - newPaid);
-
-    // Update purchase status
-    const { error: updateErr } = await admin.from('purchases').update({
-      paid_amount: newPaid,
-      status: newStatus,
-      updated_at: new Date().toISOString(),
-    }).eq('id', matchedPurchase.id);
-
-    if (updateErr) {
-      console.error('[sepay-webhook] Update error:', updateErr.message);
-      return json({ error: updateErr.message }, 500);
+    // Idempotency guard: SePay (or a network retry on our end) can redeliver
+    // the same transfer notification more than once. Without this, a PARTIAL
+    // purchase would have `amount` re-added on every redelivery, eventually
+    // crossing required_amount and unlocking an exam that was only paid once.
+    // referenceCode is the bank's own transfer id — stable across redeliveries
+    // of the same real-world transfer — recorded in payment_history.note below.
+    const refCode = String(body.referenceCode || body.id || '').trim();
+    if (refCode.length >= 4) {
+      const escapedRef = refCode.replace(/[%_\\]/g, (c) => `\\${c}`);
+      const { data: dup } = await admin
+        .from('payment_history')
+        .select('id')
+        .eq('purchase_id', matchedPurchase.id)
+        .ilike('note', `%${escapedRef}%`)
+        .limit(1)
+        .maybeSingle();
+      if (dup) {
+        console.log('[sepay-webhook] Duplicate delivery, already recorded:', refCode);
+        return json({ success: true, message: 'Duplicate webhook delivery (already recorded)' });
+      }
     }
 
-    // Log to payment_history
-    await admin.from('payment_history').insert({
-      purchase_id: matchedPurchase.id,
-      amount,
-      note: `[AUTO] SePay - ${body.gateway || 'Bank'} - ${body.transactionDate || new Date().toISOString()} - ${body.referenceCode || ''}`,
-      recorded_by: null,
-      payment_time: new Date().toISOString(),
+    const note = `[AUTO] SePay - ${body.gateway || 'Bank'} - ${body.transactionDate || new Date().toISOString()} - ${body.referenceCode || ''}`;
+
+    // record_purchase_payment locks the purchases row (SELECT ... FOR
+    // UPDATE) and re-adds paid_amount atomically, re-reading the live
+    // exams.required_amount itself — a plain read-then-write here could
+    // race with a teacher's manual "Confirm" on the same purchase at the
+    // same moment and silently lose one of the two payments.
+    const { data: result, error: payErr } = await admin.rpc('record_purchase_payment', {
+      p_purchase_id: matchedPurchase.id, p_amount: amount, p_note: note, p_recorded_by: null,
     });
 
-    console.log(`[sepay-webhook] Updated ${matchedPurchase.id}: paid=${newPaid}, status=${newStatus}, required=${liveRequired}`);
+    if (payErr) {
+      console.error('[sepay-webhook] record_purchase_payment error:', payErr.message);
+      return json({ error: payErr.message }, 500);
+    }
+
+    const { newStatus, newPaid, remaining } = result as { newStatus: string; newPaid: number; remaining: number };
+    console.log(`[sepay-webhook] Updated ${matchedPurchase.id}: paid=${newPaid}, status=${newStatus}`);
 
     return json({
       success: true,

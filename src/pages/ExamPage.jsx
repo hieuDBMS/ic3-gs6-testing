@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +8,8 @@ import { useTheme } from '../context/ThemeContext';
 import { Timer } from '../components/exam/Timer';
 import { QuestionNavigator } from '../components/exam/QuestionNavigator';
 import { QuestionRenderer } from '../components/exam/QuestionRenderer';
+import { readExamDraft, writeExamDraft, clearExamDraft, mergeExamDraft } from '../utils/examDraftStorage';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
   Flag, CheckCircle2, AlertTriangle, X,
   BookOpen, ShieldAlert, Send, LayoutGrid,
@@ -77,10 +80,19 @@ const ExamSkeleton = () => (
 ───────────────────────────────────────────────────────── */
 const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
   const { t } = useTranslation();
+  const cancelBtnRef = useRef(null);
+  // Autofocus "review again" (not Submit) — this dialog gates the
+  // irreversible act of submitting the exam, so a stray Enter/Space
+  // must never fire the submit action.
+  const dialogRef = useFocusTrap(true, { autoFocusRef: cancelBtnRef, onEscape: onCancel });
   return (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={onCancel} />
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-submit-title"
       className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
       style={{ animation: 'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
     >
@@ -100,7 +112,7 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
             }
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('exam.confirmSubmit.title')}</h2>
+            <h2 id="confirm-submit-title" className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('exam.confirmSubmit.title')}</h2>
             {unansweredCount > 0 ? (
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                 {t('exam.confirmSubmit.unansweredPre')} <span className="font-bold text-amber-600 dark:text-amber-400">{t('exam.confirmSubmit.unansweredCount', { count: unansweredCount })}</span>{t('exam.confirmSubmit.unansweredPost')}
@@ -116,6 +128,7 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
         {/* Buttons */}
         <div className="flex gap-3">
           <button
+            ref={cancelBtnRef}
             onClick={onCancel}
             className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors text-sm"
           >
@@ -145,6 +158,10 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
 ───────────────────────────────────────────────────────── */
 const ResumeModal = ({ examTitle, existingAttempt, questionsCount, durationSeconds, onResume, onRestart, loading }) => {
   const { t } = useTranslation();
+  const resumeBtnRef = useRef(null);
+  // No onEscape: there is no safe no-op here — the student must actively
+  // choose Continue or Restart, so Escape is left unhandled on purpose.
+  const dialogRef = useFocusTrap(true, { autoFocusRef: resumeBtnRef });
   const startedLabel = new Date(existingAttempt.started_at).toLocaleString('vi-VN', {
     day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
   });
@@ -158,6 +175,10 @@ const ResumeModal = ({ examTitle, existingAttempt, questionsCount, durationSecon
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-md" />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="resume-modal-title"
         className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
         style={{ animation: 'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >
@@ -168,7 +189,7 @@ const ResumeModal = ({ examTitle, existingAttempt, questionsCount, durationSecon
               <PlayCircle className="w-8 h-8 text-indigo-500" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('exam.resume.title')}</h2>
+              <h2 id="resume-modal-title" className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('exam.resume.title')}</h2>
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                 {t('exam.resume.unfinishedPre')} <span className="font-semibold text-gray-700 dark:text-slate-300">{examTitle}</span>.
               </p>
@@ -202,6 +223,7 @@ const ResumeModal = ({ examTitle, existingAttempt, questionsCount, durationSecon
               {t('exam.resume.restart')}
             </button>
             <button
+              ref={resumeBtnRef}
               onClick={onResume}
               disabled={loading}
               className="flex-1 py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
@@ -225,10 +247,18 @@ const ResumeModal = ({ examTitle, existingAttempt, questionsCount, durationSecon
 const RefreshWarningModal = ({ onStay, onLeave }) => {
   const { isDark } = useTheme();
   const { t } = useTranslation();
+  const stayBtnRef = useRef(null);
+  // Autofocus + Escape both map to "stay" — the safe, non-destructive choice
+  // — so a stray keypress never triggers the reload that discards progress.
+  const dialogRef = useFocusTrap(true, { autoFocusRef: stayBtnRef, onEscape: onStay });
   return (
   <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" />
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="refresh-warning-title"
       className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
       style={{ animation: 'refreshModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
     >
@@ -239,7 +269,7 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
             <ShieldAlert className="w-8 h-8 text-rose-500" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('exam.refreshWarning.title')}</h2>
+            <h2 id="refresh-warning-title" className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('exam.refreshWarning.title')}</h2>
             <p className="text-xs font-semibold uppercase tracking-widest text-rose-400">{t('exam.refreshWarning.subtitle')}</p>
           </div>
         </div>
@@ -261,6 +291,7 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
             {t('exam.refreshWarning.stillReload')}
           </button>
           <button
+            ref={stayBtnRef}
             onClick={onStay}
             className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all shadow-lg"
             style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)', boxShadow: '0 4px 14px rgba(239,68,68,0.35)' }}
@@ -282,10 +313,16 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
 const NavigateAwayModal = ({ onStay, onLeave }) => {
   const { isDark } = useTheme();
   const { t } = useTranslation();
+  const stayBtnRef = useRef(null);
+  const dialogRef = useFocusTrap(true, { autoFocusRef: stayBtnRef, onEscape: onStay });
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="navigate-away-title"
         className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
         style={{ animation: 'refreshModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >
@@ -295,7 +332,7 @@ const NavigateAwayModal = ({ onStay, onLeave }) => {
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: isDark ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#fff7ed,#fee2e2)' }}>
               <ShieldAlert className="w-8 h-8 text-rose-500" />
             </div>
-            <h2 className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('exam.navigateAway.title')}</h2>
+            <h2 id="navigate-away-title" className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('exam.navigateAway.title')}</h2>
           </div>
           <div className="rounded-2xl p-4 text-sm" style={{ background: isDark ? 'rgba(239,68,68,0.1)' : 'linear-gradient(135deg,#fff7ed,#fef2f2)' }}>
             <p className="text-gray-600 dark:text-slate-400">
@@ -310,6 +347,7 @@ const NavigateAwayModal = ({ onStay, onLeave }) => {
               {t('exam.navigateAway.leave')}
             </button>
             <button
+              ref={stayBtnRef}
               onClick={onStay}
               className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all shadow-lg"
               style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)', boxShadow: '0 4px 14px rgba(239,68,68,0.35)' }}
@@ -370,6 +408,7 @@ export const ExamPage = () => {
   const { t } = useTranslation();
   const { examId }  = useParams();
   const navigate    = useNavigate();
+  const queryClient = useQueryClient();
   const { user, isSelfRegistered }    = useAuth();
   const { isDark } = useTheme();
 
@@ -547,6 +586,13 @@ export const ExamPage = () => {
      last one, always capturing the latest answers/flagged/currentIndex. */
   useEffect(() => {
     if (!attemptId) return;
+    // Un-throttled local mirror — cheap synchronous write, covers the gap
+    // before the throttled server ping below fires (see mergeExamDraft on resume).
+    writeExamDraft(attemptId, { answers, flagged, currentIndex });
+  }, [attemptId, currentIndex, answers, flagged]);
+
+  useEffect(() => {
+    if (!attemptId) return;
     const controller = new AbortController();
     const save = () => {
       lastPingRef.current = Date.now();
@@ -622,17 +668,11 @@ export const ExamPage = () => {
           .select('*, exam_levels(label)')
           .eq('id', examId)
           .single(),
-        supabase
-          .from('questions')
-          .select(`
-            id, content, image_url, question_type, order_index, hotspot_multi,
-            answers ( id, content, image_url, is_correct, order_index ),
-            dragdrop_pairs ( id, drag_content, drag_image_url, drop_content, drop_image_url, order_index ),
-            truefalse_statements ( id, content, is_true, order_index ),
-            hotspot_regions ( id, x, y, width, height, is_correct, label, order_index )
-          `)
-          .eq('exam_id', examId)
-          .order('order_index'),
+        // RPC instead of a direct nested SELECT: server-side excludes
+        // is_correct/is_true entirely (not just at the client-select layer)
+        // and re-checks purchase access for self-registered accounts — see
+        // supabase/sql/2026-07-14_security_hardening.sql for why.
+        supabase.rpc('get_exam_questions_for_attempt', { p_exam_id: examId }),
       ]);
 
       if (examResult.error) throw examResult.error;
@@ -683,10 +723,17 @@ export const ExamPage = () => {
   };
 
   const handleResumeAttempt = useCallback(() => {
+    // Merge in a locally-cached draft (if any) on top of the server draft —
+    // the 4s-throttled Supabase ping can lose the last answer if the tab
+    // closes within the window; the un-throttled localStorage mirror covers it.
+    const merged = mergeExamDraft(
+      { ...existingAttempt.draft_answers, currentIndex: existingAttempt.current_question_index || 0 },
+      readExamDraft(existingAttempt.id),
+    );
     setAttemptId(existingAttempt.id);
-    setCurrentIndex(existingAttempt.current_question_index || 0);
-    setAnswers(existingAttempt.draft_answers?.answers || {});
-    setFlagged(existingAttempt.draft_answers?.flagged || []);
+    setCurrentIndex(merged.currentIndex);
+    setAnswers(merged.answers);
+    setFlagged(merged.flagged);
     setStartedAt(existingAttempt.started_at);
     setExistingAttempt(null);
   }, [existingAttempt]);
@@ -698,6 +745,8 @@ export const ExamPage = () => {
         .from('exam_attempts')
         .update({ status: 'auto_submitted', submitted_at: new Date().toISOString() })
         .eq('id', existingAttempt.id);
+      clearExamDraft(existingAttempt.id);
+      queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
 
       const { data: attempt, error: attemptError } = await supabase
         .from('exam_attempts')
@@ -720,7 +769,7 @@ export const ExamPage = () => {
     } finally {
       setResumeLoading(false);
     }
-  }, [existingAttempt, user, examId, questions.length, navigate]);
+  }, [existingAttempt, user, examId, questions.length, navigate, queryClient]);
 
   const handleAnswerChange = useCallback((val) => {
     const q = questions[currentIndex];
@@ -776,10 +825,18 @@ export const ExamPage = () => {
       });
 
       if (rpcError) throw rpcError;
+      clearExamDraft(attemptId);
+      // The Dashboard's history table caches ['examAttempts'] for 30s
+      // (staleTime, see src/lib/queryClient.js) — without invalidating here,
+      // navigating straight back to Dashboard within that window silently
+      // serves the pre-submit list until a hard refresh mints a new cache.
+      queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
       navigate(`/exam/${attemptId}/result`);
     } catch (error) {
       console.error('Error submitting:', error);
       if (error?.message?.includes('already_submitted')) {
+        clearExamDraft(attemptId);
+        queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
         navigate(`/exam/${attemptId}/result`);
       } else {
         alert(t('exam.submitError'));
@@ -788,7 +845,7 @@ export const ExamPage = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [answers, attemptId, questions, navigate, exam]);
+  }, [answers, attemptId, questions, navigate, exam, queryClient]);
 
   /* ── Computed (memoized — must run before any early return, per Rules of Hooks) ── */
   const currentQ = useMemo(() => questions[currentIndex], [questions, currentIndex]);

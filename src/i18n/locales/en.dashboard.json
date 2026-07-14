@@ -97,6 +97,7 @@
     "noDataMatch": "No data matches your filters.",
     "aiTitle": "AI Analysis",
     "aiRunButton": "Analyze current filtered data",
+    "aiCooldown": "Wait {{seconds}}s...",
     "aiNoInsight": "No commentary was returned.",
     "aiErrorFallback": "Unable to analyze right now"
   },
@@ -127,7 +128,10 @@
     "elapsedLabel": "Elapsed:",
     "pageInfo": "Page {{page}}/{{totalPages}} · {{count}} students",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "errorTitle": "Couldn't load the live list — connection may have dropped.",
+    "errorRetry": "Retry",
+    "truncatedNotice": "Showing the 300 most recently active students — others may be taking an exam outside this list."
   },
   "questionStats": {
     "title": "Most-missed questions",

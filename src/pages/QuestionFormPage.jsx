@@ -21,6 +21,19 @@ const DEF_PAIR      = (o = 0) => ({ id: uid(), drag_content: '', drag_image_url:
 const DEF_STMT      = (o = 0) => ({ id: uid(), content: '', is_true: true, order_index: o });
 const INIT_FORM     = { level_id: '', exam_type: 'testing', exam_id: '', question_type: 'choice', content: '', image_url: null, order_index: 0 };
 
+/* Sub-table for each question type, and the full set — used to insert new
+   rows before deleting old ones (avoids wiping data on a failed request)
+   and to clean up orphaned rows in other tables when a question's type
+   is changed while editing. */
+const TYPE_TABLE = {
+  choice:    'answers',
+  multi:     'answers',
+  dragdrop:  'dragdrop_pairs',
+  truefalse: 'truefalse_statements',
+  hotspot:   'hotspot_regions',
+};
+const ALL_SUB_TABLES = ['answers', 'dragdrop_pairs', 'truefalse_statements', 'hotspot_regions'];
+
 /* ═══════════════════════════════════════════════════════════
    MAIN PAGE
 ═══════════════════════════════════════════════════════════ */
@@ -56,8 +69,13 @@ export const QuestionFormPage = () => {
   const [errors,  setErrors]  = useState({});
   const { toasts, showToast, dismissToast } = useToast();
 
-  // Remember last used exam for "save & add next"
-  const lastExamRef = useRef({ level_id: '', exam_type: 'testing', exam_id: '' });
+  // Original DB ids of sub-rows loaded in edit mode (per sub-table), used to
+  // delete the old rows precisely after the new ones are inserted.
+  const originalSubIdsRef = useRef({ answers: [], pairs: [], statements: [], regions: [] });
+  // `questions.updated_at` captured at load time — used as an optimistic-lock
+  // token on save (see doSave) so two teachers editing the same question at
+  // once can't silently produce two coexisting answer sets.
+  const originalUpdatedAtRef = useRef(null);
 
   /* ── Load question data (edit mode) once reference data is ready ── */
   useEffect(() => {
@@ -83,12 +101,24 @@ export const QuestionFormPage = () => {
         image_url:     q.image_url       || null,
         order_index:   q.order_index     || 0,
       });
-      setAnswers(q.answers?.sort((a,b)=>a.order_index-b.order_index) || [DEF_ANSWER()]);
-      setPairs(q.dragdrop_pairs?.sort((a,b)=>a.order_index-b.order_index) || [DEF_PAIR()]);
-      setStatements(q.truefalse_statements?.sort((a,b)=>a.order_index-b.order_index) || [DEF_STMT(0),DEF_STMT(1)]);
+      // `q.answers` etc. come back as `[]` (not null/undefined) when the
+      // question's *current* type has no rows in that sub-table — e.g.
+      // editing a `hotspot` question. `[] || fallback` never falls through
+      // (an empty array is truthy), so a `.length` check is required to
+      // actually get sensible defaults if the teacher switches type.
+      setAnswers(q.answers?.length ? q.answers.sort((a,b)=>a.order_index-b.order_index) : [DEF_ANSWER(0), DEF_ANSWER(1), DEF_ANSWER(2), DEF_ANSWER(3)]);
+      setPairs(q.dragdrop_pairs?.length ? q.dragdrop_pairs.sort((a,b)=>a.order_index-b.order_index) : [DEF_PAIR(0), DEF_PAIR(1)]);
+      setStatements(q.truefalse_statements?.length ? q.truefalse_statements.sort((a,b)=>a.order_index-b.order_index) : [DEF_STMT(0), DEF_STMT(1)]);
       setRegions(q.hotspot_regions?.sort((a,b)=>a.order_index-b.order_index) || []);
       setHotspotMulti(q.hotspot_multi || false);
       setHotspotImg(q.image_url || null);
+      originalSubIdsRef.current = {
+        answers:    (q.answers || []).map(a => a.id),
+        pairs:      (q.dragdrop_pairs || []).map(p => p.id),
+        statements: (q.truefalse_statements || []).map(s => s.id),
+        regions:    (q.hotspot_regions || []).map(r => r.id),
+      };
+      originalUpdatedAtRef.current = q.updated_at;
       setLoadingQuestion(false);
     };
     load();
@@ -117,8 +147,10 @@ export const QuestionFormPage = () => {
       if (statements.length < 2)                         e.statements = t('questionForm.errors.minStatements');
       if (statements.some(s => !stripHtml(s.content)))   e.statements = t('questionForm.errors.statementContent');
     } else if (form.question_type === 'hotspot') {
+      const correctRegionCount = regions.filter(r => r.is_correct).length;
       if (!hotspotImg)                                         e.regions = t('questionForm.errors.mustUploadImage');
-      else if (!regions.some(r => r.is_correct))               e.regions = t('questionForm.errors.minCorrectRegion');
+      else if (correctRegionCount === 0)                       e.regions = t('questionForm.errors.minCorrectRegion');
+      else if (!hotspotMulti && correctRegionCount > 1)         e.regions = t('questionForm.errors.singleCorrectRegionOnly');
     } else if (form.question_type !== 'dragdrop') {
       if (answers.length < 2)                                  e.answers = t('questionForm.errors.minAnswers');
       if (!answers.some(a => a.is_correct))                    e.answers = t('questionForm.errors.needCorrectAnswer');
@@ -152,16 +184,37 @@ export const QuestionFormPage = () => {
       };
 
       if (isEdit) {
-        await supabase.from('questions').update({ ...qData, updated_at: new Date().toISOString() }).eq('id', qId);
+        // Optimistic lock: only apply the update if `updated_at` still matches
+        // what we loaded. Without this, two teachers editing the same question
+        // at once both insert their own new answer/pair/statement rows and
+        // then each deletes only the ids THEY originally saw — the second
+        // save's delete silently matches nothing, leaving both answer sets
+        // coexisting on the question (see docs/PATTERNS_AND_CONVENTIONS.md).
+        const { data: updatedRows, error } = await supabase
+          .from('questions')
+          .update({ ...qData, updated_at: new Date().toISOString() })
+          .eq('id', qId)
+          .eq('updated_at', originalUpdatedAtRef.current)
+          .select('id');
+        if (error) throw error;
+        if (!updatedRows || updatedRows.length === 0) {
+          throw new Error(t('questionForm.errors.conflictError'));
+        }
       } else {
         const { data, error } = await supabase.from('questions').insert(qData).select('id').single();
         if (error) throw error;
         qId = data.id;
       }
 
-      // Save sub-data
+      // Save sub-data: insert the new rows for the current type FIRST, then
+      // delete the old ones by their known ids. Insert-before-delete means a
+      // failed/dropped request never leaves the question with zero
+      // answers/pairs/statements/regions (previously: delete-then-insert
+      // could wipe them out if the insert failed after the delete).
+      const oldIds = originalSubIdsRef.current;
+      const targetTable = TYPE_TABLE[form.question_type];
+
       if (form.question_type === 'hotspot') {
-        if (isEdit) await supabase.from('hotspot_regions').delete().eq('question_id', qId);
         if (regions.length) {
           const rows = regions.map((r, i) => ({
             question_id: qId, label: r.label||null, x: r.x, y: r.y,
@@ -171,21 +224,46 @@ export const QuestionFormPage = () => {
           const { error } = await supabase.from('hotspot_regions').insert(rows);
           if (error) throw error;
         }
+        if (isEdit && oldIds.regions.length) {
+          const { error } = await supabase.from('hotspot_regions').delete().in('id', oldIds.regions);
+          if (error) throw error;
+        }
       } else if (form.question_type === 'truefalse') {
-        if (isEdit) await supabase.from('truefalse_statements').delete().eq('question_id', qId);
         const rows = statements.map((s, i) => ({ question_id: qId, content: s.content, is_true: s.is_true, order_index: i }));
         const { error } = await supabase.from('truefalse_statements').insert(rows);
         if (error) throw error;
+        if (isEdit && oldIds.statements.length) {
+          const { error: delError } = await supabase.from('truefalse_statements').delete().in('id', oldIds.statements);
+          if (delError) throw delError;
+        }
       } else if (form.question_type !== 'dragdrop') {
-        if (isEdit) await supabase.from('answers').delete().eq('question_id', qId);
         const rows = answers.map((a, i) => ({ question_id: qId, content: a.content, image_url: a.image_url||null, is_correct: a.is_correct, order_index: i }));
         const { error } = await supabase.from('answers').insert(rows);
         if (error) throw error;
+        if (isEdit && oldIds.answers.length) {
+          const { error: delError } = await supabase.from('answers').delete().in('id', oldIds.answers);
+          if (delError) throw delError;
+        }
       } else {
-        if (isEdit) await supabase.from('dragdrop_pairs').delete().eq('question_id', qId);
         const rows = pairs.map((p, i) => ({ question_id: qId, drag_content: p.drag_content.trim(), drag_image_url: p.drag_image_url||null, drop_content: p.drop_content.trim(), drop_image_url: p.drop_image_url||null, order_index: i }));
         const { error } = await supabase.from('dragdrop_pairs').insert(rows);
         if (error) throw error;
+        if (isEdit && oldIds.pairs.length) {
+          const { error: delError } = await supabase.from('dragdrop_pairs').delete().in('id', oldIds.pairs);
+          if (delError) throw delError;
+        }
+      }
+
+      // Clean up stale rows left in the OTHER 3 sub-tables — relevant when
+      // editing a question whose type was changed (e.g. choice -> hotspot),
+      // which used to leave orphaned `answers` rows behind under the old
+      // delete-then-insert-current-table-only logic.
+      if (isEdit) {
+        for (const table of ALL_SUB_TABLES) {
+          if (table === targetTable) continue;
+          const { error } = await supabase.from(table).delete().eq('question_id', qId);
+          if (error) throw error;
+        }
       }
 
       // Reorder
@@ -195,7 +273,6 @@ export const QuestionFormPage = () => {
         showToast(t('questionForm.savedNextToast'));
         // Keep exam info, reset rest
         const saved = { level_id: form.level_id, exam_type: form.exam_type, exam_id: form.exam_id };
-        lastExamRef.current = saved;
         setForm({ ...INIT_FORM, ...saved, order_index: Number(form.order_index) + 1 });
         setAnswers([DEF_ANSWER(0), DEF_ANSWER(1), DEF_ANSWER(2), DEF_ANSWER(3)]);
         setPairs([DEF_PAIR(0), DEF_PAIR(1)]);

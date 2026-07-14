@@ -131,6 +131,7 @@
       "subtitle": "This action cannot be undone",
       "messagePrefix": "Transaction",
       "messageSuffix": "will be deleted. You can purchase again anytime.",
+      "closeAriaLabel": "Close",
       "keepButton": "Keep It",
       "cancelling": "Cancelling...",
       "confirmCancelButton": "Confirm Cancel"
@@ -178,6 +179,7 @@
       "hintMulti": "Click {{count}} correct regions on the image",
       "selectedCount": "· Selected {{count}}",
       "imageAlt": "Hotspot",
+      "regionLabel": "Region {{number}}",
       "legend": {
         "correctSelected": "Correct & selected",
         "correctMissed": "Correct but missed",
@@ -216,7 +218,10 @@
     "loading": "Loading flashcards...",
     "noQuestions": "This exam has no questions yet.",
     "chooseAnother": "Choose another exam",
+    "backToList": "Back to flashcard list",
     "shuffleButton": "Shuffle",
+    "keyboardHintToggle": "Show keyboard shortcuts",
+    "resumedSession": "Your unfinished study session was restored",
     "keyHints": {
       "checkNext": "Check / Next",
       "skip": "Skip"

@@ -1,5 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -69,6 +71,7 @@ const Layout = () => {
 
 function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <LanguageProvider>
     <ThemeProvider>
       <AuthProvider>
@@ -92,7 +95,6 @@ function App() {
                     <Route path="/flashcard"                 element={<FlashcardListPage />} />
                     <Route path="/flashcard/:examId"         element={<FlashcardPage />} />
                     <Route path="/payments"                  element={<PaymentHistoryPage />} />
-                    <Route path="/teacher/payment-settings"  element={<PaymentSettingsPage />} />
                   </Route>
                 </Route>
 
@@ -103,6 +105,7 @@ function App() {
                     <Route path="/questions/new"                     element={<QuestionFormPage />} />
                     <Route path="/questions/:id/edit"                element={<QuestionFormPage />} />
                     <Route path="/questions/import"                  element={<QuestionImportPage />} />
+                    <Route path="/teacher/payment-settings"          element={<PaymentSettingsPage />} />
                     <Route path="/teacher/exam-structure"            element={<ExamStructurePage />} />
                     <Route path="/teacher/students"                  element={<StudentManagementPage />} />
                     <Route path="/teacher/students/:studentId"       element={<StudentProgressPage />} />
@@ -120,6 +123,7 @@ function App() {
       </AuthProvider>
     </ThemeProvider>
     </LanguageProvider>
+    </QueryClientProvider>
   );
 }
 

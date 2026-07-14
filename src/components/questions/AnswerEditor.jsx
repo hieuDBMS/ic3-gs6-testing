@@ -121,7 +121,8 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
               <button
                 type="button"
                 onClick={() => removeAnswer(index)}
-                className="text-gray-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 transition-colors shrink-0"
+                disabled={answers.length <= 2}
+                className="text-gray-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 disabled:opacity-30 disabled:pointer-events-none transition-colors shrink-0"
                 title="Xóa đáp án"
               >
                 <Trash2 className="w-4 h-4" />

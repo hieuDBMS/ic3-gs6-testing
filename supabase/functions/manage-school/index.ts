@@ -49,28 +49,23 @@ Deno.serve(async (req) => {
       if (!schoolId) return json({ error: 'Thiếu schoolId' });
       if (!name?.trim()) return json({ error: 'Tên trường không được để trống' });
 
-      // profiles.school stores the school NAME as free text (no FK) — read the
-      // old name first so the rename can cascade into every profile row.
-      const { data: oldSchool } = await admin.from('schools').select('name').eq('id', schoolId).single();
-
+      // profiles.school stores the school's UUID as text (matches how
+      // StudentManagementPage assigns it — <option value={s.id}> — and how
+      // the analytics RPCs join it: s.id::text = p.school). Renaming the
+      // school row itself is enough; profiles referencing it by id need no
+      // cascade. (A prior version of this cascaded by NAME instead, which
+      // silently matched zero rows since profiles never stored the name.)
       const { error } = await admin.from('schools').update({ name: name.trim() }).eq('id', schoolId);
       if (error) return json({ error: error.code === '23505' ? 'Tên trường đã tồn tại' : error.message });
-
-      if (oldSchool?.name && oldSchool.name !== name.trim()) {
-        await admin.from('profiles').update({ school: name.trim() }).eq('school', oldSchool.name);
-      }
 
       return json({ success: true });
     }
 
     if (action === 'delete') {
       if (!schoolId) return json({ error: 'Thiếu schoolId' });
-      // profiles.school stores the school NAME as free text (no FK) — must
-      // clear by name, not schoolId, or orphaned rows never get cleaned up.
-      const { data: school } = await admin.from('schools').select('name').eq('id', schoolId).single();
-      if (school?.name) {
-        await admin.from('profiles').update({ school: null }).eq('school', school.name);
-      }
+      // profiles.school stores the school's UUID as text — clear by that id
+      // so no profile is left pointing at a school row that no longer exists.
+      await admin.from('profiles').update({ school: null }).eq('school', schoolId);
       const { error } = await admin.from('schools').delete().eq('id', schoolId);
       if (error) return json({ error: error.message });
       return json({ success: true });

@@ -349,11 +349,15 @@ export const HotspotEditor = ({
                   boxShadow:   isSel ? `0 4px 16px ${hexToRgba(color, 0.2)}` : 'none',
                 }}
               >
-                {/* Card header — always visible */}
-                <button
-                  type="button"
+                {/* Card header — always visible. Plain <div> (not <button>) because it
+                    contains a nested delete <button> — a <button> inside a <button> is
+                    invalid HTML and React warns/breaks hydration. */}
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => toggleSelected(r.id)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/40"
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSelected(r.id); } }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-slate-700/40 cursor-pointer"
                   style={{ background: isSel ? hexToRgba(color, 0.07) : (isDark ? '#1e293b' : 'white') }}
                 >
                   {/* Color swatch + index */}
@@ -387,7 +391,7 @@ export const HotspotEditor = ({
 
                   {/* Expand indicator */}
                   {isSel ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0 dark:text-slate-500" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0 dark:text-slate-500" />}
-                </button>
+                </div>
 
                 {/* Expanded detail */}
                 {isSel && (

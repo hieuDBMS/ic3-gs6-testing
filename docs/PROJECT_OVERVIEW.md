@@ -18,11 +18,15 @@ Nền tảng thi trực tuyến IC3 (Internet and Computing Core Certification) 
 | Auth | Supabase Auth (email/password) |
 | Storage | Supabase Storage (`question-images`, `answer-images`) |
 | State | React Context API (AuthContext, ThemeContext, LanguageContext) |
+| Server state | TanStack Query (`@tanstack/react-query`) — dùng trong `useExamAttempts`/`useStudents`, cache/refetch/dedupe thay vì tự quản lý bằng `useState`/`useEffect`. Thêm 2026-07-14 |
+| Forms | React Hook Form + Zod (`@hookform/resolvers/zod`) — reference implementation: form tạo student trong `StudentManagementPage.jsx`. Các form khác vẫn dùng `useState` thủ công (chưa migrate). Thêm 2026-07-14 |
 | Routing | React Router v7 |
 | Icons | Lucide React |
 | PDF | jsPDF (certificate) |
 | Excel | ExcelJS (import câu hỏi) |
 | i18n | react-i18next — toàn bộ app, VI/EN (xem PATTERNS_AND_CONVENTIONS.md → i18n Pattern) |
+| Error tracking | Sentry (`@sentry/react`, `src/lib/sentry.js`) — no-op nếu thiếu `VITE_SENTRY_DSN`. Thêm 2026-07-14 |
+| CAPTCHA | Cloudflare Turnstile (`src/components/shared/Turnstile.jsx`) trên `/register` — no-op nếu thiếu `VITE_TURNSTILE_SITE_KEY`/`TURNSTILE_SECRET_KEY`. Thêm 2026-07-14 |
 
 ## Cấu trúc thư mục chính
 
@@ -89,8 +93,10 @@ IC3 GS6 / GS7 / GS8
 ```
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
+VITE_SENTRY_DSN=...            # optional — bỏ trống để tắt Sentry
+VITE_TURNSTILE_SITE_KEY=...    # optional — bỏ trống để tắt CAPTCHA trên /register
 ```
-File `.env` — KHÔNG commit lên Git.
+File `.env` — KHÔNG commit lên Git. Xem `.env.example` cho danh sách đầy đủ (kèm secret phía edge function `TURNSTILE_SECRET_KEY`, set qua Supabase Dashboard → Edge Functions → Secrets, không phải `.env`).
 
 ## Supabase RPC functions
 

@@ -8,6 +8,7 @@ import {
   DollarSign, ChevronDown, Info, X,
 } from 'lucide-react';
 import { EmptyState } from '../components/shared/EmptyState';
+import { invalidatePaymentConfigCache } from '../lib/paymentConfigCache';
 
 // Vietnamese banks for VietQR
 const BANKS = [
@@ -130,6 +131,7 @@ export const PaymentSettingsPage = () => {
           updated_at:   new Date().toISOString(),
         });
       if (error) throw error;
+      invalidatePaymentConfigCache();
       setSavedGlobal(true);
       setTimeout(() => setSavedGlobal(false), 2500);
     } catch (e) {

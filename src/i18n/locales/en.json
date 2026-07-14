@@ -92,6 +92,7 @@
       "errorPasswordLength": "Password must be at least 6 characters.",
       "errorUsernameLength": "Username must be at least 4 characters.",
       "errorUsernameFormat": "Username can only contain letters, numbers and underscores.",
+      "errorCaptcha": "Please complete the CAPTCHA challenge.",
       "errorGeneric": "Something went wrong. Please try again."
     }
   },

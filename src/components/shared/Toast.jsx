@@ -31,18 +31,28 @@ export const useToast = () => {
 };
 
 export const Toast = ({ toasts, onDismiss }) => (
-  <div className="fixed bottom-4 right-4 z-100 flex flex-col gap-2 pointer-events-none">
+  <div
+    className="fixed bottom-4 right-4 z-100 flex flex-col gap-2 pointer-events-none"
+    role="status"
+    aria-live="polite"
+    aria-atomic="false"
+  >
     {toasts.map((t) => {
       const { bg, icon: Icon } = STYLES[t.type] || STYLES.success;
       return (
         <div
           key={t.id}
+          role={t.type === 'error' ? 'alert' : undefined}
           className={`flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white pointer-events-auto transition-all animate-slide-up ${bg}`}
         >
           <Icon className="w-4 h-4 shrink-0" />
           <span>{t.message}</span>
           {onDismiss && (
-            <button onClick={() => onDismiss(t.id)} className="ml-2 opacity-70 hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => onDismiss(t.id)}
+              aria-label="Đóng thông báo"
+              className="ml-2 opacity-70 hover:opacity-100 transition-opacity"
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           )}

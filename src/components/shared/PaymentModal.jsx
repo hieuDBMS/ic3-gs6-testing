@@ -2,36 +2,7 @@ import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { X, CheckCircle2, Copy, Check, Zap, AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
-
-/* ─────────────────────────────────────────────────────────
-   Module-level payment config cache
-   Fetched once per browser session — never re-fetched on
-   every modal open. Saves ~200-400ms each time.
-───────────────────────────────────────────────────────── */
-let _configCache    = null;
-let _configFetching = null; // in-flight dedup
-
-async function getPaymentConfig() {
-  // Already cached
-  if (_configCache !== null) return _configCache;
-  // Deduplicate concurrent calls
-  if (_configFetching) return _configFetching;
-  _configFetching = supabase
-    .from('payment_config')
-    .select('*')
-    .eq('id', 1)
-    .single()
-    .then(({ data }) => {
-      _configCache    = data ?? {};   // store empty obj so truthiness works
-      _configFetching = null;
-      return _configCache;
-    })
-    .catch(() => {
-      _configFetching = null;         // allow retry on error
-      return {};
-    });
-  return _configFetching;
-}
+import { getPaymentConfig } from '../../lib/paymentConfigCache';
 
 /* ─────────────────────────────────────────────────────────
    Helpers
@@ -70,7 +41,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
   const { t } = useTranslation();
   const [phase,    setPhase]    = useState('init');
   const [purchase, setPurchase] = useState(null);
-  const [config,   setConfig]   = useState(() => _configCache || null);
+  const [config,   setConfig]   = useState(null);
   const [copied,   setCopied]   = useState(false);
   const [imgOk,    setImgOk]    = useState(false);
   const [errMsg,   setErrMsg]   = useState('');

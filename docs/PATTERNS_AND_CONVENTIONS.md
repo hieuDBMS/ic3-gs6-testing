@@ -424,6 +424,8 @@ Mục đích: chặn tạo trùng `exam_attempts` (nhiều card trùng học sin
 
 **ResumeModal cảnh báo khi attempt đã hết giờ**: `isExpired` = `elapsedSeconds >= exam.duration_seconds` (tính từ `existingAttempt.started_at`, so với hiện tại). Nếu true, đổi label nút "Tiếp tục làm bài" → "Nộp bài đã lưu" + hiện notice — vì Timer giờ tính đúng elapsed time (xem trên), bấm "Tiếp tục" trên 1 attempt đã hết giờ sẽ khiến `onTimeUp` fire ngay khi mount, tự nộp bài lập tức; tránh học sinh bị bất ngờ. Tính tại thời điểm 2026-07-13: ~219/220 attempt `in_progress` (thi thường) hiện có trên DB đã vượt quá duration — hầu hết học sinh có bài dở dang sẽ thấy trạng thái này.
 
+**localStorage mirror (thêm 2026-07-14)**: `src/utils/examDraftStorage.js` ghi `{ answers, flagged, currentIndex }` vào `localStorage` (key `ic3_exam_draft_<attemptId>`) mỗi lần state đổi — **không throttle**, khác với ping Supabase 4s ở trên. Mục đích: ping 4s có thể chưa kịp gửi (mất mạng, đóng tab trong cửa sổ 4s) — bản local đồng bộ ngay lập tức nên luôn có bản mới nhất. Khi resume (`handleResumeAttempt`/`initExam` của `MockExamPage`), `mergeExamDraft()` merge draft server + local (local đè lên theo từng key, không mất dữ liệu của bên nào). Xoá draft local (`clearExamDraft`) khi: nộp bài thành công, nộp bài do `already_submitted`, và khi restart attempt (`handleRestartAttempt` xoá draft của attempt cũ). Đây là lớp phòng hộ bổ sung — nguồn sự thật vẫn là `exam_attempts.draft_answers` trên server, không thay thế.
+
 ---
 
 ## 23. Navigate-Away Guard Pattern (ExamPage, MockExamPage)

@@ -1,5 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Link } from 'react-router-dom';
 import {
@@ -113,8 +117,9 @@ const StudentCard = ({ student, onResetPassword, onDelete, onClearHistory, schoo
       </button>
       <button
         onClick={() => onClearHistory(student)}
-        title={t('studentManagement.clearHistoryButton')}
-        className="flex items-center justify-center w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-500 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition"
+        disabled={student.totalAttempts === 0}
+        title={student.totalAttempts === 0 ? t('studentManagement.clearHistoryNothingToClear') : t('studentManagement.clearHistoryButton')}
+        className="flex items-center justify-center w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-500 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-orange-50 dark:disabled:hover:bg-orange-950/40"
       >
         <Eraser className="w-4 h-4" />
       </button>
@@ -132,6 +137,7 @@ const StudentCard = ({ student, onResetPassword, onDelete, onClearHistory, schoo
 /* ─── Main Page ──────────────────────────────────────────────── */
 export const StudentManagementPage = () => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
 
   const [modal, setModal] = useState(null);
@@ -139,9 +145,7 @@ export const StudentManagementPage = () => {
   const [clearHistoryStudent, setClearHistoryStudent] = useState(null);
   const [clearAllConfirm, setClearAllConfirm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState(''); // reset-password modal only — create modal uses createForm below
   const [showPwd, setShowPwd] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -164,6 +168,18 @@ export const StudentManagementPage = () => {
   const [editingSchoolId, setEditingSchoolId] = useState(null);
   const [editingSchoolName, setEditingSchoolName] = useState('');
   const [schoolUpdating, setSchoolUpdating] = useState(false);
+
+  const createSchema = useMemo(() => z.object({
+    fullName: z.string().trim().min(1, t('studentManagement.validationFullNameRequired')),
+    email: z.string().trim().email(t('studentManagement.validationEmailInvalid')),
+    password: z.string().min(6, t('studentManagement.validationPasswordLength')),
+  }), [t]);
+  const {
+    register: registerCreate,
+    handleSubmit: handleSubmitCreate,
+    formState: { errors: createErrors },
+    reset: resetCreateForm,
+  } = useForm({ resolver: zodResolver(createSchema), defaultValues: { fullName: '', email: '', password: '' } });
 
   const {
     students: paginated, rawStudents, totalCount, loading, error: fetchError, refetch: fetchStudents,
@@ -249,15 +265,15 @@ export const StudentManagementPage = () => {
     return data;
   };
 
-  const openCreate = () => { setModal('create'); setFullName(''); setEmail(''); setPassword(''); setShowPwd(false); setError(''); setStudentSchool(''); setStudentClass(''); };
+  const openCreate = () => { setModal('create'); resetCreateForm(); setShowPwd(false); setError(''); setStudentSchool(''); setStudentClass(''); };
   const openResetPassword = (s) => { setModal('reset-password'); setSelectedStudent(s); setPassword(''); setShowPwd(false); setError(''); };
   const openEditSchoolClass = (s) => { setModal('edit-school'); setSelectedStudent(s); setStudentSchool(s.school || ''); setStudentClass(s.class_name || ''); setError(''); };
-  const closeModal = () => { setModal(null); setError(''); };
+  const closeModal = () => { setModal(null); setError(''); resetCreateForm(); };
 
-  const handleCreate = async (e) => {
-    e.preventDefault(); setSaving(true); setError('');
+  const handleCreate = async (data) => {
+    setSaving(true); setError('');
     try {
-      await callEdgeFunction({ action: 'create', fullName, email, password, school: studentSchool || null, className: studentClass || null });
+      await callEdgeFunction({ action: 'create', fullName: data.fullName, email: data.email, password: data.password, school: studentSchool || null, className: studentClass || null });
       closeModal(); fetchStudents();
       addToast(t('studentManagement.studentCreatedToast'), 'success');
     } catch (err) { setError(err.message); }
@@ -290,6 +306,10 @@ export const StudentManagementPage = () => {
     setDeleting(true);
     try {
       await callEdgeFunction({ action: 'delete', studentId: confirmStudent.id });
+      // Deleting the last row of a page beyond page 1 would otherwise strand
+      // the view on an empty page (totalCount only reflects the full filtered
+      // set, not this page's remaining rows) — step back a page first.
+      if (paginated.length === 1 && page > 1) setPage(p => p - 1);
       setConfirmStudent(null); fetchStudents();
       addToast(t('studentManagement.studentDeletedToast'), 'success');
     } catch (err) {
@@ -301,11 +321,18 @@ export const StudentManagementPage = () => {
 
   const openClearHistoryConfirm = (student) => setClearHistoryStudent(student);
 
+  // Both handlers below invalidate the shared 'examAttempts' / 'students'
+  // query caches (not just this page's own `fetchStudents()`) — the
+  // queryClient has a 30s staleTime, so any other mounted table (e.g. a
+  // teacher's dashboard overview, or a student progress page opened right
+  // after) would otherwise keep serving the pre-delete rows for up to 30s.
   const handleClearHistory = async () => {
     setClearingHistory(true);
     try {
       await callEdgeFunction({ action: 'clear-attempts', studentId: clearHistoryStudent.id });
-      setClearHistoryStudent(null); fetchStudents();
+      setClearHistoryStudent(null);
+      queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
       addToast(t('studentManagement.clearHistorySuccessToast'), 'success');
     } catch (err) {
       addToast(t('studentManagement.clearHistoryErrorToast', { message: err.message }), 'error');
@@ -317,7 +344,9 @@ export const StudentManagementPage = () => {
     setClearingAll(true);
     try {
       await callEdgeFunction({ action: 'clear-all-attempts' });
-      setClearAllConfirm(false); fetchStudents();
+      setClearAllConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
       addToast(t('studentManagement.clearAllHistorySuccessToast'), 'success');
     } catch (err) {
       addToast(t('studentManagement.clearHistoryErrorToast', { message: err.message }), 'error');
@@ -326,6 +355,7 @@ export const StudentManagementPage = () => {
   };
 
   const attemptedCount = rawStudents.filter(s => s.totalAttempts > 0).length;
+  const totalAttemptsAll = rawStudents.reduce((sum, s) => sum + (s.totalAttempts || 0), 0);
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
   // Unique class names for class filter dropdown
   const allClasses = [...new Set(rawStudents.map(s => s.class_name).filter(Boolean))].sort();
@@ -347,7 +377,9 @@ export const StudentManagementPage = () => {
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
             onClick={() => setClearAllConfirm(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 border border-red-100 dark:border-red-900/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition font-semibold shadow-xs text-sm"
+            disabled={totalAttemptsAll === 0}
+            title={totalAttemptsAll === 0 ? t('studentManagement.clearAllHistoryNothingToClear') : undefined}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-300 border border-red-100 dark:border-red-900/40 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition font-semibold shadow-xs text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-red-50 dark:disabled:hover:bg-red-950/40"
           >
             <Eraser className="w-4 h-4" /> {t('studentManagement.clearAllHistoryButton')}
           </button>
@@ -568,8 +600,9 @@ export const StudentManagementPage = () => {
                         </button>
                         <button
                           onClick={() => openClearHistoryConfirm(student)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-300 text-xs font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/40 transition"
-                          title={t('studentManagement.clearHistoryButton')}
+                          disabled={student.totalAttempts === 0}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-300 text-xs font-semibold hover:bg-orange-100 dark:hover:bg-orange-900/40 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-orange-50 dark:disabled:hover:bg-orange-950/40"
+                          title={student.totalAttempts === 0 ? t('studentManagement.clearHistoryNothingToClear') : t('studentManagement.clearHistoryButton')}
                         >
                           <Eraser className="w-3 h-3" />
                         </button>
@@ -677,26 +710,28 @@ export const StudentManagementPage = () => {
               </div>
             )}
 
-            <form onSubmit={modal === 'create' ? handleCreate : handleResetPassword} className="space-y-4">
+            <form onSubmit={modal === 'create' ? handleSubmitCreate(handleCreate) : handleResetPassword} className="space-y-4">
               {modal === 'create' && (
                 <>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">{t('studentManagement.fullNameLabel')}</label>
                     <input
-                      type="text" required autoFocus
-                      value={fullName} onChange={e => setFullName(e.target.value)}
+                      type="text" autoFocus
+                      {...registerCreate('fullName')}
                       placeholder={t('studentManagement.fullNamePlaceholder')}
                       className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
+                    {createErrors.fullName && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{createErrors.fullName.message}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1.5">{t('studentManagement.emailLabel')}</label>
                     <input
-                      type="email" required
-                      value={email} onChange={e => setEmail(e.target.value)}
+                      type="email"
+                      {...registerCreate('email')}
                       placeholder={t('studentManagement.emailPlaceholder')}
                       className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     />
+                    {createErrors.email && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{createErrors.email.message}</p>}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -727,12 +762,21 @@ export const StudentManagementPage = () => {
                   {modal === 'create' ? t('studentManagement.passwordLabelCreate') : t('studentManagement.passwordLabelReset')}
                 </label>
                 <div className="relative">
-                  <input
-                    type={showPwd ? 'text' : 'password'} required minLength={6}
-                    value={password} onChange={e => setPassword(e.target.value)}
-                    placeholder={t('studentManagement.passwordPlaceholder')}
-                    className="w-full px-3.5 py-2.5 pr-11 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                  />
+                  {modal === 'create' ? (
+                    <input
+                      type={showPwd ? 'text' : 'password'}
+                      {...registerCreate('password')}
+                      placeholder={t('studentManagement.passwordPlaceholder')}
+                      className="w-full px-3.5 py-2.5 pr-11 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    />
+                  ) : (
+                    <input
+                      type={showPwd ? 'text' : 'password'} required minLength={6}
+                      value={password} onChange={e => setPassword(e.target.value)}
+                      placeholder={t('studentManagement.passwordPlaceholder')}
+                      className="w-full px-3.5 py-2.5 pr-11 border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={() => setShowPwd(v => !v)}
@@ -741,6 +785,7 @@ export const StudentManagementPage = () => {
                     {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {modal === 'create' && createErrors.password && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{createErrors.password.message}</p>}
               </div>
 
               <div className="flex gap-3 pt-1">
@@ -905,7 +950,12 @@ export const StudentManagementPage = () => {
       <ConfirmDialog
         open={clearAllConfirm}
         title={t('studentManagement.clearAllHistoryConfirmTitle')}
-        message={t('studentManagement.clearAllHistoryConfirmMessage')}
+        message={
+          <>
+            {t('studentManagement.clearAllHistoryConfirmMessage')}{' '}
+            <strong>{t('studentManagement.clearAllHistoryImpact', { count: totalAttemptsAll, studentCount: attemptedCount })}</strong>
+          </>
+        }
         onConfirm={handleClearAllHistory}
         onCancel={() => setClearAllConfirm(false)}
         loading={clearingAll}

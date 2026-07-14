@@ -10,6 +10,28 @@ import {
   RefreshCw, Home, Sparkles, RotateCcw, SkipForward,
 } from 'lucide-react';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
+import { Toast, useToast } from '../components/shared/Toast';
+
+/* ─── Session persistence (sessionStorage) ───
+   A page refresh / accidental back-forward mid-session used to silently
+   wipe all study progress. This mirrors the drafting idea already used for
+   real exams (see utils/examDraftStorage.js) but scoped to sessionStorage
+   — flashcards have no server-side attempt row to reconcile against, so a
+   tab-lifetime cache is enough to recover from the common "oops, refreshed"
+   case without leaving stale entries behind. */
+const flashcardDraftKey = examId => `ic3_flashcard_draft_${examId}`;
+const readFlashcardDraft = (examId) => {
+  try {
+    const raw = sessionStorage.getItem(flashcardDraftKey(examId));
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+};
+const writeFlashcardDraft = (examId, data) => {
+  try { sessionStorage.setItem(flashcardDraftKey(examId), JSON.stringify(data)); } catch { /* storage unavailable/full — non-critical */ }
+};
+const clearFlashcardDraft = (examId) => {
+  try { sessionStorage.removeItem(flashcardDraftKey(examId)); } catch { /* ignore */ }
+};
 
 /* ─── Fisher-Yates ─── */
 const shuffleArr = a => {
@@ -69,8 +91,8 @@ const AnswerBtn = ({ idx, isSelected, ansCorrect, isWrong, revealed, disabled, o
       letterStyle = { background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', boxShadow: '0 4px 12px rgba(99,102,241,0.35)' };
       textClass = 'text-indigo-900 dark:text-indigo-200 font-semibold';
     } else {
-      wrapClass = 'border-2 border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-md hover:shadow-indigo-50 dark:hover:shadow-none hover:-translate-y-px group';
-      letterClass = 'bg-gray-100 text-gray-400 dark:bg-slate-700 dark:text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 dark:group-hover:bg-indigo-900/50 dark:group-hover:text-indigo-400';
+      wrapClass = 'border-2 border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xs hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md hover:shadow-indigo-100/60 dark:hover:shadow-none hover:-translate-y-0.5 group';
+      letterClass = 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 dark:group-hover:bg-indigo-900/50 dark:group-hover:text-indigo-400';
       textClass = 'text-gray-700 dark:text-slate-300';
     }
   } else {
@@ -196,7 +218,7 @@ const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
                 : (revealed ? (correct ? '#86efac' : '#fca5a5') : userVal !== undefined ? '#93c5fd' : '#e2e8f0'),
               background: isDark
                 ? (revealed ? (correct ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)') : userVal !== undefined ? 'rgba(59,130,246,0.12)' : '#1e293b')
-                : (revealed ? (correct ? '#f0fdf4' : '#fef2f2') : userVal !== undefined ? '#eff6ff' : '#fff'),
+                : (revealed ? (correct ? '#f0fdf4' : '#fef2f2') : userVal !== undefined ? '#eff6ff' : '#f8fafc'),
             }}>
             <div className="flex items-start gap-3 px-4 py-3">
               <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
@@ -221,7 +243,7 @@ const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
                   <React.Fragment key={String(val)}>
                     {!val && <div style={{ width: 1, background: isDark ? '#334155' : '#f1f5f9' }} />}
                     <button disabled={revealed} onClick={() => !revealed && onSelect({ ...sel, [stmt.id]: val })}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all"
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold transition-all ${!revealed && !active ? 'hover:bg-slate-100 dark:hover:bg-slate-700/60' : ''}`}
                       style={{ background: bg2, color: tc }}>
                       {val ? <><CheckCircle2 className="w-3.5 h-3.5" />{t('flashcard.trueFalse.true')}</> : <><XCircle className="w-3.5 h-3.5" />{t('flashcard.trueFalse.false')}</>}
                     </button>
@@ -522,29 +544,39 @@ const HotspotPanel = ({ question, revealed, selection, onSelect }) => {
       {question.image_url && (
         <div className="relative rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 select-none shadow-xs">
           <img src={question.image_url} alt={t('flashcard.hotspot.imageAlt')} className="w-full h-auto block" draggable={false} />
-          {regions.map(r => {
+          {regions.map((r, i) => {
             const isS = sel.includes(r.id);
-            let borderC, bgC;
+            let borderC, bgC, borderStyleVal = 'solid';
             if (revealed) {
               if (r.is_correct && isS) { borderC = '#22c55e'; bgC = 'rgba(34,197,94,0.25)'; }
               else if (r.is_correct && !isS) { borderC = '#86efac'; bgC = 'rgba(134,239,172,0.15)'; }
               else if (!r.is_correct && isS) { borderC = '#ef4444'; bgC = 'rgba(239,68,68,0.25)'; }
               else { borderC = 'transparent'; bgC = 'transparent'; }
             } else {
+              // Idle regions get a faint dashed outline (not fully invisible) so
+              // students can discover the clickable zones without hunting for
+              // them pixel-by-pixel — solid + tinted once selected/hovered.
               if (isS) { borderC = '#f59e0b'; bgC = 'rgba(245,158,11,0.2)'; }
               else if (hovered === r.id) { borderC = '#93c5fd'; bgC = 'rgba(147,197,253,0.15)'; }
-              else { borderC = 'transparent'; bgC = 'transparent'; }
+              else { borderC = 'rgba(99,102,241,0.3)'; bgC = 'transparent'; borderStyleVal = 'dashed'; }
             }
             return (
-              <div key={r.id}
+              <button key={r.id}
+                type="button"
+                disabled={revealed}
+                aria-pressed={isS}
+                aria-label={r.label || t('flashcard.hotspot.regionLabel', { number: i + 1 })}
                 onClick={() => handleClick(r.id)}
                 onMouseEnter={() => setHovered(r.id)}
                 onMouseLeave={() => setHovered(null)}
+                onFocus={() => setHovered(r.id)}
+                onBlur={() => setHovered(null)}
+                className="appearance-none p-0 m-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 style={{
                   position: 'absolute',
                   left: `${r.x}%`, top: `${r.y}%`,
                   width: `${r.width}%`, height: `${r.height}%`,
-                  border: `2px solid ${borderC}`,
+                  border: `2px ${borderStyleVal} ${borderC}`,
                   background: bgC,
                   borderRadius: 6,
                   cursor: revealed ? 'default' : 'pointer',
@@ -552,7 +584,7 @@ const HotspotPanel = ({ question, revealed, selection, onSelect }) => {
                 }}>
                 {revealed && r.is_correct && <span className="absolute top-0.5 left-0.5 bg-green-500 text-white text-[9px] font-bold px-1 rounded-sm leading-none">✔</span>}
                 {revealed && !r.is_correct && isS && <span className="absolute top-0.5 left-0.5 bg-red-500 text-white text-[9px] font-bold px-1 rounded-sm leading-none">✘</span>}
-              </div>
+              </button>
             );
           })}
         </div>
@@ -901,6 +933,7 @@ export const FlashcardPage = () => {
   const navigate   = useNavigate();
   const { user, isSelfRegistered } = useAuth();
   const { isDark } = useTheme();
+  const { toasts, showToast, dismissToast } = useToast();
 
   /* ── Access guard ── */
   useEffect(() => {
@@ -930,19 +963,37 @@ export const FlashcardPage = () => {
       try {
         const [examRes, qRes] = await Promise.all([
           supabase.from('exams').select('*, exam_levels(label)').eq('id', examId).single(),
-          supabase.from('questions').select(`
-            id, content, image_url, question_type, order_index,
-            answers(id, content, image_url, is_correct, order_index),
-            truefalse_statements(id, content, is_true, order_index),
-            dragdrop_pairs(id, drag_content, drag_image_url, drop_content, order_index),
-            hotspot_regions(id, x, y, width, height, is_correct, label, order_index)
-          `).eq('exam_id', examId).order('order_index'),
+          // RPC instead of a direct nested SELECT — this page legitimately
+          // needs is_correct/is_true (reveal-after-answer study mode), but
+          // must still re-check purchase access for self-registered accounts
+          // server-side rather than relying only on the redirect-after-fetch
+          // guard above. See supabase/sql/2026-07-14_security_hardening.sql.
+          supabase.rpc('get_flashcard_questions', { p_exam_id: examId }),
         ]);
         if (examRes.error) throw examRes.error;
         if (qRes.error)   throw qRes.error;
         setExam(examRes.data);
-        setAllQuestions(qRes.data || []);
-        buildDeck(qRes.data || [], false);
+        const questions = qRes.data || [];
+        setAllQuestions(questions);
+
+        // Resume an in-progress session if the tab still has one cached
+        // (e.g. accidental refresh) instead of silently discarding it.
+        const draft = readFlashcardDraft(examId);
+        const byId = new Map(questions.map(q => [q.id, q]));
+        const restoredDeck = (draft?.deckIds || []).map(id => byId.get(id)).filter(Boolean);
+        if (draft && restoredDeck.length > 0 && restoredDeck.length === draft.deckIds.length) {
+          setDeck(restoredDeck);
+          setShuffledPerCard(computePerCard(restoredDeck));
+          setCurrentIdx(Math.min(draft.currentIdx || 0, restoredDeck.length - 1));
+          setResults(draft.results || []);
+          setSkippedQueue((draft.skippedIds || []).map(id => byId.get(id)).filter(Boolean));
+          setPhase(draft.phase || 'main');
+          setIsShuffled(!!draft.isShuffled);
+          cardKey.current += 1;
+          showToast(t('flashcard.resumedSession'), 'info');
+        } else {
+          buildDeck(questions, false);
+        }
       } catch (err) { console.error(err); navigate('/flashcard'); }
       finally { setLoading(false); }
     })();
@@ -952,6 +1003,26 @@ export const FlashcardPage = () => {
     answers:     shuffleArr([...(q.answers||[]).sort((a,b) => a.order_index - b.order_index)]),
     dropOptions: shuffleArr([...new Set((q.dragdrop_pairs||[]).map(p => p.drop_content))]),
   }));
+
+  // Persist progress every time it changes so a refresh mid-session can
+  // recover instead of silently losing the student's study progress.
+  useEffect(() => {
+    if (!examId || deck.length === 0 || showSummary) return;
+    writeFlashcardDraft(examId, {
+      deckIds: deck.map(q => q.id),
+      currentIdx,
+      results,
+      skippedIds: skippedQueue.map(q => q.id),
+      phase,
+      isShuffled,
+    });
+  }, [examId, deck, currentIdx, results, skippedQueue, phase, isShuffled, showSummary]);
+
+  // Session finished — drop the cached draft so reopening this exam later
+  // starts fresh instead of resuming a completed run.
+  useEffect(() => {
+    if (showSummary && examId) clearFlashcardDraft(examId);
+  }, [showSummary, examId]);
 
   const buildDeck = (questions, shuffled) => {
     const d = shuffled ? shuffleArr(questions) : [...questions];
@@ -1049,7 +1120,7 @@ export const FlashcardPage = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 shadow-xs">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
-          <Link to="/flashcard" className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-all shrink-0">
+          <Link to="/flashcard" aria-label={t('flashcard.backToList')} className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-all shrink-0">
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <div className="flex-1 min-w-0">
@@ -1064,12 +1135,16 @@ export const FlashcardPage = () => {
               </div>
             )}
             <button onClick={toggleShuffle}
+              aria-pressed={isShuffled}
+              aria-label={t('flashcard.shuffleButton')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all
                 ${isShuffled ? 'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/60' : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700'}`}>
               <Shuffle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t('flashcard.shuffleButton')}</span>
+              <span className="hidden sm:inline" aria-hidden="true">{t('flashcard.shuffleButton')}</span>
             </button>
             <button onClick={() => setShowKeyHint(v => !v)}
+              aria-pressed={showKeyHint}
+              aria-label={t('flashcard.keyboardHintToggle')}
               className={`p-2 rounded-xl border transition-all ${showKeyHint ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600' : 'border-slate-200 text-slate-400 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-500 dark:hover:bg-slate-700'}`}>
               <Keyboard className="w-4 h-4" />
             </button>
@@ -1143,6 +1218,8 @@ export const FlashcardPage = () => {
           </div>
         )}
       </div>
+
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };

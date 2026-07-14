@@ -444,7 +444,11 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
   };
 
   const [hoveredId, setHoveredId] = React.useState(null);
-  const correctCount  = sortedRegions.filter(r => r.is_correct).length;
+  // NOTE: deliberately not reading region.is_correct here — this component renders
+  // during live exam-taking (ExamPage/MockExamPage), and the questions fetch for
+  // those pages no longer selects is_correct at all (see docs/DATABASE_SCHEMA.md
+  // "Bẫy thường gặp"). Any UI that reveals how many regions are correct before
+  // submit is itself a leak, independent of whether the field is in the payload.
   const selectedCount = selected.length;
 
   return (
@@ -462,12 +466,9 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
             }
           </p>
         </div>
-        {isMulti && (
-          <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${
-            selectedCount >= correctCount && selectedCount > 0
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
-          }`}>
-            {selectedCount}/{correctCount}
+        {isMulti && selectedCount > 0 && (
+          <span className="text-xs font-bold px-3 py-1 rounded-full shrink-0 bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
+            {selectedCount}
           </span>
         )}
       </div>
@@ -551,7 +552,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
         <div className="flex items-center gap-2 px-4 py-2.5 bg-orange-50 border border-orange-200 rounded-xl dark:bg-orange-950/30 dark:border-orange-800/50">
           <span className="text-orange-500">🎯</span>
           <p className="text-sm font-medium text-orange-700 dark:text-orange-300">
-            {t('questionRenderer.hotspot.selectedCount', { count: selected.length })}{isMulti ? t('questionRenderer.hotspot.selectedRequired', { correct: correctCount }) : ''}
+            {t('questionRenderer.hotspot.selectedCount', { count: selected.length })}
           </p>
           <button
             type="button"

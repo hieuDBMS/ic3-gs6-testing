@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ExternalLink, Clock, Calendar, BookOpen,
   ChevronLeft, ChevronRight, Filter, X, AlertTriangle, Trash2,
@@ -44,6 +45,7 @@ const Chip = ({ label, active, onClick, colorActive = 'bg-indigo-600 text-white 
 const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false, canDelete = false }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [passFilter, setPassFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -54,7 +56,7 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false, canDelete 
   const [deleting, setDeleting] = useState(false);
   const { toasts, showToast, dismissToast } = useToast();
 
-  const { attempts, totalCount, cheatCounts, loading, refetch } = useExamAttempts(studentId, {
+  const { attempts, totalCount, cheatCounts, loading } = useExamAttempts(studentId, {
     excludeStatus: 'in_progress',
     examType: typeFilter !== 'all' ? typeFilter : undefined,
     dateFrom, dateTo, passFilter,
@@ -85,13 +87,19 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false, canDelete 
       setDeleteTarget(null);
       // Deleting the last row on a page beyond the first would otherwise leave
       // `page` pointing past the new last page — step back instead (this alone
-      // triggers the hook's own refetch for the new page). Any other case can
-      // refresh in place without flashing the skeleton for a single-row change.
+      // triggers the hook's own refetch for the new page, since `page` is part
+      // of its query key).
       if (attempts.length === 1 && page > 0) {
         setPage(p => p - 1);
-      } else {
-        refetch(true);
       }
+      // Query results stay "fresh" (no refetch) for staleTime after the last
+      // fetch, so a plain refetch() call after a mutation isn't enough once
+      // this same query gets remounted elsewhere within that window (e.g. the
+      // teacher reopens this student's page) — it would silently serve the
+      // pre-delete cache. Explicitly invalidate so every consumer, mounted or
+      // not, is forced to refetch.
+      queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
       showToast(t('attemptHistory.deleteSuccessToast'), 'success');
     } catch (err) {
       showToast(t('attemptHistory.deleteErrorToast', { message: err.message }), 'error');

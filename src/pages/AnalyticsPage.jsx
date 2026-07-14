@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import {
@@ -55,6 +55,12 @@ export const AnalyticsPage = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiInsight, setAiInsight] = useState('');
   const [aiError, setAiError] = useState('');
+  // Cooldown between AI Insight runs — each click is an unbounded-cost Gemini
+  // API call server-side with no rate limit of its own; without this a
+  // teacher spam-clicking the button fires one call per click.
+  const AI_COOLDOWN_SECONDS = 20;
+  const [aiCooldown, setAiCooldown] = useState(0);
+  const aiCooldownEndRef = useRef(0);
 
   useEffect(() => {
     supabase.from('exam_levels').select('*').order('version').order('level_number')
@@ -85,9 +91,12 @@ export const AnalyticsPage = () => {
           p_group_by: groupBy, p_level_id: levelId || null, p_exam_type: examType || null,
           p_date_from: dateFromISO, p_date_to: dateToISO,
           p_pass_filter: passFilter === 'all' ? null : passFilter,
+          p_school_id: schoolId || null, p_class_name: className || null,
         }),
         supabase.rpc('get_question_wrong_stats', {
           p_min_attempts: Number(minAttempts) || 0, p_level_id: levelId || null, p_exam_type: examType || null,
+          p_date_from: dateFromISO, p_date_to: dateToISO,
+          p_school_id: schoolId || null, p_class_name: className || null,
         }),
       ]);
       if (distRes.error) throw distRes.error;
@@ -112,7 +121,18 @@ export const AnalyticsPage = () => {
     setDateFrom(''); setDateTo('');
   };
 
+  // Ticks aiCooldown down to 0 once a run starts its cooldown window —
+  // always running (cheap) rather than started/stopped conditionally, so it
+  // never needs to react to aiCooldown itself changing.
+  useEffect(() => {
+    const id = setInterval(() => {
+      setAiCooldown(Math.max(0, Math.ceil((aiCooldownEndRef.current - Date.now()) / 1000)));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const runAiAnalysis = async () => {
+    if (aiLoading || aiCooldown > 0) return;
     setAiLoading(true);
     setAiError('');
     setAiInsight('');
@@ -127,6 +147,8 @@ export const AnalyticsPage = () => {
       setAiError(err.message || t('analytics.aiErrorFallback'));
     } finally {
       setAiLoading(false);
+      aiCooldownEndRef.current = Date.now() + AI_COOLDOWN_SECONDS * 1000;
+      setAiCooldown(AI_COOLDOWN_SECONDS);
     }
   };
 
@@ -264,11 +286,11 @@ export const AnalyticsPage = () => {
           </div>
           <button
             onClick={runAiAnalysis}
-            disabled={aiLoading || loading}
+            disabled={aiLoading || loading || aiCooldown > 0}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all disabled:opacity-50"
           >
             {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-            {t('analytics.aiRunButton')}
+            {aiCooldown > 0 ? t('analytics.aiCooldown', { seconds: aiCooldown }) : t('analytics.aiRunButton')}
           </button>
         </div>
         {aiError && <p className="mt-3 text-xs text-red-600 dark:text-red-400">{aiError}</p>}

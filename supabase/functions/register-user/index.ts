@@ -11,6 +11,28 @@ const json = (data: unknown, status = 200) =>
     headers: { ...cors, 'Content-Type': 'application/json' },
   });
 
+// Verifies a Turnstile token with Cloudflare's siteverify endpoint.
+// Only enforced when TURNSTILE_SECRET_KEY is configured, so local/dev
+// deployments without a Cloudflare site keep working unchanged.
+async function verifyTurnstile(token: string | undefined, remoteIp: string | null): Promise<string | null> {
+  const secret = Deno.env.get('TURNSTILE_SECRET_KEY');
+  if (!secret) return null;
+  if (!token) return 'Vui long hoan thanh xac minh CAPTCHA';
+
+  const form = new URLSearchParams();
+  form.append('secret', secret);
+  form.append('response', token);
+  if (remoteIp) form.append('remoteip', remoteIp);
+
+  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    body: form,
+  });
+  const outcome = await res.json();
+  if (!outcome.success) return 'Xac minh CAPTCHA khong hop le, vui long thu lai';
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
@@ -23,7 +45,7 @@ Deno.serve(async (req) => {
     });
 
     const body = await req.json().catch(() => ({}));
-    const { username, password, fullName } = body;
+    const { username, password, fullName, turnstileToken } = body;
 
     if (!username || !password || !fullName) {
       return json({ error: 'Can dien du: ten dang nhap, mat khau, ho va ten' });
@@ -36,6 +58,24 @@ Deno.serve(async (req) => {
     }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
       return json({ error: 'Ten dang nhap chi duoc chua chu cai, so va dau gach duoi' });
+    }
+
+    // Rate limit by IP (5 registrations/hour by default) — independent of
+    // CAPTCHA, which is a no-op whenever TURNSTILE_SECRET_KEY isn't set (see
+    // verifyTurnstile above). admin.auth.admin.createUser below deliberately
+    // bypasses Supabase Auth's own signup rate-limit, so without this a
+    // script can mass-create accounts with nothing else in the way.
+    const remoteIp = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown';
+    const { data: allowed, error: rlErr } = await admin.rpc('check_and_record_registration_attempt', { p_ip: remoteIp });
+    if (rlErr) {
+      console.error('[register-user] rate limit check failed:', rlErr.message);
+    } else if (!allowed) {
+      return json({ error: 'Ban da dang ky qua nhieu lan. Vui long thu lai sau 1 gio.' });
+    }
+
+    const captchaError = await verifyTurnstile(turnstileToken, req.headers.get('cf-connecting-ip'));
+    if (captchaError) {
+      return json({ error: captchaError });
     }
 
     const email = `${username.toLowerCase()}@ic3fighter.local`;

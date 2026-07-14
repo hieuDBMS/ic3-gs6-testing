@@ -60,7 +60,7 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
               <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">{t('flashcardList.cancelSheet.title')}</h3>
               <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{t('flashcardList.cancelSheet.subtitle')}</p>
             </div>
-            <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition">
+            <button onClick={onClose} aria-label={t('flashcardList.cancelSheet.closeAriaLabel')} className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 flex items-center justify-center transition">
               <X className="w-3.5 h-3.5 text-gray-500 dark:text-slate-400" />
             </button>
           </div>
@@ -303,7 +303,7 @@ export const FlashcardListPage = () => {
                           const showSkeleton = isSelfRegistered && !purchasesLoaded;
                           return (
                             <div key={exam.id}
-                              className="bg-white dark:bg-slate-800 rounded-2xl p-4 flex flex-col gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                              className="bg-white dark:bg-slate-800 rounded-2xl p-4 flex flex-col gap-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                               style={{ border: isPending ? '1.5px solid #fbbf24' : `1.5px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
                               <div className="flex items-start gap-2">
                                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug flex-1 line-clamp-2">{exam.title}</h3>

@@ -176,24 +176,16 @@ Deno.serve(async (req) => {
         purchaseId = newPurchase.id;
       }
 
-      const { data: p } = await admin.from('purchases').select('*').eq('id', purchaseId).single();
-      if (!p) return json({ error: 'Khong tim thay purchase' });
-
-      const newPaid   = p.paid_amount + amount;
-      const newStatus = newPaid >= liveRequired ? 'SUCCESS' : 'PARTIAL';
-
-      await admin.from('purchases').update({
-        paid_amount: newPaid, status: newStatus,
-        updated_at: new Date().toISOString(),
-      }).eq('id', purchaseId);
-
-      await admin.from('payment_history').insert({
-        purchase_id: purchaseId, amount,
-        note: note || null, recorded_by: user.id,
-        payment_time: new Date().toISOString(),
+      // record_purchase_payment locks the purchases row (SELECT ... FOR
+      // UPDATE) and re-adds paid_amount atomically — a plain read-then-write
+      // here could race with the SePay webhook crediting the same purchase
+      // at the same moment and silently lose one of the two payments.
+      const { data: result, error: payErr } = await admin.rpc('record_purchase_payment', {
+        p_purchase_id: purchaseId, p_amount: amount, p_note: note || null, p_recorded_by: user.id,
       });
+      if (payErr) return json({ error: payErr.message });
 
-      return json({ success: true, newStatus, newPaid, remaining: Math.max(0, liveRequired - newPaid), unlocked: newStatus === 'SUCCESS' });
+      return json({ success: true, ...result });
     }
 
     // ── LIST OWN (student) ──────────────────────────────────────────
@@ -221,8 +213,14 @@ Deno.serve(async (req) => {
     if (action === 'list-all') {
       if (!isTeacher) return json({ error: 'Chi giao vien moi duoc xem' }, 403);
 
+      // PaymentHistoryPage computes its stats (nSuccess/nPending/revenue) and
+      // search/filter client-side from the full list, so this can't switch to
+      // true server-side pagination without also moving those aggregates into
+      // an RPC (bigger change, tracked separately). `.limit(2000)` is a safety
+      // cap only — bounds worst-case payload growth instead of leaving it
+      // fully unbounded against the whole purchases table.
       const { data: purchases, error } = await admin
-        .from('purchases').select('*').order('created_at', { ascending: false });
+        .from('purchases').select('*').order('created_at', { ascending: false }).limit(2000);
       if (error) return json({ error: error.message });
       if (!purchases || purchases.length === 0) return json({ success: true, purchases: [] });
 
@@ -258,30 +256,20 @@ Deno.serve(async (req) => {
         return json({ error: 'Thieu purchaseId hoac so tien khong hop le' });
 
       const { data: purchase } = await admin
-        .from('purchases')
-        .select('*, exams(required_amount)')
-        .eq('id', purchaseId)
-        .single();
+        .from('purchases').select('id, status').eq('id', purchaseId).single();
       if (!purchase) return json({ error: 'Khong tim thay giao dich' });
       if (purchase.status === 'SUCCESS') return json({ error: 'Giao dich nay da thanh cong roi' });
 
-      const liveRequired = (purchase.exams as { required_amount?: number } | null)?.required_amount
-        ?? purchase.required_amount;
-
-      const newPaid   = purchase.paid_amount + amount;
-      const newStatus = newPaid >= liveRequired ? 'SUCCESS' : 'PARTIAL';
-      const remaining = Math.max(0, liveRequired - newPaid);
-
-      await admin.from('purchases').update({
-        paid_amount: newPaid, status: newStatus, updated_at: new Date().toISOString(),
-      }).eq('id', purchaseId);
-
-      await admin.from('payment_history').insert({
-        purchase_id: purchaseId, amount, note: note || null,
-        recorded_by: user.id, payment_time: new Date().toISOString(),
+      // record_purchase_payment locks the purchases row (SELECT ... FOR
+      // UPDATE) and re-adds paid_amount atomically — a plain read-then-write
+      // here could race with the SePay webhook crediting the same purchase
+      // at the same moment and silently lose one of the two payments.
+      const { data: result, error: payErr } = await admin.rpc('record_purchase_payment', {
+        p_purchase_id: purchaseId, p_amount: amount, p_note: note || null, p_recorded_by: user.id,
       });
+      if (payErr) return json({ error: payErr.message });
 
-      return json({ success: true, newStatus, newPaid, remaining, unlocked: newStatus === 'SUCCESS' });
+      return json({ success: true, ...result });
     }
 
     // ── STATUS (student) ─────────────────────────────────────────────

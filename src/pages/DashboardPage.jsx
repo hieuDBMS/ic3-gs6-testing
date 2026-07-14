@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { AttemptHistoryTable } from '../components/dashboard/AttemptHistoryTable';
@@ -91,6 +92,7 @@ const useTeacherStats = (enabled) => {
 export const DashboardPage = () => {
   const { t } = useTranslation();
   const { user, profile, isTeacher } = useAuth();
+  const queryClient = useQueryClient();
 
   const studentStats = useStudentStats(!isTeacher ? user?.id : null);
   const teacherStats = useTeacherStats(isTeacher);
@@ -111,6 +113,10 @@ export const DashboardPage = () => {
       if (fnErr) throw new Error(fnErr.message || t('studentManagement.edgeFunctionError'));
       if (data?.error) throw new Error(data.error);
       setClearConfirm(false);
+      // Remounting via historyKey alone can still hit a "fresh" (un-invalidated)
+      // cache entry within staleTime and silently render the pre-clear rows —
+      // see the same pattern in StudentProgressPage.jsx / AttemptHistoryTable.jsx.
+      queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
       setHistoryKey(k => k + 1);
       showToast(t('dashboard.clearMyHistorySuccessToast'), 'success');
     } catch (err) {

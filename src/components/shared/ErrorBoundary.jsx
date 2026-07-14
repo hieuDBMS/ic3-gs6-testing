@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, RotateCw } from 'lucide-react';
+import { captureException } from '../../lib/sentry.js';
 
 /**
  * Top-level crash guard. Without this, any render error in the tree (typo,
@@ -8,7 +9,7 @@ import { AlertTriangle, RotateCw } from 'lucide-react';
  * their in-progress attempt with zero explanation.
  */
 export class ErrorBoundary extends React.Component {
-  state = { hasError: false };
+  state = { hasError: false, eventId: null };
 
   static getDerivedStateFromError() {
     return { hasError: true };
@@ -16,6 +17,8 @@ export class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     console.error('Unhandled render error:', error, info);
+    const eventId = captureException(error, { contexts: { react: { componentStack: info.componentStack } } });
+    if (eventId) this.setState({ eventId });
   }
 
   render() {
@@ -40,6 +43,11 @@ export class ErrorBoundary extends React.Component {
               <RotateCw className="w-4 h-4" />
               Tải lại trang
             </button>
+            {this.state.eventId && (
+              <p className="mt-3 text-xs text-gray-400 dark:text-slate-500">
+                Mã lỗi: {this.state.eventId}
+              </p>
+            )}
           </div>
         </div>
       );

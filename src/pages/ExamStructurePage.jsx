@@ -254,13 +254,28 @@ const LevelSection = ({ level, exams, onRefresh, showToast }) => {
 
   const handleDeleteExamClick = async (exam) => {
     try {
-      const { count: qCount, error: qErr } = await supabase
-        .from('questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('exam_id', exam.id);
-      if (qErr) { showToast(t('examStructure.checkError', { message: qErr.message }), 'error'); return; }
-      if (qCount > 0) {
-        showToast(t('examStructure.examHasQuestionsError', { count: qCount }), 'error');
+      // exams.id has no ON DELETE CASCADE from exam_attempts/purchases — an
+      // unchecked delete would fail with a raw Postgres FK-violation message
+      // surfaced verbatim in a toast. Check all three referencing tables up
+      // front so the teacher gets a clear reason instead of a DB error string.
+      const [qRes, aRes, pRes] = await Promise.all([
+        supabase.from('questions').select('*', { count: 'exact', head: true }).eq('exam_id', exam.id),
+        supabase.from('exam_attempts').select('*', { count: 'exact', head: true }).eq('exam_id', exam.id),
+        supabase.from('purchases').select('*', { count: 'exact', head: true }).eq('exam_id', exam.id),
+      ]);
+      if (qRes.error) { showToast(t('examStructure.checkError', { message: qRes.error.message }), 'error'); return; }
+      if (aRes.error) { showToast(t('examStructure.checkError', { message: aRes.error.message }), 'error'); return; }
+      if (pRes.error) { showToast(t('examStructure.checkError', { message: pRes.error.message }), 'error'); return; }
+      if (qRes.count > 0) {
+        showToast(t('examStructure.examHasQuestionsError', { count: qRes.count }), 'error');
+        return;
+      }
+      if (aRes.count > 0) {
+        showToast(t('examStructure.examHasAttemptsError', { count: aRes.count }), 'error');
+        return;
+      }
+      if (pRes.count > 0) {
+        showToast(t('examStructure.examHasPurchasesError', { count: pRes.count }), 'error');
         return;
       }
       setConfirmDialog({ open: true, exam, deleting: false });

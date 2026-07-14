@@ -92,6 +92,7 @@
       "errorPasswordLength": "Mật khẩu phải có ít nhất 6 ký tự.",
       "errorUsernameLength": "Tên đăng nhập phải có ít nhất 4 ký tự.",
       "errorUsernameFormat": "Tên đăng nhập chỉ được chứa chữ cái, số và dấu gạch dưới.",
+      "errorCaptcha": "Vui lòng hoàn thành xác minh CAPTCHA.",
       "errorGeneric": "Đã có lỗi xảy ra. Vui lòng thử lại."
     }
   },

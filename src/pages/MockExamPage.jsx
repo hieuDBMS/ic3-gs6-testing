@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +8,8 @@ import { useTheme } from '../context/ThemeContext';
 import { Timer } from '../components/exam/Timer';
 import { QuestionNavigator } from '../components/exam/QuestionNavigator';
 import { QuestionRenderer } from '../components/exam/QuestionRenderer';
+import { readExamDraft, writeExamDraft, clearExamDraft, mergeExamDraft } from '../utils/examDraftStorage';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
   Flag, CheckCircle2, AlertTriangle, X,
   BookOpen, ShieldAlert, Send, LayoutGrid,
@@ -76,10 +79,16 @@ const ExamSkeleton = () => (
 ───────────────────────────────────────────────────────── */
 const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
   const { t } = useTranslation();
+  const cancelBtnRef = useRef(null);
+  const dialogRef = useFocusTrap(true, { autoFocusRef: cancelBtnRef, onEscape: onCancel });
   return (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={onCancel} />
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mock-confirm-submit-title"
       className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
       style={{ animation: 'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
     >
@@ -99,7 +108,7 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
             }
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('mockExam.confirmModal.title')}</h2>
+            <h2 id="mock-confirm-submit-title" className="text-xl font-bold text-gray-900 dark:text-slate-100">{t('mockExam.confirmModal.title')}</h2>
             {unansweredCount > 0 ? (
               <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
                 {t('mockExam.confirmModal.unansweredPrefix')} <span className="font-bold text-amber-600 dark:text-amber-400">{t('mockExam.confirmModal.unansweredCount', { count: unansweredCount })}</span>. {t('mockExam.confirmModal.unansweredSuffix')}
@@ -115,6 +124,7 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
         {/* Buttons */}
         <div className="flex gap-3">
           <button
+            ref={cancelBtnRef}
             onClick={onCancel}
             className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors text-sm"
           >
@@ -143,10 +153,16 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
 const RefreshWarningModal = ({ onStay, onLeave }) => {
   const { isDark } = useTheme();
   const { t } = useTranslation();
+  const stayBtnRef = useRef(null);
+  const dialogRef = useFocusTrap(true, { autoFocusRef: stayBtnRef, onEscape: onStay });
   return (
   <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
     <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" />
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mock-refresh-warning-title"
       className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
       style={{ animation: 'refreshModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
     >
@@ -157,7 +173,7 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
             <ShieldAlert className="w-8 h-8 text-rose-500" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('mockExam.refreshModal.title')}</h2>
+            <h2 id="mock-refresh-warning-title" className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('mockExam.refreshModal.title')}</h2>
             <p className="text-xs font-semibold uppercase tracking-widest text-rose-400">{t('mockExam.refreshModal.warningBadge')}</p>
           </div>
         </div>
@@ -178,6 +194,7 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
             {t('mockExam.refreshModal.leaveAnyway')}
           </button>
           <button
+            ref={stayBtnRef}
             onClick={onStay}
             className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all shadow-lg"
             style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)', boxShadow: '0 4px 14px rgba(239,68,68,0.35)' }}
@@ -199,10 +216,16 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
 const NavigateAwayModal = ({ onStay, onLeave }) => {
   const { isDark } = useTheme();
   const { t } = useTranslation();
+  const stayBtnRef = useRef(null);
+  const dialogRef = useFocusTrap(true, { autoFocusRef: stayBtnRef, onEscape: onStay });
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" />
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mock-navigate-away-title"
         className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
         style={{ animation: 'refreshModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >
@@ -212,7 +235,7 @@ const NavigateAwayModal = ({ onStay, onLeave }) => {
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: isDark ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#fff7ed,#fee2e2)' }}>
               <ShieldAlert className="w-8 h-8 text-rose-500" />
             </div>
-            <h2 className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('mockExam.navigateAwayModal.title')}</h2>
+            <h2 id="mock-navigate-away-title" className="text-lg font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{t('mockExam.navigateAwayModal.title')}</h2>
           </div>
           <div className="rounded-2xl p-4 text-sm" style={{ background: isDark ? 'rgba(239,68,68,0.1)' : 'linear-gradient(135deg,#fff7ed,#fef2f2)' }}>
             <p className="text-gray-600 dark:text-slate-400">
@@ -227,6 +250,7 @@ const NavigateAwayModal = ({ onStay, onLeave }) => {
               {t('mockExam.navigateAwayModal.leaveButton')}
             </button>
             <button
+              ref={stayBtnRef}
               onClick={onStay}
               className="flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-all shadow-lg"
               style={{ background: 'linear-gradient(135deg,#f97316,#ef4444)', boxShadow: '0 4px 14px rgba(239,68,68,0.35)' }}
@@ -282,6 +306,7 @@ export const MockExamPage = () => {
   const { t } = useTranslation();
   const { attemptId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { isDark } = useTheme();
 
@@ -446,6 +471,13 @@ export const MockExamPage = () => {
     };
   }, [currentIndex, answers, flagged, attempt?.id]);
 
+  useEffect(() => {
+    if (!attempt?.id) return;
+    // Un-throttled local mirror — covers the gap before the throttled server
+    // ping above fires (see mergeExamDraft on resume in initExam below).
+    writeExamDraft(attempt.id, { answers, flagged, currentIndex });
+  }, [attempt?.id, currentIndex, answers, flagged]);
+
   const initExam = async () => {
     try {
       // 1. Fetch attempt
@@ -466,36 +498,28 @@ export const MockExamPage = () => {
       // Resume Session Pattern (see ExamPage.jsx / docs #22) — restore position,
       // answers and elapsed time so re-opening the same URL (tab closed mid-exam)
       // continues exactly where the student left off instead of starting blank.
-      setCurrentIndex(attemptData.current_question_index || 0);
-      setAnswers(attemptData.draft_answers?.answers || {});
-      setFlagged(attemptData.draft_answers?.flagged || []);
+      // Merged with the un-throttled localStorage mirror in case the last
+      // server ping never landed (see examDraftStorage.js).
+      const merged = mergeExamDraft(
+        { ...attemptData.draft_answers, currentIndex: attemptData.current_question_index || 0 },
+        readExamDraft(attemptData.id),
+      );
+      setCurrentIndex(merged.currentIndex);
+      setAnswers(merged.answers);
+      setFlagged(merged.flagged);
       setStartedAt(attemptData.started_at);
 
-      // 2. Fetch questions based on mock_question_ids
-      const questionIds = attemptData.mock_question_ids || [];
-      if (questionIds.length === 0) throw new Error('No questions generated for mock exam');
-
+      // 2. Fetch questions for this attempt via RPC — server-side excludes
+      // is_correct/is_true entirely (not just at the client-select layer),
+      // verifies the caller owns this attempt, and already returns rows in
+      // the exact mock_question_ids order (no client-side reorder needed).
+      // See supabase/sql/2026-07-14_security_hardening.sql.
       const { data: qResult, error: qError } = await supabase
-        .from('questions')
-        .select(`
-          id, content, image_url, question_type, order_index, hotspot_multi,
-          answers ( id, content, image_url, is_correct, order_index ),
-          dragdrop_pairs ( id, drag_content, drag_image_url, drop_content, drop_image_url, order_index ),
-          truefalse_statements ( id, content, is_true, order_index ),
-          hotspot_regions ( id, x, y, width, height, is_correct, label, order_index )
-        `)
-        .in('id', questionIds);
+        .rpc('get_mock_exam_questions', { p_attempt_id: attemptId });
 
       if (qError) throw qError;
-
-      // 3. Reorder questions to match mock_question_ids order exactly so we get a consistent random order
-      const orderedQuestions = [];
-      for (const qid of questionIds) {
-        const q = qResult.find(x => x.id === qid);
-        if (q) orderedQuestions.push(q);
-      }
-      
-      setQuestions(orderedQuestions);
+      if (!qResult || qResult.length === 0) throw new Error('No questions generated for mock exam');
+      setQuestions(qResult);
     } catch (error) {
       console.error('Failed to init mock exam:', error);
       navigate('/dashboard');
@@ -558,10 +582,16 @@ export const MockExamPage = () => {
       });
 
       if (rpcError) throw rpcError;
+      clearExamDraft(attemptId);
+      // Same 30s staleTime gotcha as ExamPage.jsx — invalidate so Dashboard's
+      // history table can't silently serve the pre-submit cached list.
+      queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
       navigate(`/mock-exam/${attemptId}/result`);
     } catch (error) {
       console.error('Error submitting:', error);
       if (error?.message?.includes('already_submitted')) {
+        clearExamDraft(attemptId);
+        queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
         navigate(`/mock-exam/${attemptId}/result`);
       } else {
         alert(t('mockExam.errors.submitFailed'));
@@ -570,7 +600,7 @@ export const MockExamPage = () => {
     } finally {
       setSubmitting(false);
     }
-  }, [answers, attemptId, questions, navigate, t]);
+  }, [answers, attemptId, questions, navigate, t, queryClient]);
 
   if (loading) return <ExamSkeleton />;
 

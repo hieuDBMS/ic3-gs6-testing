@@ -1,3 +1,5 @@
+import { sanitizeHtml } from './sanitizeHtml';
+
 export const SHEET_NAMES = ['choice_multi', 'dragdrop', 'truefalse'];
 
 /* ExcelJS is ~950kB — load on demand (template download / .xlsx parse) instead of
@@ -227,16 +229,17 @@ export async function commitQuestions(supabase, questions) {
   const results = [];
 
   for (const q of questions) {
+    let qId = null;
     try {
       const { data, error } = await supabase.from('questions').insert({
-        exam_id: q.examId, question_type: q.question_type, content: q.content,
+        exam_id: q.examId, question_type: q.question_type, content: sanitizeHtml(q.content),
         image_url: null, order_index: q.order_index, hotspot_multi: false,
       }).select('id').single();
       if (error) throw error;
-      const qId = data.id;
+      qId = data.id;
 
       if (q.question_type === 'truefalse') {
-        const rows = q.statements.map(s => ({ question_id: qId, content: s.content, is_true: s.is_true, order_index: s.order_index }));
+        const rows = q.statements.map(s => ({ question_id: qId, content: sanitizeHtml(s.content), is_true: s.is_true, order_index: s.order_index }));
         const { error: e2 } = await supabase.from('truefalse_statements').insert(rows);
         if (e2) throw e2;
       } else if (q.question_type === 'dragdrop') {
@@ -247,7 +250,7 @@ export async function commitQuestions(supabase, questions) {
         const { error: e2 } = await supabase.from('dragdrop_pairs').insert(rows);
         if (e2) throw e2;
       } else {
-        const rows = q.answers.map(a => ({ question_id: qId, content: a.content, image_url: a.image_url, is_correct: a.is_correct, order_index: a.order_index }));
+        const rows = q.answers.map(a => ({ question_id: qId, content: sanitizeHtml(a.content), image_url: a.image_url, is_correct: a.is_correct, order_index: a.order_index }));
         const { error: e2 } = await supabase.from('answers').insert(rows);
         if (e2) throw e2;
       }
@@ -255,6 +258,11 @@ export async function commitQuestions(supabase, questions) {
       affectedExamIds.add(q.examId);
       results.push({ ok: true, question: q });
     } catch (err) {
+      // The parent `questions` row may already be committed even though its
+      // answers/pairs/statements failed to insert — without this, a transient
+      // error here leaves a ghost question with zero sub-rows: renders blank
+      // and unscoreable to a student, and silently pollutes QuestionsPage.
+      if (qId) await supabase.from('questions').delete().eq('id', qId);
       results.push({ ok: false, question: q, message: err.message });
     }
   }

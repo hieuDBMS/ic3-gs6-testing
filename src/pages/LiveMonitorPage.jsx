@@ -37,6 +37,8 @@ export const LiveMonitorPage = () => {
   const { t } = useTranslation();
   const [attempts, setAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [truncated, setTruncated] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [page, setPage] = useState(0);
   const debounceRef = useRef(null);
@@ -47,7 +49,7 @@ export const LiveMonitorPage = () => {
     // query itself never returns a row this page would immediately drop.
     const cutoffISO = new Date(Date.now() - ACTIVITY_TIMEOUT_SECONDS * 1000).toISOString();
 
-    const { data: attemptRows } = await supabase
+    const { data: attemptRows, error: attemptErr } = await supabase
       .from('exam_attempts')
       .select(`
         id, user_id, current_question_index, total_questions, started_at, last_activity_at,
@@ -59,20 +61,32 @@ export const LiveMonitorPage = () => {
       .order('started_at', { ascending: false })
       .limit(300);
 
+    // A query error here must NOT be mistaken for "no one is taking an exam" —
+    // that empty state looks identical and would hide an outage exactly when
+    // live cheat-monitoring matters most. Keep the last-known list on screen
+    // instead of clearing it, and surface the error separately.
+    if (attemptErr) { setLoadError(true); setLoading(false); return; }
+
     const rows = attemptRows || [];
+    setTruncated(rows.length >= 300);
 
     let cheatCounts = {};
+    let cheatErr = null;
     if (rows.length) {
-      const { data: cheatRows } = await supabase
+      const { data: cheatRows, error } = await supabase
         .from('exam_cheat_events')
         .select('attempt_id')
         .in('attempt_id', rows.map(r => r.id));
+      cheatErr = error;
       cheatCounts = (cheatRows || []).reduce((acc, r) => {
         acc[r.attempt_id] = (acc[r.attempt_id] || 0) + 1;
         return acc;
       }, {});
     }
 
+    if (cheatErr) { setLoadError(true); setLoading(false); return; }
+
+    setLoadError(false);
     setAttempts(rows.map(r => ({ ...r, cheatCount: cheatCounts[r.id] || 0 })));
     setLoading(false);
   }, []);
@@ -151,6 +165,18 @@ export const LiveMonitorPage = () => {
           }
         />
       </div>
+
+      {loadError && (
+        <div className="mb-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm dark:bg-red-950/40 dark:border-red-800/60 dark:text-red-300">
+          <span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4 shrink-0" /> {t('liveMonitor.errorTitle')}</span>
+          <button onClick={fetchLive} className="font-semibold underline shrink-0">{t('liveMonitor.errorRetry')}</button>
+        </div>
+      )}
+      {!loadError && truncated && (
+        <div className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs dark:bg-amber-950/40 dark:border-amber-800/60 dark:text-amber-300">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {t('liveMonitor.truncatedNotice')}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

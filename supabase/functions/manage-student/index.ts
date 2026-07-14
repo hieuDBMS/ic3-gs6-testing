@@ -45,6 +45,8 @@ Deno.serve(async (req) => {
     if (action === 'create') {
       if (!email || !password || !fullName)
         return json({ error: 'Can dien du: ho ten, email, mat khau' });
+      if (password.length < 6)
+        return json({ error: 'Mat khau phai co it nhat 6 ky tu' });
 
       const { data: authData, error: createErr } = await admin.auth.admin.createUser({
         email,
@@ -148,17 +150,23 @@ Deno.serve(async (req) => {
     }
 
     // ── CLEAR ATTEMPT HISTORY (1 user, student hoac teacher) ────
+    // Loai tru status='in_progress': khong xoa mat session dang thi dang dien
+    // ra cua chinh hoc sinh nay (xoa "lich su" khong nen huy ca bai dang lam).
     if (action === 'clear-attempts') {
       if (!studentId) return json({ error: 'Thieu studentId' });
 
       const { count, error: countErr } = await admin
         .from('exam_attempts')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', studentId);
+        .eq('user_id', studentId)
+        .neq('status', 'in_progress');
       if (countErr) return json({ error: countErr.message });
 
       // attempt_answers + exam_cheat_events cascade tu dong (ON DELETE CASCADE)
-      const { error: delErr } = await admin.from('exam_attempts').delete().eq('user_id', studentId);
+      const { error: delErr } = await admin.from('exam_attempts')
+        .delete()
+        .eq('user_id', studentId)
+        .neq('status', 'in_progress');
       if (delErr) return json({ error: delErr.message });
 
       return json({ success: true, deletedCount: count ?? 0 });
@@ -180,16 +188,21 @@ Deno.serve(async (req) => {
     }
 
     // ── CLEAR ALL ATTEMPT HISTORY (toan he thong) ───────────────
+    // Loai tru status='in_progress': khong xoa cac session dang thi dang
+    // dien ra cua BAT KY hoc sinh nao ngay luc bam nut nay (co the co hang
+    // chuc em dang lam bai cung luc).
     if (action === 'clear-all-attempts') {
       const { count, error: countErr } = await admin
         .from('exam_attempts')
-        .select('id', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true })
+        .neq('status', 'in_progress');
       if (countErr) return json({ error: countErr.message });
 
       const { error: delErr } = await admin
         .from('exam_attempts')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+        .neq('status', 'in_progress');
       if (delErr) return json({ error: delErr.message });
 
       return json({ success: true, deletedCount: count ?? 0 });
@@ -198,6 +211,7 @@ Deno.serve(async (req) => {
     // ── RESET PASSWORD ────────────────────────────────────────
     if (action === 'reset-password') {
       if (!studentId || !password) return json({ error: 'Thieu studentId hoac mat khau' });
+      if (password.length < 6) return json({ error: 'Mat khau phai co it nhat 6 ky tu' });
       const { data: target } = await admin
         .from('profiles').select('role').eq('id', studentId).single();
       if (target?.role === 'teacher') return json({ error: 'Khong the doi mat khau giao vien' });

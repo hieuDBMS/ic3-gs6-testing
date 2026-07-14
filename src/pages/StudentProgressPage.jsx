@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { ArrowLeft, User, Eraser } from 'lucide-react';
 import { AttemptHistoryTable } from '../components/dashboard/AttemptHistoryTable';
@@ -11,6 +12,7 @@ import { Skeleton } from '../components/shared/Skeleton';
 export const StudentProgressPage = () => {
   const { t } = useTranslation();
   const { studentId } = useParams();
+  const queryClient = useQueryClient();
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [clearConfirm, setClearConfirm] = useState(false);
@@ -50,6 +52,12 @@ export const StudentProgressPage = () => {
       if (fnErr) throw new Error(fnErr.message || t('studentManagement.edgeFunctionError'));
       if (data?.error) throw new Error(data.error);
       setClearConfirm(false);
+      // Remounting resets the table's filters/page back to defaults, but the
+      // remounted query can still hit a "fresh" (un-invalidated) cache entry
+      // within staleTime and silently render the pre-delete rows — invalidate
+      // explicitly so it's forced to refetch regardless of cache age.
+      queryClient.invalidateQueries({ queryKey: ['examAttempts'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
       setHistoryKey(k => k + 1);
       showToast(t('studentManagement.clearHistorySuccessToast'), 'success');
     } catch (err) {
