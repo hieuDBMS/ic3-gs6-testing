@@ -21,7 +21,7 @@ const Chip = ({ label, active, onClick }) => (
 );
 
 const Card = ({ title, action, children }) => (
-  <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+  <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 overflow-hidden">
     <div className="px-5 py-3 border-b border-gray-100 dark:border-slate-700/60 flex items-center justify-between">
       <h2 className="text-sm font-bold text-gray-700 dark:text-slate-300">{title}</h2>
       {action}
@@ -140,12 +140,12 @@ export const AnalyticsPage = () => {
       />
 
       {/* Filter bar */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-4 space-y-3">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-700/50 rounded-xl border border-gray-200 dark:border-slate-600 px-3 py-1.5">
             <Layers className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
             <select value={levelId} onChange={e => setLevelId(e.target.value)}
-              className="outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer max-w-[220px]">
+              className="outline-hidden text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer max-w-[220px]">
               <option value="">{t('analytics.allLevels')}</option>
               {[...new Set(levels.map(l => l.version))].map(v => (
                 <optgroup key={v} label={v}>
@@ -169,7 +169,7 @@ export const AnalyticsPage = () => {
           <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-700/50 rounded-xl border border-gray-200 dark:border-slate-600 px-3 py-1.5">
             <Building2 className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400" />
             <select value={schoolId} onChange={e => setSchoolId(e.target.value)}
-              className="outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer">
+              className="outline-hidden text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer">
               <option value="">{t('analytics.allSchools')}</option>
               {schools.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -177,7 +177,7 @@ export const AnalyticsPage = () => {
           <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-700/50 rounded-xl border border-gray-200 dark:border-slate-600 px-3 py-1.5">
             <School className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
             <select value={className} onChange={e => setClassName(e.target.value)}
-              className="outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer">
+              className="outline-hidden text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer">
               <option value="">{t('analytics.allClasses')}</option>
               {classes.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -185,10 +185,10 @@ export const AnalyticsPage = () => {
           <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700/50 rounded-xl border border-gray-200 dark:border-slate-600 px-3 py-1.5">
             <Calendar className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500" />
             <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-              className="text-xs bg-transparent outline-none w-[110px] dark:text-slate-300" />
+              className="text-xs bg-transparent outline-hidden w-[110px] dark:text-slate-300" />
             <span className="text-gray-300 dark:text-slate-600">–</span>
             <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-              className="text-xs bg-transparent outline-none w-[110px] dark:text-slate-300" />
+              className="text-xs bg-transparent outline-hidden w-[110px] dark:text-slate-300" />
           </div>
           {hasActiveFilters && (
             <button onClick={resetFilters} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-semibold">
@@ -200,7 +200,7 @@ export const AnalyticsPage = () => {
 
       {error && (
         <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 dark:text-red-400 dark:bg-red-950/40 dark:border-red-800/60">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
+          <AlertCircle className="w-4 h-4 shrink-0" /> {error}
         </div>
       )}
 
@@ -234,7 +234,7 @@ export const AnalyticsPage = () => {
           <div className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-slate-500">
             <span>{t('analytics.minAttemptsLabel')}</span>
             <input type="number" min={0} value={minAttempts} onChange={e => setMinAttempts(e.target.value)}
-              className="w-14 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100" />
+              className="w-14 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-hidden focus:ring-2 focus:ring-indigo-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100" />
           </div>
         }
       >
@@ -244,11 +244,11 @@ export const AnalyticsPage = () => {
           <div className="space-y-2">
             {worstQuestions.map(q => (
               <div key={q.question_id} className="flex items-center gap-3 py-2 border-b border-gray-50 dark:border-slate-700/60 last:border-0">
-                <span className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 text-red-600 text-xs font-bold dark:bg-red-950/40 dark:text-red-400">
+                <span className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg bg-red-50 text-red-600 text-xs font-bold dark:bg-red-950/40 dark:text-red-400">
                   <TrendingDown className="w-3 h-3" /> {q.wrong_pct}%
                 </span>
                 <p className="flex-1 min-w-0 text-sm text-gray-700 dark:text-slate-300 truncate">{stripHtml(q.content)}</p>
-                <span className="flex-shrink-0 text-xs text-gray-400 dark:text-slate-500">{q.level_label} · {q.exam_type === 'testing' ? t('analytics.testing') : t('analytics.gmetrix')} {q.exam_number}</span>
+                <span className="shrink-0 text-xs text-gray-400 dark:text-slate-500">{q.level_label} · {q.exam_type === 'testing' ? t('analytics.testing') : t('analytics.gmetrix')} {q.exam_number}</span>
               </div>
             ))}
           </div>
@@ -256,7 +256,7 @@ export const AnalyticsPage = () => {
       </Card>
 
       {/* AI Analysis */}
-      <div className="bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/40 dark:to-violet-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800/60 p-5">
+      <div className="bg-linear-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/40 dark:to-violet-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-800/60 p-5">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />

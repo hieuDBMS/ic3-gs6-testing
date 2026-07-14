@@ -21,11 +21,11 @@ export const ConfirmDialog = ({
     : { icon: 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400', btn: 'bg-indigo-600 hover:bg-indigo-700' };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+    <div className="fixed inset-0 z-200 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-xs animate-fade-in" onClick={onCancel} />
+      <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-scale-in">
         <div className="flex items-start gap-3 mb-4">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${accent.icon}`}>
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${accent.icon}`}>
             <Trash2 className="w-5 h-5" />
           </div>
           <div>

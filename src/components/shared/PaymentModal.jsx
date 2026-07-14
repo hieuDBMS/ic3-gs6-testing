@@ -40,7 +40,7 @@ const fmt = (n) => new Intl.NumberFormat('vi-VN').format(n ?? 0) + ' ₫';
 
 /* SVG animated checkmark – memoised */
 const AnimatedCheck = memo(() => (
-  <svg viewBox="0 0 52 52" className="w-20 h-20 drop-shadow-sm">
+  <svg viewBox="0 0 52 52" className="w-20 h-20 drop-shadow-xs">
     <circle cx="26" cy="26" r="24" fill="none" stroke="#10b981" strokeWidth="2.5"
       style={{ strokeDasharray: 151, strokeDashoffset: 151, animation: 'circ .55s ease forwards' }} />
     <path fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" d="M15 27l8 8 14-14"
@@ -54,7 +54,7 @@ const AnimatedCheck = memo(() => (
 
 /* Live pulsing dot */
 const LiveDot = memo(({ color = 'bg-emerald-500' }) => (
-  <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+  <span className="relative flex h-2.5 w-2.5 shrink-0">
     <span className={`animate-ping absolute inset-0 rounded-full ${color} opacity-50`} />
     <span className={`relative rounded-full h-2.5 w-2.5 ${color}`} />
   </span>
@@ -182,7 +182,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
       >
         {/* close */}
         <button onClick={onClose}
-          className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-black/[.06] hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center transition-colors">
+          className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-black/6 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 flex items-center justify-center transition-colors">
           <X className="w-4 h-4 text-gray-500 dark:text-slate-300" />
         </button>
 
@@ -224,7 +224,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
             <div className="w-full space-y-2 mt-2">
               {t('paymentModal.success.unlockedItems', { returnObjects: true }).map(item => (
                 <div key={item} className="flex items-center gap-2.5 px-4 py-3 bg-emerald-50 rounded-2xl border border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800/60">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                   <span className="text-sm font-medium text-emerald-800 dark:text-emerald-300">{item}</span>
                 </div>
               ))}
@@ -266,7 +266,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
               {/* Bank not configured */}
               {!hasBnk && (
                 <div className="flex gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl dark:bg-amber-950/30 dark:border-amber-800/50">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">{t('paymentModal.ready.notConfiguredTitle')}</p>
                     <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">{t('paymentModal.ready.notConfiguredDesc')}</p>
@@ -278,12 +278,12 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
                 <>
                   {/* Amount + QR */}
                   <div className="flex flex-col items-center gap-3">
-                    <div className="px-5 py-2 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 dark:from-indigo-950/40 dark:to-violet-950/40 dark:border-indigo-800/50">
+                    <div className="px-5 py-2 rounded-full bg-linear-to-r from-indigo-50 to-violet-50 border border-indigo-100 dark:from-indigo-950/40 dark:to-violet-950/40 dark:border-indigo-800/50">
                       <span className="text-2xl font-extrabold text-gray-900 dark:text-slate-100 tracking-tight">{fmt(amount)}</span>
                     </div>
 
                     {/* QR — kept white regardless of theme so the code stays scannable */}
-                    <div className="p-2 rounded-3xl bg-white border-2 border-gray-100 shadow"
+                    <div className="p-2 rounded-3xl bg-white border-2 border-gray-100 shadow-sm"
                       style={{ boxShadow: '0 4px 24px rgba(0,0,0,.08)' }}>
                       {!imgOk && (
                         <div className="w-52 h-52 rounded-2xl bg-gray-50 animate-pulse" />
@@ -321,7 +321,7 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
                       <code className={`flex-1 text-sm font-mono font-bold break-all leading-snug ${copied ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-800 dark:text-slate-200'}`}>
                         {code}
                       </code>
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all
                         ${copied ? 'bg-emerald-500 scale-105' : 'bg-gray-200 hover:bg-gray-300 dark:bg-slate-600 dark:hover:bg-slate-500'}`}>
                         {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-gray-500 dark:text-slate-300" />}
                       </div>

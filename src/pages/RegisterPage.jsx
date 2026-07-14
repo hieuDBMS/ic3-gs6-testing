@@ -87,7 +87,7 @@ export const RegisterPage = () => {
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+          <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-xs">
             <Sword className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -105,7 +105,7 @@ export const RegisterPage = () => {
             </div>
             <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight">
               {t('auth.register.heroLine1')}<br />
-              <span className="bg-gradient-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent">
                 {t('auth.register.heroLine2')}
               </span>
             </h1>
@@ -117,7 +117,7 @@ export const RegisterPage = () => {
           <ul className="space-y-3">
             {features.map((f, i) => (
               <li key={i} className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-violet-300 flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-violet-300 shrink-0">
                   {f.icon}
                 </div>
                 <span className="text-white/70 text-sm font-medium">{f.text}</span>
@@ -132,11 +132,11 @@ export const RegisterPage = () => {
       </div>
 
       {/* ── RIGHT: Register Form ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-gradient-to-br from-slate-50 via-violet-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-linear-to-br from-slate-50 via-violet-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
 
         {/* Mobile logo */}
         <div className="lg:hidden flex flex-col items-center mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg mb-3">
             <Sword className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-slate-100">IC3-Fighter</h1>
@@ -152,7 +152,7 @@ export const RegisterPage = () => {
           {/* Success state */}
           {success && (
             <div className="mb-5 flex items-center gap-3 px-4 py-4 rounded-xl bg-emerald-50 border border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/60">
-              <BadgeCheck className="w-6 h-6 text-emerald-500 flex-shrink-0" />
+              <BadgeCheck className="w-6 h-6 text-emerald-500 shrink-0" />
               <div>
                 <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{t('auth.register.successTitle')}</p>
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">{t('auth.register.successSubtitle')}</p>
@@ -163,7 +163,7 @@ export const RegisterPage = () => {
           {/* Error */}
           {error && (
             <div className="mb-5 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-red-50 border border-red-200 dark:bg-red-950/40 dark:border-red-800/60">
-              <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               <p className="text-sm text-red-700 dark:text-red-300 font-medium">{error}</p>
@@ -187,8 +187,8 @@ export const RegisterPage = () => {
                   placeholder={t('auth.register.fullNamePlaceholder')}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
-                             focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
-                             transition-all duration-150 shadow-sm hover:border-gray-300 dark:hover:border-slate-500"
+                             focus:outline-hidden focus:ring-2 focus:ring-violet-400 focus:border-transparent
+                             transition-all duration-150 shadow-xs hover:border-gray-300 dark:hover:border-slate-500"
                 />
               </div>
             </div>
@@ -209,8 +209,8 @@ export const RegisterPage = () => {
                   placeholder={t('auth.register.usernamePlaceholder')}
                   className="w-full pl-9 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
-                             focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
-                             transition-all duration-150 shadow-sm hover:border-gray-300 dark:hover:border-slate-500 font-mono"
+                             focus:outline-hidden focus:ring-2 focus:ring-violet-400 focus:border-transparent
+                             transition-all duration-150 shadow-xs hover:border-gray-300 dark:hover:border-slate-500 font-mono"
                 />
               </div>
               <p className="mt-1 text-xs text-gray-400 dark:text-slate-500">{t('auth.register.usernameHint')}</p>
@@ -232,8 +232,8 @@ export const RegisterPage = () => {
                   placeholder={t('auth.register.passwordPlaceholder')}
                   className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
-                             focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
-                             transition-all duration-150 shadow-sm hover:border-gray-300 dark:hover:border-slate-500"
+                             focus:outline-hidden focus:ring-2 focus:ring-violet-400 focus:border-transparent
+                             transition-all duration-150 shadow-xs hover:border-gray-300 dark:hover:border-slate-500"
                 />
                 <button type="button" tabIndex={-1} onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-violet-500 dark:text-slate-500 dark:hover:text-violet-400 transition-colors">
@@ -258,8 +258,8 @@ export const RegisterPage = () => {
                   placeholder={t('auth.register.confirmPasswordPlaceholder')}
                   className={`w-full pl-10 pr-4 py-3 rounded-xl border bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
-                             focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent
-                             transition-all duration-150 shadow-sm
+                             focus:outline-hidden focus:ring-2 focus:ring-violet-400 focus:border-transparent
+                             transition-all duration-150 shadow-xs
                              ${confirmPassword && confirmPassword !== password ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30' : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'}`}
                 />
               </div>
@@ -273,11 +273,11 @@ export const RegisterPage = () => {
               type="submit"
               disabled={isLoading || success}
               className="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-xl font-bold text-sm text-white
-                         bg-gradient-to-r from-violet-600 to-indigo-500
+                         bg-linear-to-r from-violet-600 to-indigo-500
                          hover:from-violet-700 hover:to-indigo-600
                          shadow-lg shadow-violet-200 hover:shadow-xl
                          active:scale-[0.98] transition-all duration-200
-                         focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2
+                         focus:outline-hidden focus:ring-2 focus:ring-violet-400 focus:ring-offset-2
                          disabled:opacity-60 disabled:cursor-not-allowed mt-2"
             >
               {isLoading ? (

@@ -32,6 +32,8 @@ Các file tài liệu này được viết để Claude AI có thể tra cứu s
 | Học sinh thoát bài giữa chừng / trùng session | PATTERNS_AND_CONVENTIONS.md → #22 Resume Session, ROUTES_AND_PAGES.md → ExamPage |
 | Chặn rời trang thi (logo/back/logout) | PATTERNS_AND_CONVENTIONS.md → #23 Navigate-Away Guard |
 | LiveMonitorPage không hiện / hiện trùng / không tự ẩn | PATTERNS_AND_CONVENTIONS.md → #24 LiveMonitor Zombie Filter, ROUTES_AND_PAGES.md → LiveMonitorPage |
+| Hiệu năng nhiều user đồng thời (index, RPC aggregate, realtime channel) | DATABASE_SCHEMA.md → Bẫy thường gặp + RPC mới (2026-07-13), `supabase/sql/2026-07-13_concurrency_indexes.sql`, COMPONENTS.md → useMediaQuery/useStudents |
+| Xoá lịch sử làm bài (1 dòng / 1 student·teacher / toàn hệ thống), không đụng tài khoản | PROJECT_OVERVIEW.md → Edge Functions → `manage-student` (`delete-attempt`/`clear-attempts`/`clear-all-attempts`), ROUTES_AND_PAGES.md → StudentManagementPage/StudentProgressPage/DashboardPage, COMPONENTS.md → AttemptHistoryTable, DATABASE_SCHEMA.md → Bẫy thường gặp (không có RLS DELETE trên `exam_attempts`) |
 
 ## Shared Infrastructure (đã có, dùng luôn không cần tạo mới)
 

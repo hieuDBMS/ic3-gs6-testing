@@ -6,9 +6,11 @@ import { AttemptHistoryTable } from '../components/dashboard/AttemptHistoryTable
 import { StudentOverviewTable } from '../components/dashboard/StudentOverviewTable';
 import { supabase } from '../lib/supabase';
 import { useExamAttempts } from '../hooks/useExamAttempts';
-import { BookOpen, TrendingUp, CheckCircle, PlayCircle, Users, ChevronRight } from 'lucide-react';
+import { BookOpen, TrendingUp, CheckCircle, PlayCircle, Users, ChevronRight, Eraser } from 'lucide-react';
 import { getInitials } from '../utils/avatar';
 import { Skeleton } from '../components/shared/Skeleton';
+import { ConfirmDialog } from '../components/shared/ConfirmDialog';
+import { Toast, useToast } from '../components/shared/Toast';
 
 /* ─── Avatar ─── */
 const COLORS = [
@@ -25,8 +27,8 @@ const getColor = (s) => {
 
 /* ─── Stat Card ─── */
 const StatCard = ({ icon, label, value, sub, color }) => (
-  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex items-center gap-4">
-    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center flex-shrink-0 shadow-md`}>
+  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-xs p-5 flex items-center gap-4">
+    <div className={`w-12 h-12 rounded-2xl bg-linear-to-br ${color} flex items-center justify-center shrink-0 shadow-md`}>
       {icon}
     </div>
     <div className="min-w-0">
@@ -54,32 +56,35 @@ const useStudentStats = (userId) => {
 };
 
 /* ─── Teacher stats ─── */
+// School-wide totals come from RPC get_teacher_dashboard_stats() (aggregate
+// server-side, 1 row back) instead of fetching every exam_attempts row
+// platform-wide — Dashboard is the post-login landing page, so this runs on
+// every teacher login. See supabase/sql/2026-07-13_concurrency_indexes.sql.
 const useTeacherStats = (enabled) => {
-  const [totalStudents, setTotalStudents] = useState(null);
-  const { attempts, loading: attemptsLoading } = useExamAttempts(null, {
-    excludeStatus: 'in_progress',
-    select: 'score',
-    enabled,
-  });
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     if (!enabled) return;
+    let cancelled = false;
     const load = async () => {
-      const { count } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('role', 'student');
-      setTotalStudents(count || 0);
+      const [{ count }, { data: rpcStats }] = await Promise.all([
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'student'),
+        supabase.rpc('get_teacher_dashboard_stats'),
+      ]);
+      if (cancelled) return;
+      const row = rpcStats?.[0];
+      setStats({
+        totalStudents: count || 0,
+        totalAttempts: Number(row?.total_attempts) || 0,
+        avgScore: row?.avg_score != null ? Number(row.avg_score).toFixed(1) : '0',
+      });
     };
     load();
+    return () => { cancelled = true; };
   }, [enabled]);
 
-  if (!enabled || attemptsLoading || totalStudents === null) return null;
-  const totalAttempts = attempts.length;
-  const avgScore = totalAttempts > 0
-    ? (attempts.reduce((a, b) => a + Number(b.score), 0) / totalAttempts).toFixed(1)
-    : '0';
-  return { totalStudents, totalAttempts, avgScore };
+  if (!enabled || !stats) return null;
+  return stats;
 };
 
 /* ─── Main DashboardPage ─── */
@@ -90,6 +95,30 @@ export const DashboardPage = () => {
   const studentStats = useStudentStats(!isTeacher ? user?.id : null);
   const teacherStats = useTeacherStats(isTeacher);
 
+  const [clearConfirm, setClearConfirm] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [historyKey, setHistoryKey] = useState(0);
+  const { toasts, showToast, dismissToast } = useToast();
+
+  const handleClearMyHistory = async () => {
+    setClearing(true);
+    try {
+      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+      if (refreshErr || !refreshed?.session) throw new Error(t('studentManagement.sessionExpiredError'));
+      const { data, error: fnErr } = await supabase.functions.invoke('manage-student', {
+        body: { action: 'clear-attempts', studentId: user.id },
+      });
+      if (fnErr) throw new Error(fnErr.message || t('studentManagement.edgeFunctionError'));
+      if (data?.error) throw new Error(data.error);
+      setClearConfirm(false);
+      setHistoryKey(k => k + 1);
+      showToast(t('dashboard.clearMyHistorySuccessToast'), 'success');
+    } catch (err) {
+      showToast(t('studentManagement.clearHistoryErrorToast', { message: err.message }), 'error');
+      setClearConfirm(false);
+    } finally { setClearing(false); }
+  };
+
   if (!user || !profile) return null;
 
   const initials = getInitials(profile.full_name);
@@ -98,7 +127,7 @@ export const DashboardPage = () => {
   const roleColor = isTeacher ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         {/* ─── Hero greeting ─── */}
@@ -113,7 +142,7 @@ export const DashboardPage = () => {
 
           <div className="relative flex items-center gap-5">
             {/* Avatar */}
-            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br ${avatarColor} flex items-center justify-center text-2xl sm:text-3xl font-extrabold text-white shadow-lg flex-shrink-0 border-4 border-white/20`}>
+            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-linear-to-br ${avatarColor} flex items-center justify-center text-2xl sm:text-3xl font-extrabold text-white shadow-lg shrink-0 border-4 border-white/20`}>
               {initials}
             </div>
 
@@ -128,7 +157,7 @@ export const DashboardPage = () => {
             </div>
 
             {/* CTA */}
-            <div className="hidden sm:flex flex-col gap-2 ml-auto flex-shrink-0">
+            <div className="hidden sm:flex flex-col gap-2 ml-auto shrink-0">
               <Link
                 to="/exam"
                 className="flex items-center gap-2 px-5 py-2.5 bg-white text-primary-700 font-bold text-sm rounded-xl hover:bg-white/90 transition-colors shadow-md"
@@ -196,7 +225,7 @@ export const DashboardPage = () => {
 
         {/* ─── Teacher: Student Overview ─── */}
         {isTeacher && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary-500" />
@@ -214,7 +243,7 @@ export const DashboardPage = () => {
         )}
 
         {/* ─── History ─── */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-slate-700">
             <div className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-primary-500" />
@@ -222,21 +251,31 @@ export const DashboardPage = () => {
                 {isTeacher ? t('dashboard.historyPersonalTitle') : t('dashboard.historyTitle')}
               </h2>
             </div>
-            <Link
-              to="/exam"
-              className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
-            >
-              {t('dashboard.newExamLink')} <ChevronRight className="w-4 h-4" />
-            </Link>
+            <div className="flex items-center gap-3">
+              {isTeacher && (
+                <button
+                  onClick={() => setClearConfirm(true)}
+                  className="flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
+                >
+                  <Eraser className="w-3.5 h-3.5" /> {t('dashboard.clearMyHistoryButton')}
+                </button>
+              )}
+              <Link
+                to="/exam"
+                className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
+              >
+                {t('dashboard.newExamLink')} <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
-          <AttemptHistoryTable studentId={user.id} />
+          <AttemptHistoryTable key={historyKey} studentId={user.id} canDelete={isTeacher} />
         </div>
 
         {/* Mobile CTA */}
         <div className="sm:hidden flex gap-3">
           <Link
             to="/exam"
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-primary-600 to-primary-500 text-white font-bold text-sm rounded-2xl shadow-md shadow-primary-200"
+            className="flex-1 flex items-center justify-center gap-2 py-3 bg-linear-to-r from-primary-600 to-primary-500 text-white font-bold text-sm rounded-2xl shadow-md shadow-primary-200"
           >
             <PlayCircle className="w-4 h-4" /> {t('dashboard.takeExam')}
           </Link>
@@ -250,6 +289,16 @@ export const DashboardPage = () => {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={clearConfirm}
+        title={t('dashboard.clearMyHistoryConfirmTitle')}
+        message={t('dashboard.clearMyHistoryConfirmMessage')}
+        onConfirm={handleClearMyHistory}
+        onCancel={() => setClearConfirm(false)}
+        loading={clearing}
+      />
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };

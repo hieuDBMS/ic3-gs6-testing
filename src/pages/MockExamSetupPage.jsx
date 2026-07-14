@@ -6,11 +6,11 @@ import { Monitor, PlayCircle, Loader2, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const VERSION_STYLES = {
-  GS6: { from: 'from-primary-600', to: 'to-primary-400', ring: 'ring-primary-200', text: 'text-primary-700', bg: 'bg-primary-50', border: 'border-primary-200', activeBg: 'bg-gradient-to-r from-primary-600 to-primary-500' },
-  GS7: { from: 'from-violet-600', to: 'to-violet-400', ring: 'ring-violet-200', text: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200', activeBg: 'bg-gradient-to-r from-violet-600 to-violet-500' },
-  GS8: { from: 'from-accent-600', to: 'to-accent-400', ring: 'ring-accent-200', text: 'text-accent-700', bg: 'bg-accent-50', border: 'border-accent-200', activeBg: 'bg-gradient-to-r from-accent-600 to-accent-500' },
+  GS6: { from: 'from-primary-600', to: 'to-primary-400', ring: 'ring-primary-200', text: 'text-primary-700', bg: 'bg-primary-50', border: 'border-primary-200', activeBg: 'bg-linear-to-r from-primary-600 to-primary-500' },
+  GS7: { from: 'from-violet-600', to: 'to-violet-400', ring: 'ring-violet-200', text: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-200', activeBg: 'bg-linear-to-r from-violet-600 to-violet-500' },
+  GS8: { from: 'from-accent-600', to: 'to-accent-400', ring: 'ring-accent-200', text: 'text-accent-700', bg: 'bg-accent-50', border: 'border-accent-200', activeBg: 'bg-linear-to-r from-accent-600 to-accent-500' },
 };
-const DEFAULT_STYLE = { from: 'from-gray-600', to: 'to-gray-400', ring: 'ring-gray-200', text: 'text-gray-700', bg: 'bg-gray-50', border: 'border-gray-200', activeBg: 'bg-gradient-to-r from-gray-600 to-gray-500' };
+const DEFAULT_STYLE = { from: 'from-gray-600', to: 'to-gray-400', ring: 'ring-gray-200', text: 'text-gray-700', bg: 'bg-gray-50', border: 'border-gray-200', activeBg: 'bg-linear-to-r from-gray-600 to-gray-500' };
 const getStyle = (v) => VERSION_STYLES[v] || DEFAULT_STYLE;
 
 const Skeleton = () => (
@@ -125,7 +125,7 @@ export const MockExamSetupPage = () => {
   const style = getStyle(selectedVersion);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50/20 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-red-50/20 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
       <div className="relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #450a0a 0%, #7f1d1d 60%, #991b1b 100%)' }}>
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-red-400/20 blur-[80px] pointer-events-none" />
@@ -186,7 +186,7 @@ export const MockExamSetupPage = () => {
         ) : (
           <div className="space-y-4">
             {filteredLevels.length === 0 && (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center border border-slate-100 dark:border-slate-700 shadow-sm">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center border border-slate-100 dark:border-slate-700 shadow-xs">
                 <p className="text-slate-500 dark:text-slate-400">{t('mockExamSetup.noExamsForVersion')}</p>
               </div>
             )}
@@ -206,12 +206,12 @@ export const MockExamSetupPage = () => {
               return (
               <div
                 key={level.id}
-                className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-xs overflow-hidden hover:shadow-md transition-shadow"
                 style={{ animationDelay: `${idx * 60}ms` }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4">
                   <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${style.from} ${style.to} flex items-center justify-center text-white font-black text-xl flex-shrink-0 shadow-md`}>
+                    <div className={`w-14 h-14 rounded-2xl bg-linear-to-br ${style.from} ${style.to} flex items-center justify-center text-white font-black text-xl shrink-0 shadow-md`}>
                       {level.level_number}
                     </div>
                     <div>
@@ -220,7 +220,7 @@ export const MockExamSetupPage = () => {
                           {level.version} — {level.label}
                         </h2>
                         {!isFullyPaid && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide dark:bg-amber-950/40 dark:text-amber-300">{t('mockExamSetup.trialBadge')}</span>
+                          <span className="px-2 py-0.5 rounded-sm text-[10px] font-bold bg-amber-100 text-amber-700 uppercase tracking-wide dark:bg-amber-950/40 dark:text-amber-300">{t('mockExamSetup.trialBadge')}</span>
                         )}
                       </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -228,7 +228,7 @@ export const MockExamSetupPage = () => {
                       </p>
                       {!isFullyPaid && !isGmetrixMissing && (
                         <div className="mt-2 text-xs font-medium text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800/60 flex items-start sm:items-center gap-1.5 max-w-sm">
-                          <Lock className="w-3.5 h-3.5 mt-0.5 sm:mt-0 flex-shrink-0" />
+                          <Lock className="w-3.5 h-3.5 mt-0.5 sm:mt-0 shrink-0" />
                           <span>{t('mockExamSetup.paymentRequired')}</span>
                         </div>
                       )}

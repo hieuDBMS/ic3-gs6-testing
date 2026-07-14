@@ -33,7 +33,7 @@ const AnswerOption = ({ ans, idx, selected, onSelect, type }) => {
     >
       {/* Letter / Check badge */}
       <div
-        className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-extrabold flex-shrink-0 transition-all duration-200 ${
+        className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-extrabold shrink-0 transition-all duration-200 ${
           isSelected ? '' : 'bg-gray-100 text-gray-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 dark:bg-slate-700 dark:text-slate-500 dark:group-hover:bg-indigo-900/40 dark:group-hover:text-indigo-300'
         }`}
         style={isSelected
@@ -50,7 +50,7 @@ const AnswerOption = ({ ans, idx, selected, onSelect, type }) => {
           <ZoomableImage
             src={ans.image_url}
             alt=""
-            className="h-14 w-20 object-contain rounded-lg border border-gray-100 flex-shrink-0 bg-white dark:border-slate-700/60 dark:bg-slate-800"
+            className="h-14 w-20 object-contain rounded-lg border border-gray-100 shrink-0 bg-white dark:border-slate-700/60 dark:bg-slate-800"
           />
         )}
         {/* Render HTML from RichTextEditor */}
@@ -104,12 +104,12 @@ const DragItemCard = ({ pair, dragging, onDragStart, onDragEnd, inZone = false, 
           : isSelected
             ? 'border-amber-400 bg-amber-50 shadow-md ring-2 ring-amber-300 ring-offset-1 scale-105'
             : inZone
-              ? 'border-indigo-300 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md hover:border-indigo-400 hover:-translate-y-0.5'
-              : 'border-blue-200 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md hover:border-blue-400 hover:-translate-y-0.5'
+              ? 'border-indigo-300 bg-white dark:bg-slate-800 shadow-xs hover:shadow-md hover:border-indigo-400 hover:-translate-y-0.5'
+              : 'border-blue-200 bg-white dark:bg-slate-800 shadow-xs hover:shadow-md hover:border-blue-400 hover:-translate-y-0.5'
       }`}
     >
       {hasImage && (
-        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-100 flex-shrink-0 shadow-sm w-full dark:bg-slate-800 dark:border-slate-700/60">
+        <div className="w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center p-1.5 bg-white rounded-lg border border-gray-100 shrink-0 shadow-xs w-full dark:bg-slate-800 dark:border-slate-700/60">
           <ZoomableImage 
             src={pair.drag_image_url} 
             alt="" 
@@ -119,7 +119,7 @@ const DragItemCard = ({ pair, dragging, onDragStart, onDragEnd, inZone = false, 
         </div>
       )}
       {hasText && (
-        <span className={`text-xs sm:text-sm font-bold text-center leading-snug break-words w-full ${
+        <span className={`text-xs sm:text-sm font-bold text-center leading-snug wrap-break-word w-full ${
           isSelected ? 'text-amber-800' : inZone ? 'text-indigo-700' : 'text-gray-700 dark:text-slate-300'
         }`}>
           {pair.drag_content}
@@ -173,8 +173,8 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
   return (
     <div className="space-y-5">
       {/* Instruction */}
-      <div className="flex items-start gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl px-4 py-3 dark:border-blue-800/60">
-        <span className="text-lg mt-0.5 flex-shrink-0">🔀</span>
+      <div className="flex items-start gap-3 bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl px-4 py-3 dark:border-blue-800/60">
+        <span className="text-lg mt-0.5 shrink-0">🔀</span>
         <div>
           <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">{t('questionRenderer.dragdrop.title')}</p>
           <p
@@ -193,7 +193,7 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
         className={`rounded-2xl border-2 border-dashed p-4 transition-all duration-200 ${
           dragOverZone === 'pool'
             ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/40 shadow-inner'
-            : 'border-blue-200 dark:border-blue-800/60 bg-gradient-to-br from-slate-50 to-blue-50/30'
+            : 'border-blue-200 dark:border-blue-800/60 bg-linear-to-br from-slate-50 to-blue-50/30'
         }`}
       >
         <div className="flex items-center gap-2 mb-3">
@@ -240,12 +240,12 @@ const DragDropQuestion = ({ question, currentAnswer, onChange }) => {
               className={`rounded-2xl border-2 overflow-hidden transition-all duration-200 cursor-pointer ${
                 isOver   ? `${color.ring} ${color.bg} shadow-lg scale-[1.02]`
                 : isTarget ? 'border-indigo-300 bg-indigo-50/30 shadow-md ring-2 ring-indigo-200 ring-offset-1'
-                : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'
+                : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-600'
               }`}
             >
-              <div className={`px-4 py-3 border-b flex items-center gap-2 transition-colors ${isOver ? color.header : 'border-gray-100 bg-gradient-to-r from-gray-50 to-white dark:border-slate-700/60'}`}>
-                <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isOver ? color.dot : 'bg-gray-300'}`} />
-                {zone.image_url && <img src={zone.image_url} alt="" className="h-8 w-auto object-contain flex-shrink-0" />}
+              <div className={`px-4 py-3 border-b flex items-center gap-2 transition-colors ${isOver ? color.header : 'border-gray-100 bg-linear-to-r from-gray-50 to-white dark:border-slate-700/60'}`}>
+                <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOver ? color.dot : 'bg-gray-300'}`} />
+                {zone.image_url && <img src={zone.image_url} alt="" className="h-8 w-auto object-contain shrink-0" />}
                 <span className={`text-sm font-bold leading-snug ${isOver ? '' : 'text-gray-800 dark:text-slate-100'}`}>{zone.label}</span>
                 <span className="ml-auto text-[11px] font-semibold text-gray-400 dark:text-slate-500">{zoneItems.length > 0 && t('questionRenderer.dragdrop.cardsCount', { count: zoneItems.length })}</span>
               </div>
@@ -304,14 +304,14 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)' }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs" style={{ background: 'linear-gradient(135deg, #14b8a6, #10b981)' }}>
             <span className="text-white text-[10px] font-black tracking-tight">T/F</span>
           </div>
           <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
             {t('questionRenderer.truefalse.instructionPre')} <span className="text-emerald-600 font-bold">{t('questionRenderer.truefalse.true')}</span> {t('questionRenderer.truefalse.instructionOr')} <span className="text-red-500 font-bold">{t('questionRenderer.truefalse.false')}</span> {t('questionRenderer.truefalse.instructionPost')}
           </p>
         </div>
-        <span className={`text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 transition-all ${
+        <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 transition-all ${
           answeredCount === total && total > 0
             ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800'
             : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
@@ -329,12 +329,12 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
       </div>
 
       {/* Statements */}
-      <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-xs dark:border-slate-700 dark:bg-slate-800">
         {/* Column headers */}
         <div className="flex items-center bg-gray-50 border-b border-gray-200 px-4 py-2.5 gap-3 dark:bg-slate-700/40 dark:border-slate-700">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest w-5 text-center flex-shrink-0 dark:text-slate-500">{t('questionRenderer.truefalse.columnIndex')}</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest w-5 text-center shrink-0 dark:text-slate-500">{t('questionRenderer.truefalse.columnIndex')}</span>
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex-1 dark:text-slate-500">{t('questionRenderer.truefalse.columnStatement')}</span>
-          <div className="flex gap-1.5 flex-shrink-0">
+          <div className="flex gap-1.5 shrink-0">
             <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest w-16 text-center dark:text-emerald-400">{t('questionRenderer.truefalse.true')}</span>
             <span className="text-[10px] font-bold text-red-500  uppercase tracking-widest w-16 text-center dark:text-red-400">{t('questionRenderer.truefalse.false')}</span>
           </div>
@@ -355,7 +355,7 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
               }`}
             >
               {/* Index badge */}
-              <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold flex-shrink-0 transition-all ${
+              <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold shrink-0 transition-all ${
                 !answered ? 'bg-gray-100 text-gray-400 dark:bg-slate-700 dark:text-slate-500'
                 : isTrue  ? 'bg-emerald-200 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
                 : 'bg-red-200 text-red-800 dark:bg-red-900/50 dark:text-red-300'
@@ -374,7 +374,7 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
               />
 
               {/* Buttons */}
-              <div className="flex gap-1.5 flex-shrink-0">
+              <div className="flex gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => handleSelect(stmt.id, true)}
@@ -405,8 +405,8 @@ const TrueFalseQuestion = ({ question, currentAnswer, onChange }) => {
 
       {/* Completion banner */}
       {answeredCount === total && total > 0 && (
-        <div className="flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl dark:from-emerald-950/30 dark:to-teal-950/30 dark:border-emerald-800/50">
-          <span className="text-emerald-600 text-sm flex-shrink-0">✅</span>
+        <div className="flex items-center gap-2.5 px-4 py-3 bg-linear-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl dark:from-emerald-950/30 dark:to-teal-950/30 dark:border-emerald-800/50">
+          <span className="text-emerald-600 text-sm shrink-0">✅</span>
           <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{t('questionRenderer.truefalse.allDone', { total })}</p>
         </div>
       )}
@@ -452,7 +452,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm" style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)' }}>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs" style={{ background: 'linear-gradient(135deg, #F59E0B, #F97316)' }}>
             <span className="text-white text-sm">🎯</span>
           </div>
           <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
@@ -463,7 +463,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
           </p>
         </div>
         {isMulti && (
-          <span className={`text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 ${
+          <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${
             selectedCount >= correctCount && selectedCount > 0
               ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
           }`}>
@@ -473,7 +473,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
       </div>
 
       {/* Image with hotspot overlay */}
-      <div className="relative max-w-3xl mx-auto rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50 shadow-sm select-none dark:border-slate-700 dark:bg-slate-800">
+      <div className="relative max-w-3xl mx-auto rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50 shadow-xs select-none dark:border-slate-700 dark:bg-slate-800">
         {question.image_url ? (
           <>
             {/* IMPORTANT: img has w-full h-auto (no max-height, no object-fit).
@@ -510,11 +510,11 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
                         : hexToRgba(color, 0.08),
                     boxShadow: isSelected ? `inset 0 0 0 2px ${color}, 0 0 0 2px ${hexToRgba(color, 0.3)}` : 'none',
                   }}
-                  className="absolute border-2 transition-all duration-150 cursor-pointer rounded-sm"
+                  className="absolute border-2 transition-all duration-150 cursor-pointer rounded-xs"
                 >
                   {/* Number badge */}
                   <span
-                    className="absolute top-0.5 left-0.5 text-[9px] font-bold px-1 py-0.5 rounded leading-none text-white"
+                    className="absolute top-0.5 left-0.5 text-[9px] font-bold px-1 py-0.5 rounded-sm leading-none text-white"
                     style={{ background: color }}
                   >
                     {sortedRegions.indexOf(region) + 1}
@@ -533,7 +533,7 @@ const HotspotQuestion = ({ question, currentAnswer, onChange }) => {
             })}
             {selected.length === 0 && (
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 pointer-events-none">
-                <div className="bg-black/60 backdrop-blur text-white text-xs px-4 py-2 rounded-xl flex items-center gap-2">
+                <div className="bg-black/60 backdrop-blur-sm text-white text-xs px-4 py-2 rounded-xl flex items-center gap-2">
                   <span>🎯</span>
                   {isMulti
                     ? `${t('questionRenderer.hotspot.instructionMultiPrefix')} ${t('questionRenderer.hotspot.instructionSuffix')}`
@@ -597,7 +597,7 @@ const QuestionRendererImpl = ({ question, currentAnswer, onChange }) => {
           <ZoomableImage
             src={question.image_url}
             alt={t('questionRenderer.questionImageAlt')}
-            className="max-h-64 rounded-xl shadow-sm border border-gray-200 object-contain bg-gray-50 dark:border-slate-700 dark:bg-slate-800"
+            className="max-h-64 rounded-xl shadow-xs border border-gray-200 object-contain bg-gray-50 dark:border-slate-700 dark:bg-slate-800"
           />
         )}
       </div>

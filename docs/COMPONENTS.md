@@ -44,6 +44,10 @@ const { attempts, totalCount, cheatCounts, loading, error, refetch } =
     withCheatCounts, // bool, default false
     enabled,         // bool, default true
   });
+
+refetch(silent = false); // silent=true giữ nguyên data cũ trong lúc fetch lại
+                          // (không set loading=true → không flash skeleton),
+                          // dùng sau khi xoá 1 attempt (xem AttemptHistoryTable)
 ```
 Dùng tại: `DashboardPage`, `AttemptHistoryTable`
 
@@ -65,6 +69,12 @@ const { questions, totalCount, loading, error, refetch } = useQuestions(
 ```
 Dùng tại: `QuestionsPage`
 
+### `useMediaQuery(query)` — `hooks/useMediaQuery.js`
+```js
+const isDesktop = useMediaQuery('(min-width: 640px)');
+```
+Dùng tại `PaymentHistoryPage` để **chỉ mount 1 trong 2** `PurchaseRow`(table)/`PurchaseCard`(mobile) thay vì mount cả 2 rồi CSS-hide (`hidden sm:block`/`sm:hidden`) — mỗi row/card không-SUCCESS tự mở 1 realtime channel (`row:${id}`/`card:${id}`), mount cả 2 layout sẽ nhân đôi số channel khi có nhiều purchase đang chờ cùng lúc (đầu kỳ cả lớp thanh toán).
+
 ### `useStudents(options)` — `hooks/useStudents.js`
 ```js
 const { students, totalCount, loading, error, refetch } = useStudents({
@@ -72,6 +82,7 @@ const { students, totalCount, loading, error, refetch } = useStudents({
 });
 ```
 Dùng tại: `StudentManagementPage`, `StudentOverviewTable`
+- Attempt stats (`totalAttempts`/`avgScore`/`lastActiveAt`) fetch qua RPC `get_student_attempt_stats()` (aggregate server-side, 1 dòng/học sinh có attempt) — **không** fetch raw `exam_attempts` nữa (trước 2026-07-13 fetch toàn bộ bảng, phình vô hạn theo lịch sử làm bài tích luỹ, không liên quan số học sinh đang xem trang).
 
 ---
 
@@ -239,7 +250,12 @@ Dùng tại: `QuestionStatsPage`, `LiveMonitorPage`, `AnalyticsPage`
 
 ## Dashboard Components (`src/components/dashboard/`)
 
-### AttemptHistoryTable — uses `useExamAttempts(studentId, { ... })`
+### AttemptHistoryTable (`AttemptHistoryTable.jsx`) — uses `useExamAttempts(studentId, { ... })`
+```jsx
+<AttemptHistoryTable studentId={uuid} showCheatFlags={bool} canDelete={bool} />
+```
+- `showCheatFlags`: hiện badge số lần gian lận trên mỗi dòng (teacher-only context, dùng ở `StudentProgressPage`)
+- `canDelete` (mặc định `false`, thêm 2026-07-13): hiện nút xoá (Trash2) trên mỗi dòng, hover mới lộ ra cùng nút "Xem kết quả". Bấm → `ConfirmDialog` → gọi Edge Function `manage-student` action `delete-attempt` → `refetch(true)` (silent, không flash skeleton). Nếu xoá dòng cuối cùng của 1 trang > trang đầu → lùi về trang trước thay vì gọi `refetch` (tự trigger fetch bình thường cho trang mới) — tránh để `page` trỏ quá trang cuối. Chỉ set `true` khi người xem là teacher: `DashboardPage` truyền `canDelete={isTeacher}`, `StudentProgressPage` luôn truyền `canDelete` (trang teacher-only).
 ### StudentOverviewTable — uses `useStudents({ search, page, pageSize })`
 
 ---

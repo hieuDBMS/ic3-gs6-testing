@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import {
   Plus, Edit2, Trash2, Search, ChevronLeft,
-  ChevronRight, Image as ImageIcon, BookOpen, X, Loader2, Layers,
+  ChevronRight, Image as ImageIcon, BookOpen, X, Layers,
   ArrowUpDown, ArrowUp, ArrowDown, Hash, FileSpreadsheet,
 } from 'lucide-react';
 import { useQuestions } from '../hooks/useQuestions';
@@ -12,6 +12,7 @@ import { useExamStructure } from '../hooks/useExamStructure';
 import { Toast, useToast } from '../components/shared/Toast';
 import { ConfirmDialog } from '../components/shared/ConfirmDialog';
 import { EmptyState } from '../components/shared/EmptyState';
+import { Skeleton } from '../components/shared/Skeleton';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 
 const PAGE_SIZE = 20;
@@ -222,7 +223,7 @@ export const QuestionsPage = () => {
           </button>
           <button
             onClick={handleAdd}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-colors"
           >
             <Plus className="w-4 h-4" /> {t('questionsAdmin.addQuestion')}
           </button>
@@ -230,20 +231,20 @@ export const QuestionsPage = () => {
       </div>
 
       {/* ══════════ Filter Bar ══════════ */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700/60 mb-6 p-4 space-y-3">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700/60 mb-6 p-4 space-y-3">
 
         {/* Row 1: Search */}
         <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-xl px-4 py-2.5">
-          <Search className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
+          <Search className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" />
           <input
             type="text"
             placeholder={t('questionsAdmin.searchPlaceholder')}
             value={filters.search}
             onChange={e => setFilter('search', e.target.value)}
-            className="flex-1 bg-transparent text-sm outline-none placeholder-gray-400 dark:placeholder-slate-500 dark:text-slate-100 min-w-0"
+            className="flex-1 bg-transparent text-sm outline-hidden placeholder-gray-400 dark:placeholder-slate-500 dark:text-slate-100 min-w-0"
           />
           {filters.search && (
-            <button onClick={() => setFilter('search', '')} className="text-gray-300 dark:text-slate-500 hover:text-gray-500 dark:hover:text-slate-300 flex-shrink-0">
+            <button onClick={() => setFilter('search', '')} className="text-gray-300 dark:text-slate-500 hover:text-gray-500 dark:hover:text-slate-300 shrink-0">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -254,12 +255,12 @@ export const QuestionsPage = () => {
           {/* Sort select */}
           <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 flex-1 min-w-[180px]">
             {sortOption.endsWith(':asc')
-              ? <ArrowUp className="w-4 h-4 text-indigo-500 flex-shrink-0" />
-              : <ArrowDown className="w-4 h-4 text-indigo-500 flex-shrink-0" />}
+              ? <ArrowUp className="w-4 h-4 text-indigo-500 shrink-0" />
+              : <ArrowDown className="w-4 h-4 text-indigo-500 shrink-0" />}
             <select
               value={sortOption}
               onChange={e => setSortOption(e.target.value)}
-              className="flex-1 bg-transparent text-sm outline-none text-gray-700 dark:text-slate-300 cursor-pointer min-w-0"
+              className="flex-1 bg-transparent text-sm outline-hidden text-gray-700 dark:text-slate-300 cursor-pointer min-w-0"
             >
               {SORT_OPTIONS.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -269,7 +270,7 @@ export const QuestionsPage = () => {
 
           {/* Order index filter: exact OR range */}
           <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-700/50 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 flex-wrap">
-            <Hash className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+            <Hash className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
             <span className="text-xs text-gray-500 dark:text-slate-500 font-semibold whitespace-nowrap">{t('questionsAdmin.orderNumberLabel')}</span>
 
             {/* Exact */}
@@ -285,7 +286,7 @@ export const QuestionsPage = () => {
                   setFilter('order_to', '');
                 }
               }}
-              className={`w-16 bg-transparent text-sm outline-none text-center placeholder-gray-300 dark:placeholder-slate-500 transition-colors ${
+              className={`w-16 bg-transparent text-sm outline-hidden text-center placeholder-gray-300 dark:placeholder-slate-500 transition-colors ${
                 filters.order_exact ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-700 dark:text-slate-300'
               }`}
             />
@@ -301,7 +302,7 @@ export const QuestionsPage = () => {
               value={filters.order_from}
               disabled={!!filters.order_exact}
               onChange={e => setFilter('order_from', e.target.value)}
-              className={`w-14 bg-transparent text-sm outline-none text-center placeholder-gray-300 dark:placeholder-slate-500 transition-colors ${
+              className={`w-14 bg-transparent text-sm outline-hidden text-center placeholder-gray-300 dark:placeholder-slate-500 transition-colors ${
                 filters.order_exact ? 'opacity-30 cursor-not-allowed' : 'text-gray-700 dark:text-slate-300'
               }`}
             />
@@ -314,7 +315,7 @@ export const QuestionsPage = () => {
               value={filters.order_to}
               disabled={!!filters.order_exact}
               onChange={e => setFilter('order_to', e.target.value)}
-              className={`w-14 bg-transparent text-sm outline-none text-center placeholder-gray-300 dark:placeholder-slate-500 transition-colors ${
+              className={`w-14 bg-transparent text-sm outline-hidden text-center placeholder-gray-300 dark:placeholder-slate-500 transition-colors ${
                 filters.order_exact ? 'opacity-30 cursor-not-allowed' : 'text-gray-700 dark:text-slate-300'
               }`}
             />
@@ -340,7 +341,7 @@ export const QuestionsPage = () => {
             <select
               value={filters.version}
               onChange={e => { setFilter('version', e.target.value); setFilter('level_id', ''); setFilter('exam_id', ''); }}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
               <option value="">{t('questionsAdmin.allOption')}</option>
               {versions.map(v => <option key={v} value={v}>{v}</option>)}
@@ -353,7 +354,7 @@ export const QuestionsPage = () => {
             <select
               value={filters.level_id}
               onChange={e => { setFilter('level_id', e.target.value); setFilter('exam_id', ''); }}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
               <option value="">{t('questionsAdmin.allOption')}</option>
               {filteredLevels.map(l => (
@@ -368,7 +369,7 @@ export const QuestionsPage = () => {
             <select
               value={filters.exam_type}
               onChange={e => { setFilter('exam_type', e.target.value); setFilter('exam_id', ''); }}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
               <option value="">{t('questionsAdmin.allOption')}</option>
               <option value="testing">{t('questionsAdmin.examTypeTesting')}</option>
@@ -382,7 +383,7 @@ export const QuestionsPage = () => {
             <select
               value={filters.exam_id}
               onChange={e => setFilter('exam_id', e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
               <option value="">{t('questionsAdmin.allOption')}</option>
               {filteredLevelExams.map(e => (
@@ -399,7 +400,7 @@ export const QuestionsPage = () => {
             <select
               value={filters.question_type}
               onChange={e => setFilter('question_type', e.target.value)}
-              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+              className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
             >
               <option value="">{t('questionsAdmin.allOption')}</option>
               <option value="choice">{t('questionsAdmin.typeLabels.choice')}</option>
@@ -413,15 +414,12 @@ export const QuestionsPage = () => {
       </div>
 
       {/* ══════════ Question List ══════════ */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700/60 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700/60 overflow-hidden">
 
         {/* ── Mobile Card View ── */}
         <div className="sm:hidden divide-y divide-gray-100 dark:divide-slate-700">
           {loading ? (
-            <div className="px-4 py-14 text-center">
-              <Loader2 className="w-6 h-6 text-indigo-400 animate-spin mx-auto mb-2" />
-              <p className="text-sm text-gray-400 dark:text-slate-500">{t('questionsAdmin.loadingData')}</p>
-            </div>
+            <Skeleton variant="table-row" count={4} />
           ) : questions.length === 0 ? (
             <EmptyState
               icon={BookOpen}
@@ -441,7 +439,7 @@ export const QuestionsPage = () => {
               <div key={q.id} className="p-4 active:bg-gray-50 dark:active:bg-slate-700/40 transition-colors">
                 <div className="flex items-start gap-3">
                   {q.image_url && (
-                    <img src={q.image_url} alt="" className="w-11 h-11 rounded-lg object-cover flex-shrink-0 border border-gray-100 dark:border-slate-700/60 mt-0.5" />
+                    <img src={q.image_url} alt="" loading="lazy" className="w-11 h-11 rounded-lg object-cover shrink-0 border border-gray-100 dark:border-slate-700/60 mt-0.5" />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -450,7 +448,7 @@ export const QuestionsPage = () => {
                         className="text-sm font-medium text-gray-900 dark:text-slate-100 line-clamp-3 flex-1 leading-snug"
                         dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.content) }}
                       />
-                      <span className="text-xs text-gray-300 dark:text-slate-600 font-mono flex-shrink-0">#{q.order_index ?? rowNumber}</span>
+                      <span className="text-xs text-gray-300 dark:text-slate-600 font-mono shrink-0">#{q.order_index ?? rowNumber}</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${typeColor}`}>
@@ -522,9 +520,8 @@ export const QuestionsPage = () => {
             <tbody className="divide-y divide-gray-50 dark:divide-slate-700/60">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center">
-                    <Loader2 className="w-6 h-6 text-indigo-400 animate-spin mx-auto mb-2" />
-                    <p className="text-sm text-gray-400 dark:text-slate-500">{t('questionsAdmin.loadingData')}</p>
+                  <td colSpan={6} className="p-0">
+                    <Skeleton variant="table-row" count={6} />
                   </td>
                 </tr>
               ) : questions.length === 0 ? (
@@ -554,7 +551,7 @@ export const QuestionsPage = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-start gap-3">
                           {q.image_url && (
-                            <img src={q.image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100 dark:border-slate-700/60" />
+                            <img src={q.image_url} alt="" loading="lazy" className="w-10 h-10 rounded-lg object-cover shrink-0 border border-gray-100 dark:border-slate-700/60" />
                           )}
                           <div className="min-w-0">
                             <div
@@ -684,7 +681,7 @@ export const QuestionsPage = () => {
                         onClick={() => setPage(item)}
                         className={`min-w-[36px] h-9 text-sm rounded-lg border transition-colors font-medium
                           ${page === item
-                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
                             : 'border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:border-indigo-300 dark:hover:border-indigo-500'}`}
                       >
                         {item}

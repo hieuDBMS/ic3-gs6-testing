@@ -36,7 +36,7 @@ const AddVersionModal = ({ open, onClose, onSaved, existingVersions }) => {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
       <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm">
         <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-4">{t('examStructure.addVersionModalTitle')}</h3>
         <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">{t('examStructure.versionNameLabel')} <span className="text-red-500 dark:text-red-400">*</span></label>
@@ -44,7 +44,7 @@ const AddVersionModal = ({ open, onClose, onSaved, existingVersions }) => {
           value={name} onChange={e => setName(e.target.value)}
           placeholder={t('examStructure.versionNamePlaceholder')}
           onKeyDown={e => e.key === 'Enter' && handleSave()}
-          className={`w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${err ? 'border-red-400 dark:border-red-600' : 'border-gray-200 dark:border-slate-600'}`}
+          className={`w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 uppercase dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${err ? 'border-red-400 dark:border-red-600' : 'border-gray-200 dark:border-slate-600'}`}
         />
         {err && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{err}</p>}
         <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">{t('examStructure.addVersionHint')}</p>
@@ -84,7 +84,7 @@ const AddLevelModal = ({ open, onClose, onSaved, version, existingLevels }) => {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
       <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm">
         <h3 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-1">{t('examStructure.addLevelModalTitle')}</h3>
         <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">{t('examStructure.versionPrefix')} <span className="font-semibold text-indigo-600 dark:text-indigo-400">{version}</span></p>
@@ -93,7 +93,7 @@ const AddLevelModal = ({ open, onClose, onSaved, version, existingLevels }) => {
           type="number" min={1} value={levelNum} onChange={e => setLevelNum(e.target.value)}
           placeholder={t('examStructure.levelNumberPlaceholder')}
           onKeyDown={e => e.key === 'Enter' && handleSave()}
-          className={`w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${err ? 'border-red-400 dark:border-red-600' : 'border-gray-200 dark:border-slate-600'}`}
+          className={`w-full text-sm border rounded-xl px-4 py-2.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${err ? 'border-red-400 dark:border-red-600' : 'border-gray-200 dark:border-slate-600'}`}
         />
         {err && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{err}</p>}
         <div className="flex justify-end gap-2 mt-5">
@@ -154,7 +154,7 @@ const ExamModal = ({ open, onClose, onSaved, levelId, levelLabel, editExam }) =>
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
       <div className="relative bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 w-full max-w-md">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -183,12 +183,12 @@ const ExamModal = ({ open, onClose, onSaved, levelId, levelLabel, editExam }) =>
             <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">{t('examStructure.examNumberLabel')} <span className="text-red-500 dark:text-red-400">*</span></label>
             <input type="number" min={1} value={form.exam_number} onChange={e => set('exam_number', e.target.value)}
               placeholder="1, 2, 3..."
-              className="w-full text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl px-3 py-2.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-500" />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">{t('examStructure.durationLabel')}</label>
             <input type="number" min={60} value={form.duration_seconds} onChange={e => set('duration_seconds', e.target.value)}
-              className="w-full text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl px-3 py-2.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-500" />
           </div>
         </div>
 
@@ -196,7 +196,7 @@ const ExamModal = ({ open, onClose, onSaved, levelId, levelLabel, editExam }) =>
           <label className="block text-xs font-medium text-gray-600 dark:text-slate-300 mb-1">{t('examStructure.examTitleLabel')} <span className="text-red-500 dark:text-red-400">*</span></label>
           <input value={form.title} onChange={e => set('title', e.target.value)}
             placeholder={t('examStructure.examTitlePlaceholder', { type: form.exam_type === 'testing' ? EXAM_TYPE_LABELS.testing : EXAM_TYPE_LABELS.gmetrix, number: form.exam_number || 1 })}
-            className="w-full text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            className="w-full text-sm border border-gray-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-xl px-3 py-2.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-500" />
         </div>
 
         {err && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl px-3 py-2 mb-3">{err}</p>}
@@ -316,7 +316,7 @@ const LevelSection = ({ level, exams, onRefresh, showToast }) => {
   return (
     <div className="border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden">
       {/* Level header */}
-      <div className="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-gray-50 to-white dark:from-slate-700/50 dark:to-slate-800">
+      <div className="flex items-center justify-between px-5 py-3.5 bg-linear-to-r from-gray-50 to-white dark:from-slate-700/50 dark:to-slate-800">
         <button onClick={() => setExpanded(v => !v)} className="flex items-center gap-3 flex-1 text-left">
           <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-sm">
             {level.level_number}
@@ -449,7 +449,7 @@ export const ExamStructurePage = () => {
           <p className="mt-1.5 text-sm text-gray-500 dark:text-slate-400">{t('examStructure.pageSubtitle')}</p>
         </div>
         <button onClick={() => setAddVersionOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors">
+          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-xs transition-colors">
           <Plus className="w-4 h-4" /> {t('examStructure.addVersionButton')}
         </button>
       </div>
@@ -475,7 +475,7 @@ export const ExamStructurePage = () => {
 
       {/* Content area */}
       {activeVersion && (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 p-6">
           {/* Version header */}
           <div className="flex items-center justify-between mb-5">
             <div>

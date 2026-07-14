@@ -8,9 +8,13 @@ import { useTranslation } from 'react-i18next';
  *
  * Exposes getTimeLeft() via ref so parent can read elapsed time on submit.
  */
-const TimerImpl = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = true }, ref) {
+const TimerImpl = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = true, startedAt }, ref) {
   const { t } = useTranslation();
-  const [timeLeft, setTimeLeft] = useState(durationSeconds);
+  const [timeLeft, setTimeLeft] = useState(() => {
+    if (!startedAt) return durationSeconds;
+    const elapsed = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
+    return Math.max(0, durationSeconds - elapsed);
+  });
   const firedRef    = useRef(false);
   const onTimeUpRef = useRef(onTimeUp);
   useEffect(() => { onTimeUpRef.current = onTimeUp; }, [onTimeUp]);
@@ -69,7 +73,7 @@ const TimerImpl = forwardRef(function Timer({ durationSeconds, onTimeUp, dark = 
           COMPACT — mobile top bar  (hidden on md+)
       ═══════════════════════════════════════════════ */}
       <div className={`md:hidden flex items-center gap-2 ${isDanger ? 'animate-pulse' : ''}`}>
-        <svg width="30" height="30" className="-rotate-90 flex-shrink-0" style={glowStyle}>
+        <svg width="30" height="30" className="-rotate-90 shrink-0" style={glowStyle}>
           <circle cx="15" cy="15" r={cr} strokeWidth="2.5" fill="none" stroke={trackColor} />
           <circle
             cx="15" cy="15" r={cr}

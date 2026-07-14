@@ -132,6 +132,7 @@ mock_question_ids       uuid[]                         -- 45 (hoặc 10 dùng th
 score_1000              numeric                        -- điểm quy đổi thang IC3 1000, chỉ dùng khi is_mock=true
 current_question_index  int NOT NULL DEFAULT 0          -- live tracking (LiveMonitorPage)
 last_activity_at        timestamptz NOT NULL DEFAULT now() -- ping từ client mỗi 4s
+draft_answers           jsonb NOT NULL DEFAULT '{}'::jsonb -- { answers, flagged } — Resume Session Pattern, ghi kèm ping 4s. Thêm 2026-07-13, xem `supabase/sql/2026-07-13_exam_draft_answers.sql`
 ```
 > **Pass threshold khác nhau theo loại bài**: `exam_attempts` thường (`score`, thang 0-100) → pass ≥70 (`utils/scoreUtils.js`). Mock exam (`score_1000`, thang 0-1000) → pass ≥700 (hard-coded trong `MockResultPage.jsx`, KHÔNG dùng `isPassed()`).
 > **`status='auto_submitted'` có 2 nguồn gốc khác nhau** (kể từ khi ExamPage có Resume Session — xem PATTERNS_AND_CONVENTIONS.md #22): (1) Timer hết giờ → `doSubmit(true)` → RPC `submit_exam_attempt` chấm điểm thật như bình thường; (2) học sinh bấm "Bắt đầu lại" trên `ResumeModal` khi có attempt cũ dở dang → client `UPDATE` trực tiếp `status='auto_submitted', submitted_at=now()` cho attempt cũ, **KHÔNG** qua RPC, **KHÔNG có** `score`/`correct_count` (giữ nguyên default 0/NULL) vì chưa từng có answers để chấm. Khi đọc lịch sử/thống kê theo `auto_submitted`, cân nhắc loại trừ các row `score IS NULL` nếu cần phân biệt "hết giờ thật" với "bị hủy vì làm lại".
@@ -306,6 +307,18 @@ RETURNS TABLE(group_label text, total_attempts bigint, avg_score numeric, pass_p
 ```
 Teacher-only. Dùng ở `AnalyticsPage` → `GroupBreakdownChart`.
 
+### `get_student_attempt_stats()`
+```sql
+RETURNS TABLE(user_id uuid, total_attempts bigint, avg_score numeric, last_active timestamptz)
+```
+Teacher-only. Thêm 2026-07-13 (`supabase/sql/2026-07-13_concurrency_indexes.sql`) — group-by aggregate trên `exam_attempts` (loại `status='in_progress'`), 1 dòng/học sinh có attempt. Dùng bởi `useStudents.js` thay cho việc fetch nguyên bảng `exam_attempts` (payload trước đây lớn dần vô hạn theo lịch sử làm bài tích luỹ toàn hệ thống, không liên quan số học sinh đang xem trang).
+
+### `get_teacher_dashboard_stats()`
+```sql
+RETURNS TABLE(total_attempts bigint, avg_score numeric)   -- luôn đúng 1 dòng
+```
+Teacher-only. Thêm 2026-07-13, cùng file SQL trên. Dùng bởi `DashboardPage.jsx`'s `useTeacherStats` — trước đó gọi `useExamAttempts(null, { select: 'score' })` (userId=null → không filter theo user) fetch TOÀN BỘ `exam_attempts` platform-wide mỗi lần Dashboard (landing page sau login) load, chỉ để COUNT/AVG ở client.
+
 ---
 
 ## Bẫy thường gặp (đã từng gây lỗi thật)
@@ -315,3 +328,5 @@ Teacher-only. Dùng ở `AnalyticsPage` → `GroupBreakdownChart`.
 - **Không tự ý viết/sửa trực tiếp vào `purchases`/`payment_history`/`schools` (ngoại trừ RLS fallback update tên trường) từ client** — luôn qua Edge Functions (`manage-purchase`, `manage-school`) để giữ tính nhất quán (side-effect như tính `paid_amount`, kiểm tra quyền).
 - **`exam_attempts` phục vụ cả bài thi thường lẫn mock exam** — phân biệt bằng `is_mock`. Đọc/ghi điểm phải chọn đúng cột: `score` (0-100, bài thường) vs `score_1000` (0-1000, mock) — nhầm cột sẽ cho ra ngưỡng pass sai (70 vs 700).
 - Trước khi viết SQL/RPC mới dựa trên schema tài liệu hoá ở đây: **luôn `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '...'` để xác nhận lại**, vì schema có thể đã đổi sau lần cập nhật doc này (2026-07-10).
+- **`exam_attempts` KHÔNG có RLS policy DELETE nào** (chỉ insert own / select own+teacher / update own — xem bảng RLS ở trên). Đây là chủ ý: xoá lịch sử làm bài (1 dòng, 1 student/teacher, hoặc toàn hệ thống) chỉ thực hiện qua Edge Function `manage-student` (`delete-attempt`/`clear-attempts`/`clear-all-attempts`, thêm 2026-07-13) — dùng service role, tự kiểm tra `role='teacher'` ở đầu function, KHÔNG dựa vào RLS. Client không thể tự `DELETE FROM exam_attempts` trực tiếp dù có JWT hợp lệ.
+- **Không tìm thấy `CREATE INDEX` nào trong `supabase/sql/` trước 2026-07-13** — các cột filter hot-path (`exam_attempts.user_id/exam_id/status/is_mock/last_activity_at`, `exam_cheat_events.attempt_id`, `questions.exam_id`, `attempt_answers.attempt_id/question_id`, `purchases.user_id`) không chắc có index trên DB thật (schema doc này reverse-engineer từ `information_schema`, không phải nguồn đầy đủ). Đã thêm `supabase/sql/2026-07-13_concurrency_indexes.sql` (dùng `CREATE INDEX CONCURRENTLY IF NOT EXISTS`, chưa chạy — cần tự chạy tay qua Supabase Studio) để bù các cột này, phục vụ tải đồng thời nhiều học sinh/giáo viên. Xác nhận bằng `SELECT indexname, indexdef FROM pg_indexes WHERE schemaname='public'` trước khi giả định đã có/chưa có.

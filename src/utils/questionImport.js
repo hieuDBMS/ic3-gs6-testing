@@ -1,6 +1,12 @@
-import ExcelJS from 'exceljs';
-
 export const SHEET_NAMES = ['choice_multi', 'dragdrop', 'truefalse'];
+
+/* ExcelJS is ~950kB — load on demand (template download / .xlsx parse) instead of
+   bundling it into QuestionImportPage's chunk, so the page shell renders instantly. */
+let _exceljsPromise;
+const loadExcelJS = () => {
+  if (!_exceljsPromise) _exceljsPromise = import('exceljs').then((m) => m.default ?? m);
+  return _exceljsPromise;
+};
 
 const cell = (v) => (v == null ? '' : String(v).trim());
 
@@ -43,6 +49,7 @@ export function parseCsvText(text) {
 
 /* ── .xlsx parsing → { choice_multi: [rows], dragdrop: [rows], truefalse: [rows] } ── */
 export async function parseWorkbookFile(arrayBuffer) {
+  const ExcelJS = await loadExcelJS();
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(arrayBuffer);
   const sheets = {};
@@ -261,6 +268,7 @@ export async function commitQuestions(supabase, questions) {
 
 /* ── Downloadable template workbook ── */
 export async function buildTemplateWorkbook() {
+  const ExcelJS = await loadExcelJS();
   const wb = new ExcelJS.Workbook();
   const common = ['level_version', 'level_number', 'exam_type', 'exam_number', 'order_index'];
 

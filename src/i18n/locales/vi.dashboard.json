@@ -19,7 +19,11 @@
     "historyPersonalTitle": "Lịch sử làm bài (Cá nhân)",
     "historyTitle": "Lịch sử làm bài",
     "newExamLink": "Làm bài mới",
-    "studentsLink": "Học sinh"
+    "studentsLink": "Học sinh",
+    "clearMyHistoryButton": "Xoá lịch sử của tôi",
+    "clearMyHistoryConfirmTitle": "Xoá lịch sử làm bài của tôi",
+    "clearMyHistoryConfirmMessage": "Thao tác này xoá vĩnh viễn toàn bộ lịch sử làm bài của chính bạn. Không thể hoàn tác.",
+    "clearMyHistorySuccessToast": "Đã xoá lịch sử làm bài của bạn!"
   },
   "attemptHistory": {
     "filterAll": "Tất cả",
@@ -43,7 +47,13 @@
     "correctSuffix": "đúng",
     "viewResult": "Xem kết quả",
     "prev": "Trước",
-    "next": "Sau"
+    "next": "Sau",
+    "deleteButton": "Xoá lượt thi này",
+    "deleteConfirmTitle": "Xoá lượt làm bài",
+    "deleteConfirmPre": "Bạn sắp xoá vĩnh viễn lượt làm bài:",
+    "deleteConfirmPost": "Không thể hoàn tác.",
+    "deleteSuccessToast": "Đã xoá lượt làm bài!",
+    "deleteErrorToast": "Lỗi khi xoá: {{message}}"
   },
   "studentOverview": {
     "searchPlaceholder": "Tìm kiếm theo tên hoặc email...",

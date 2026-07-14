@@ -117,8 +117,8 @@ export const QuestionImportPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm">
-        <div className="max-w-screen-lg mx-auto flex items-center gap-3 px-4 sm:px-6 py-3">
+      <div className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-xs">
+        <div className="max-w-(--breakpoint-lg) mx-auto flex items-center gap-3 px-4 sm:px-6 py-3">
           <button onClick={() => navigate('/questions')} className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-100 transition-colors text-sm font-medium">
             <ChevronLeft className="w-4 h-4" /> {t('questionImport.backToQuestions')}
           </button>
@@ -132,7 +132,7 @@ export const QuestionImportPage = () => {
         </div>
       </div>
 
-      <div className="max-w-screen-lg mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-(--breakpoint-lg) mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Step indicator */}
         <div className="flex items-center gap-2">
           {STEPS.map((label, i) => (
@@ -150,9 +150,9 @@ export const QuestionImportPage = () => {
 
         {/* Step 0: Upload */}
         {step === 0 && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 space-y-5">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-xs p-6 space-y-5">
             <div className="flex items-start gap-3 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-xs text-indigo-800 leading-relaxed dark:bg-indigo-950/30 dark:border-indigo-800/50 dark:text-indigo-300">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <div>
                 {t('questionImport.supportedTypesIntro')} <b>{t('questionImport.csvTypes.choiceMulti')}</b>, <b>{t('questionImport.csvTypes.dragdrop')}</b>, <b>{t('questionImport.csvTypes.truefalse')}</b>.
                 {' '}{t('questionImport.unsupportedIntro')} <b>{t('questionImport.hotspotTypeLabel')}</b> {t('questionImport.unsupportedNote')}
@@ -193,7 +193,7 @@ export const QuestionImportPage = () => {
                   <span>{t('questionImport.csvTypeHint')}</span>
                   <select
                     value={csvType} onChange={e => setCsvType(e.target.value)}
-                    className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200"
+                    className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200"
                   >
                     {CSV_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
@@ -206,7 +206,7 @@ export const QuestionImportPage = () => {
                 )}
                 {parseError && (
                   <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 dark:text-red-400 dark:bg-red-950/40 dark:border-red-800/60">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" /> {parseError}
+                    <AlertCircle className="w-4 h-4 shrink-0" /> {parseError}
                   </div>
                 )}
               </>
@@ -234,14 +234,14 @@ export const QuestionImportPage = () => {
             </div>
 
             {errors.length > 0 && (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-red-100 dark:border-red-900/50 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-red-100 dark:border-red-900/50 shadow-xs overflow-hidden">
                 <div className="px-4 py-2.5 bg-red-50 border-b border-red-100 text-xs font-bold text-red-700 uppercase tracking-wide dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-300">
                   {t('questionImport.errorRowsHeader')}
                 </div>
                 <div className="max-h-64 overflow-y-auto divide-y divide-gray-50 dark:divide-slate-700">
                   {errors.map((e, i) => (
                     <div key={i} className="px-4 py-2 text-xs flex items-start gap-2">
-                      <span className="flex-shrink-0 px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 font-mono dark:bg-slate-700 dark:text-slate-400">{e.sheet}:{e.row}</span>
+                      <span className="shrink-0 px-1.5 py-0.5 rounded-sm bg-gray-100 text-gray-500 font-mono dark:bg-slate-700 dark:text-slate-400">{e.sheet}:{e.row}</span>
                       <span className="text-red-600 dark:text-red-400">{e.message}</span>
                     </div>
                   ))}
@@ -250,7 +250,7 @@ export const QuestionImportPage = () => {
             )}
 
             {questions.length > 0 && (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-xs overflow-hidden">
                 <div className="px-4 py-2.5 bg-emerald-50 border-b border-emerald-100 text-xs font-bold text-emerald-700 uppercase tracking-wide dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-300">
                   {t('questionImport.questionsToAdd')}
                 </div>
@@ -286,9 +286,9 @@ export const QuestionImportPage = () => {
 
         {/* Step 2: Results */}
         {step === 2 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-6 h-6 text-emerald-600" />
               </div>
               <div>

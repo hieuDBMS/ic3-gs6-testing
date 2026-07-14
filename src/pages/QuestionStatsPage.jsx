@@ -76,12 +76,12 @@ export const QuestionStatsPage = () => {
       </div>
 
       {/* Filter bar */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 mb-6 p-4 space-y-3">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 mb-6 p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-700/50 rounded-xl border border-gray-200 dark:border-slate-600 px-3 py-1.5">
             <Layers className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
             <select value={levelId} onChange={e => setLevelId(e.target.value)}
-              className="outline-none text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer max-w-[220px]">
+              className="outline-hidden text-xs text-gray-700 dark:text-slate-300 bg-transparent cursor-pointer max-w-[220px]">
               <option value="">{t('questionStats.allLevels')}</option>
               {[...new Set(levels.map(l => l.version))].map(v => (
                 <optgroup key={v} label={v}>
@@ -107,14 +107,14 @@ export const QuestionStatsPage = () => {
           <input
             type="number" min={0} value={minAttempts}
             onChange={e => setMinAttempts(e.target.value)}
-            className="w-20 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
+            className="w-20 text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
           />
           <span className="text-[11px] text-gray-400 dark:text-slate-500">{t('questionStats.minAttemptsHint')}</span>
         </div>
       </div>
 
       {/* Results */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-indigo-500 dark:text-indigo-400" />
@@ -130,7 +130,7 @@ export const QuestionStatsPage = () => {
           <div className="divide-y divide-gray-100 dark:divide-slate-700">
             {rows.map((r) => (
               <div key={r.question_id} className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors">
-                <span className={`flex-shrink-0 px-3 py-1.5 rounded-xl border text-sm font-bold ${wrongPctColor(r.wrong_pct)}`}>
+                <span className={`shrink-0 px-3 py-1.5 rounded-xl border text-sm font-bold ${wrongPctColor(r.wrong_pct)}`}>
                   {r.wrong_pct}%
                 </span>
                 <div className="flex-1 min-w-0">

@@ -65,7 +65,7 @@ export const LoginPage = () => {
         <div className="relative z-10">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+            <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-xs">
               <Sword className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -84,7 +84,7 @@ export const LoginPage = () => {
             </div>
             <h1 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight text-balance">
               {t('auth.login.heroLine1')}<br />
-              <span className="bg-gradient-to-r from-accent-300 to-primary-300 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-accent-300 to-primary-300 bg-clip-text text-transparent">
                 {t('auth.login.heroLine2')}
               </span>
             </h1>
@@ -97,7 +97,7 @@ export const LoginPage = () => {
           <ul className="space-y-3">
             {features.map((f, i) => (
               <li key={i} className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-accent-300 flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-accent-300 shrink-0">
                   {f.icon}
                 </div>
                 <span className="text-white/70 text-sm font-medium">{f.text}</span>
@@ -115,11 +115,11 @@ export const LoginPage = () => {
       </div>
 
       {/* ── RIGHT: Login Form Panel ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-gradient-to-br from-slate-50 via-blue-50/40 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 bg-linear-to-br from-slate-50 via-blue-50/40 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
 
         {/* Mobile logo */}
         <div className="lg:hidden flex flex-col items-center mb-10">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-200 mb-3">
+          <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-200 mb-3">
             <Sword className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-slate-100">IC3-Fighter</h1>
@@ -136,7 +136,7 @@ export const LoginPage = () => {
           {/* Error */}
           {error && (
             <div className="mb-5 flex items-start gap-3 px-4 py-3.5 rounded-xl bg-red-50 border border-red-200 dark:bg-red-950/40 dark:border-red-800/60 animate-fade-in">
-              <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               <p className="text-sm text-red-700 dark:text-red-300 font-medium">{error}</p>
@@ -159,8 +159,8 @@ export const LoginPage = () => {
                 placeholder={t('auth.login.usernamePlaceholder')}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                            dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
-                           focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
-                           transition-all duration-150 shadow-sm hover:border-gray-300 dark:hover:border-slate-500"
+                           focus:outline-hidden focus:ring-2 focus:ring-primary-400 focus:border-transparent
+                           transition-all duration-150 shadow-xs hover:border-gray-300 dark:hover:border-slate-500"
               />
             </div>
 
@@ -180,8 +180,8 @@ export const LoginPage = () => {
                   placeholder={t('auth.login.passwordPlaceholder')}
                   className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm placeholder-gray-400
                              dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500
-                             focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent
-                             transition-all duration-150 shadow-sm hover:border-gray-300 dark:hover:border-slate-500"
+                             focus:outline-hidden focus:ring-2 focus:ring-primary-400 focus:border-transparent
+                             transition-all duration-150 shadow-xs hover:border-gray-300 dark:hover:border-slate-500"
                 />
                 <button
                   type="button"
@@ -200,11 +200,11 @@ export const LoginPage = () => {
               type="submit"
               disabled={isLoading}
               className={`w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-xl font-bold text-sm text-white
-                         bg-gradient-to-r from-primary-600 to-primary-500
+                         bg-linear-to-r from-primary-600 to-primary-500
                          hover:from-primary-700 hover:to-primary-600
                          shadow-lg shadow-primary-200 hover:shadow-xl hover:shadow-primary-200
                          active:scale-[0.98] transition-all duration-200
-                         focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2
+                         focus:outline-hidden focus:ring-2 focus:ring-primary-400 focus:ring-offset-2
                          disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100`}
             >
               {isLoading ? (

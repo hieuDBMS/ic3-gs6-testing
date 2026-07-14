@@ -53,7 +53,7 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
         </div>
         <div className="px-6 pt-4 pb-6 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center shrink-0">
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
             <div className="flex-1">
@@ -65,11 +65,11 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
             </button>
           </div>
           <div className="p-3.5 bg-gray-50 dark:bg-slate-700/50 rounded-2xl text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-            {t('flashcardList.cancelSheet.messagePrefix')} <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{txCode}</code> {t('flashcardList.cancelSheet.messageSuffix')}
+            {t('flashcardList.cancelSheet.messagePrefix')} <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-sm">{txCode}</code> {t('flashcardList.cancelSheet.messageSuffix')}
           </div>
           {err && (
             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 rounded-xl text-xs text-red-700 dark:text-red-300">
-              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" /> {err}
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {err}
             </div>
           )}
           <div className="flex gap-2.5">
@@ -193,12 +193,12 @@ export const FlashcardListPage = () => {
               </p>
               {selectedVersion && !loading && (
                 <div className="mt-5 flex items-center gap-2.5 flex-wrap">
-                  <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur-xs">
                     <Sparkles className="w-3.5 h-3.5 text-white/80" />
                     <span className="text-white font-semibold text-sm">{totalCards.toLocaleString()}</span>
                     <span className="text-white/45 text-xs">{t('flashcardList.hero.cardsUnit')}</span>
                   </div>
-                  <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 backdrop-blur-xs">
                     <Layers className="w-3.5 h-3.5 text-white/80" />
                     <span className="text-white font-semibold text-sm">{filteredLevels.length}</span>
                     <span className="text-white/45 text-xs">{t('flashcardList.hero.levelsUnit')}</span>
@@ -242,7 +242,7 @@ export const FlashcardListPage = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
         {loading && (
           <div className="space-y-3">
-            {[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl animate-pulse bg-white dark:bg-slate-800 shadow-sm" style={{ opacity: 1 - i*0.2 }} />)}
+            {[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl animate-pulse bg-white dark:bg-slate-800 shadow-xs" style={{ opacity: 1 - i*0.2 }} />)}
           </div>
         )}
 
@@ -266,7 +266,7 @@ export const FlashcardListPage = () => {
                       else localStorage.removeItem('ic3_expanded_level');
                     }}
                     className="w-full flex items-center gap-4 px-5 py-4 sm:px-6 text-left group hover:bg-slate-50/50 dark:hover:bg-slate-700/40 transition-colors">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-sm"
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-base shrink-0 shadow-xs"
                       style={{ background: cfg.grad }}>
                       {level.level_number}
                     </div>
@@ -283,8 +283,8 @@ export const FlashcardListPage = () => {
                         )}
                       </div>
                     </div>
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0
-                      ${isOpen ? 'text-white shadow-sm' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-500 dark:group-hover:bg-slate-600'}`}
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all shrink-0
+                      ${isOpen ? 'text-white shadow-xs' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-500 dark:group-hover:bg-slate-600'}`}
                       style={isOpen ? { background: cfg.grad } : {}}>
                       <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                     </div>
@@ -307,7 +307,7 @@ export const FlashcardListPage = () => {
                               style={{ border: isPending ? '1.5px solid #fbbf24' : `1.5px solid ${isDark ? '#334155' : '#e2e8f0'}` }}>
                               <div className="flex items-start gap-2">
                                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug flex-1 line-clamp-2">{exam.title}</h3>
-                                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                <div className="flex flex-col items-end gap-1 shrink-0">
                                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border ${TYPE_BADGE[exam.exam_type]}`}>
                                     {isGmetrix ? '🎯' : '📝'} {isGmetrix ? t('flashcardList.examCard.gmetrixLabel') : t('flashcardList.examCard.testingLabel')}
                                   </span>
@@ -330,7 +330,7 @@ export const FlashcardListPage = () => {
                                 <div className="w-full h-9 bg-gray-100 dark:bg-slate-700 rounded-xl animate-pulse mt-auto" />
                               ) : isPurchased ? (
                                 <Link to={`/flashcard/${exam.id}`}
-                                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] transition-all mt-auto"
+                                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold text-white shadow-xs hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] transition-all mt-auto"
                                   style={{ background: cfg.btn }}>
                                   <Zap className="w-3.5 h-3.5" /> {t('flashcardList.examCard.studyNow')} <ChevronRight className="w-3.5 h-3.5 opacity-70" />
                                 </Link>
@@ -338,7 +338,7 @@ export const FlashcardListPage = () => {
                                 /* ── Pending: resume + cancel ── */
                                 <div className="flex gap-2 mt-auto">
                                   <button onClick={() => setPaymentExam(exam)}
-                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-amber-500 to-orange-400 hover:opacity-90 active:scale-[.97] transition-all shadow-sm">
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-semibold text-white bg-linear-to-r from-amber-500 to-orange-400 hover:opacity-90 active:scale-[.97] transition-all shadow-xs">
                                     <Clock className="w-3.5 h-3.5" /> {t('flashcardList.examCard.continuePayment')}
                                   </button>
                                   <button
@@ -351,7 +351,7 @@ export const FlashcardListPage = () => {
                               ) : (
                                 /* ── Not purchased: buy ── */
                                 <button onClick={() => setPaymentExam(exam)}
-                                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold text-white shadow-sm hover:shadow-md active:scale-[0.97] transition-all mt-auto bg-gradient-to-r from-indigo-600 to-violet-600">
+                                  className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold text-white shadow-xs hover:shadow-md active:scale-[0.97] transition-all mt-auto bg-linear-to-r from-indigo-600 to-violet-600">
                                   <ShoppingCart className="w-3.5 h-3.5" /> {t('flashcardList.examCard.buyNow')} &mdash; {new Intl.NumberFormat('vi-VN').format(exam.required_amount || 100000)}đ
                                 </button>
                               )}

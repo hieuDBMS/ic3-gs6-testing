@@ -63,10 +63,10 @@ const QuestionNavigatorImpl = ({ questions, currentIndex, answers, flagged, onSe
   const sectionCls  = dark ? 'text-amber-400'   : 'text-amber-500';
 
   return (
-    <div className={`flex flex-col flex-1 min-h-0 ${!dark ? 'bg-white rounded-2xl shadow-sm border border-gray-100' : ''}`}>
+    <div className={`flex flex-col flex-1 min-h-0 ${!dark ? 'bg-white rounded-2xl shadow-xs border border-gray-100' : ''}`}>
 
       {/* ── Header ── */}
-      <div className={`px-4 pt-4 pb-3 border-b ${dividerCls} flex-shrink-0`}>
+      <div className={`px-4 pt-4 pb-3 border-b ${dividerCls} shrink-0`}>
         <div className="flex items-center justify-between mb-2.5">
           <h3 className={`text-sm font-bold ${titleCls}`}>{t('questionNavigator.title')}</h3>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${countCls}`}>
@@ -109,21 +109,21 @@ const QuestionNavigatorImpl = ({ questions, currentIndex, answers, flagged, onSe
       </div>
 
       {/* ── Legend ── */}
-      <div className={`px-4 pb-4 pt-3 border-t ${dividerCls} flex-shrink-0 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs ${legendCls}`}>
+      <div className={`px-4 pb-4 pt-3 border-t ${dividerCls} shrink-0 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs ${legendCls}`}>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-md bg-emerald-500 flex-shrink-0" />
+          <span className="w-3 h-3 rounded-md bg-emerald-500 shrink-0" />
           {t('questionNavigator.legend.answered')}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className={`w-3 h-3 rounded-md flex-shrink-0 ${dark ? 'bg-slate-700 border border-slate-600' : 'bg-white border-2 border-gray-200'}`} />
+          <span className={`w-3 h-3 rounded-md shrink-0 ${dark ? 'bg-slate-700 border border-slate-600' : 'bg-white border-2 border-gray-200'}`} />
           {t('questionNavigator.legend.unanswered')}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className={`w-3 h-3 rounded-full flex-shrink-0 ${dark ? 'bg-white' : 'bg-indigo-600'}`} />
+          <span className={`w-3 h-3 rounded-full shrink-0 ${dark ? 'bg-white' : 'bg-indigo-600'}`} />
           {t('questionNavigator.legend.current')}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-md bg-amber-500 flex-shrink-0" />
+          <span className="w-3 h-3 rounded-md bg-amber-500 shrink-0" />
           {t('questionNavigator.legend.flagged')}
         </div>
       </div>

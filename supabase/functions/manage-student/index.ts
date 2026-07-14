@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Chi giao vien moi duoc dung chuc nang nay' });
 
     const body = await req.json().catch(() => ({}));
-    const { action, email, password, fullName, studentId, school, className } = body;
+    const { action, email, password, fullName, studentId, school, className, attemptId } = body;
 
     // ── CREATE ────────────────────────────────────────────
     if (action === 'create') {
@@ -145,6 +145,54 @@ Deno.serve(async (req) => {
       await admin.auth.admin.deleteUser(studentId);
 
       return json({ success: true });
+    }
+
+    // ── CLEAR ATTEMPT HISTORY (1 user, student hoac teacher) ────
+    if (action === 'clear-attempts') {
+      if (!studentId) return json({ error: 'Thieu studentId' });
+
+      const { count, error: countErr } = await admin
+        .from('exam_attempts')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', studentId);
+      if (countErr) return json({ error: countErr.message });
+
+      // attempt_answers + exam_cheat_events cascade tu dong (ON DELETE CASCADE)
+      const { error: delErr } = await admin.from('exam_attempts').delete().eq('user_id', studentId);
+      if (delErr) return json({ error: delErr.message });
+
+      return json({ success: true, deletedCount: count ?? 0 });
+    }
+
+    // ── DELETE 1 ATTEMPT (mot dong lich su duy nhat) ────────────
+    if (action === 'delete-attempt') {
+      if (!attemptId) return json({ error: 'Thieu attemptId' });
+
+      // attempt_answers + exam_cheat_events cascade tu dong (ON DELETE CASCADE)
+      const { error: delErr, count } = await admin
+        .from('exam_attempts')
+        .delete({ count: 'exact' })
+        .eq('id', attemptId);
+      if (delErr) return json({ error: delErr.message });
+      if (!count) return json({ error: 'Khong tim thay lich su lam bai nay' });
+
+      return json({ success: true });
+    }
+
+    // ── CLEAR ALL ATTEMPT HISTORY (toan he thong) ───────────────
+    if (action === 'clear-all-attempts') {
+      const { count, error: countErr } = await admin
+        .from('exam_attempts')
+        .select('id', { count: 'exact', head: true });
+      if (countErr) return json({ error: countErr.message });
+
+      const { error: delErr } = await admin
+        .from('exam_attempts')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+      if (delErr) return json({ error: delErr.message });
+
+      return json({ success: true, deletedCount: count ?? 0 });
     }
 
     // ── RESET PASSWORD ────────────────────────────────────────

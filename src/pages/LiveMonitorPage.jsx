@@ -40,6 +40,7 @@ export const LiveMonitorPage = () => {
   const [now, setNow] = useState(Date.now());
   const [page, setPage] = useState(0);
   const debounceRef = useRef(null);
+  const maxWaitRef = useRef(null);
 
   const fetchLive = useCallback(async () => {
     // Server-side floor: same threshold as the zombie filter below, so the
@@ -55,7 +56,8 @@ export const LiveMonitorPage = () => {
       `)
       .eq('status', 'in_progress')
       .gte('last_activity_at', cutoffISO)
-      .order('started_at', { ascending: false });
+      .order('started_at', { ascending: false })
+      .limit(300);
 
     const rows = attemptRows || [];
 
@@ -75,9 +77,22 @@ export const LiveMonitorPage = () => {
     setLoading(false);
   }, []);
 
+  // Debounce with a hard ceiling: a full classroom pinging every 4s can keep
+  // resetting a pure trailing-edge debounce forever, so the dashboard would
+  // never refresh precisely when activity (and the need for live data) is
+  // highest. maxWaitRef guarantees a refetch fires at least every 1.5s even
+  // under continuous realtime traffic.
   const scheduleRefetch = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(fetchLive, 500);
+    const fire = () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (maxWaitRef.current) clearTimeout(maxWaitRef.current);
+      debounceRef.current = null;
+      maxWaitRef.current = null;
+      fetchLive();
+    };
+    debounceRef.current = setTimeout(fire, 500);
+    if (!maxWaitRef.current) maxWaitRef.current = setTimeout(fire, 1500);
   }, [fetchLive]);
 
   useEffect(() => {
@@ -93,7 +108,11 @@ export const LiveMonitorPage = () => {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'exam_cheat_events' }, scheduleRefetch)
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); if (debounceRef.current) clearTimeout(debounceRef.current); };
+    return () => {
+      supabase.removeChannel(channel);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (maxWaitRef.current) clearTimeout(maxWaitRef.current);
+    };
   }, [fetchLive, scheduleRefetch]);
 
   useEffect(() => {
@@ -151,7 +170,7 @@ export const LiveMonitorPage = () => {
             const progress = a.total_questions ? Math.round(((a.current_question_index + 1) / a.total_questions) * 100) : 0;
 
             return (
-              <div key={a.id} className={`bg-white dark:bg-slate-800 rounded-2xl border shadow-sm p-4 space-y-3 transition-opacity ${stale ? 'opacity-60 border-gray-100 dark:border-slate-700' : 'border-gray-100 dark:border-slate-700'}`}>
+              <div key={a.id} className={`bg-white dark:bg-slate-800 rounded-2xl border shadow-xs p-4 space-y-3 transition-opacity ${stale ? 'opacity-60 border-gray-100 dark:border-slate-700' : 'border-gray-100 dark:border-slate-700'}`}>
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate">{a.profiles?.full_name || t('liveMonitor.studentFallback')}</p>
                   {a.cheatCount > 0 && (

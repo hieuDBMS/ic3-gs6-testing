@@ -284,7 +284,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 backdrop-blur-xs"
         onClick={handleClose}
       />
 
@@ -336,7 +336,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                   <select
                     value={form.level_id}
                     onChange={(e) => set('level_id', e.target.value)}
-                    className={`w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    className={`w-full text-sm border rounded-lg px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 ${
                       errors.level_id ? 'border-red-400' : 'border-gray-200'
                     }`}
                   >
@@ -387,7 +387,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                     value={form.exam_id}
                     onChange={(e) => set('exam_id', e.target.value)}
                     disabled={!form.level_id}
-                    className={`w-full text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
+                    className={`w-full text-sm border rounded-lg px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 ${
                       errors.exam_id ? 'border-red-400' : 'border-gray-200'
                     }`}
                   >
@@ -411,7 +411,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                     min={0}
                     value={form.order_index}
                     onChange={(e) => set('order_index', e.target.value)}
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
                 {form.exam_id && selectedExam && (
@@ -441,7 +441,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                     onClick={() => set('question_type', t.value)}
                     className={`flex flex-col items-center p-3 rounded-xl border-2 transition-all ${
                       form.question_type === t.value
-                        ? 'border-indigo-500 bg-indigo-50 shadow-sm'
+                        ? 'border-indigo-500 bg-indigo-50 shadow-xs'
                         : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
                   >
@@ -554,7 +554,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                       {/* Row: number + textarea + toggle + delete */}
                       <div className="flex items-start gap-2">
                         {/* Index badge */}
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs font-bold flex items-center justify-center mt-1">
+                        <span className="shrink-0 w-6 h-6 rounded-full bg-gray-200 text-gray-600 text-xs font-bold flex items-center justify-center mt-1">
                           {i + 1}
                         </span>
 
@@ -569,7 +569,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                         </div>
 
                         {/* True / False toggle */}
-                        <div className="flex-shrink-0 flex rounded-xl overflow-hidden border border-gray-200 mt-0.5">
+                        <div className="shrink-0 flex rounded-xl overflow-hidden border border-gray-200 mt-0.5">
                           <button
                             type="button"
                             onClick={() => updateStatement(i, 'is_true', true)}
@@ -598,7 +598,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                         <button
                           type="button"
                           onClick={() => removeStatement(i)}
-                          className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors mt-1"
+                          className="shrink-0 text-gray-300 hover:text-red-400 transition-colors mt-1"
                           disabled={statements.length <= 2}
                           title={statements.length <= 2 ? 'Cần ít nhất 2 nhận định' : 'Xóa nhận định'}
                         >
@@ -653,7 +653,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                         {/* ── Drag side ── */}
                         <div className="p-4 space-y-3 border-b sm:border-b-0 sm:border-r border-gray-200">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-semibold bg-blue-100 text-blue-700">
                               🔵 Kéo (Drag)
                             </span>
                           </div>
@@ -666,7 +666,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                             }}
                             placeholder={`Nội dung kéo ${i + 1}... (Enter để xuống dòng)`}
                             rows={2}
-                            className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden"
+                            className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden"
                             style={{ minHeight: '64px' }}
                           />
                           <ImageUploader
@@ -685,7 +685,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                         {/* ── Drop side ── */}
                         <div className="p-4 space-y-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-700">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-semibold bg-purple-100 text-purple-700">
                               🟣 Thả (Drop)
                             </span>
                           </div>
@@ -698,7 +698,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                             }}
                             placeholder={`Nội dung thả ${i + 1}... (Enter để xuống dòng)`}
                             rows={2}
-                            className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none overflow-hidden"
+                            className="w-full text-sm border border-gray-200 bg-white rounded-lg px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-purple-400 resize-none overflow-hidden"
                             style={{ minHeight: '64px' }}
                           />
                           <ImageUploader
@@ -745,9 +745,9 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                     <div className="space-y-2">
                       {statements.map((stmt, i) => (
                         <div key={stmt.id} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-600 bg-gray-800">
-                          <span className="text-xs font-bold text-gray-400 w-5 flex-shrink-0">{i + 1}.</span>
+                          <span className="text-xs font-bold text-gray-400 w-5 shrink-0">{i + 1}.</span>
                           <span className="text-sm flex-1 whitespace-pre-wrap">{stmt.content || <em className="text-gray-500">Chưa có nội dung</em>}</span>
-                          <div className="flex-shrink-0 flex rounded-lg overflow-hidden border border-gray-600 opacity-50">
+                          <div className="shrink-0 flex rounded-lg overflow-hidden border border-gray-600 opacity-50">
                             <span className={`px-2.5 py-1 text-xs font-bold ${
                               stmt.is_true ? 'bg-emerald-700 text-emerald-100' : 'bg-gray-700 text-gray-400'
                             }`}>Đúng</span>
@@ -755,7 +755,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                               !stmt.is_true ? 'bg-red-700 text-red-100' : 'bg-gray-700 text-gray-400'
                             }`}>Sai</span>
                           </div>
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${
                             stmt.is_true ? 'bg-emerald-800 text-emerald-300' : 'bg-red-900 text-red-300'
                           }`}>{stmt.is_true ? '✔ Đúng' : '✘ Sai'}</span>
                         </div>
@@ -772,7 +772,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                               style={{ left: `${r.x}%`, top: `${r.y}%`, width: `${r.width}%`, height: `${r.height}%` }}
                               className={`absolute border-2 ${r.is_correct ? 'border-emerald-400 bg-emerald-400/20' : 'border-red-400 bg-red-400/20'}`}
                             >
-                              <span className={`absolute top-0.5 left-0.5 text-[9px] font-bold px-1 rounded ${r.is_correct ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>{i+1}</span>
+                              <span className={`absolute top-0.5 left-0.5 text-[9px] font-bold px-1 rounded-sm ${r.is_correct ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>{i+1}</span>
                             </div>
                           ))}
                         </div>
@@ -795,7 +795,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                         >
                           <span className="font-bold text-sm">{String.fromCharCode(65 + i)}.</span>
                           <span className="text-sm flex-1 whitespace-pre-wrap">{a.content || <em className="text-gray-500">Chưa có nội dung</em>}</span>
-                          {a.image_url && <img src={a.image_url} alt="" className="h-8 w-8 rounded object-cover" />}
+                          {a.image_url && <img src={a.image_url} alt="" className="h-8 w-8 rounded-sm object-cover" />}
                           {a.is_correct && <span className="text-emerald-400 text-xs font-semibold">✓ Đúng</span>}
                         </div>
                       ))}
@@ -807,7 +807,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                           {/* Drag item */}
                           <div className="flex flex-col items-center gap-1.5 px-3 py-2 bg-blue-900/50 border border-blue-500 rounded-lg min-w-[90px]">
                             {p.drag_image_url && (
-                              <img src={p.drag_image_url} alt="drag" className="h-12 w-16 object-contain rounded" />
+                              <img src={p.drag_image_url} alt="drag" className="h-12 w-16 object-contain rounded-sm" />
                             )}
                             <span>{p.drag_content || <em className="text-gray-500">...</em>}</span>
                           </div>
@@ -815,7 +815,7 @@ export const QuestionModal = ({ open, onClose, onSaved, editQuestion = null }) =
                           {/* Drop item */}
                           <div className="flex flex-col items-center gap-1.5 px-3 py-2 bg-purple-900/50 border border-purple-500 rounded-lg min-w-[90px]">
                             {p.drop_image_url && (
-                              <img src={p.drop_image_url} alt="drop" className="h-12 w-16 object-contain rounded" />
+                              <img src={p.drop_image_url} alt="drop" className="h-12 w-16 object-contain rounded-sm" />
                             )}
                             <span>{p.drop_content || <em className="text-gray-500">...</em>}</span>
                           </div>

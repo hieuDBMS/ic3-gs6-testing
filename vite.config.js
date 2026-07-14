@@ -7,23 +7,25 @@ export default defineConfig({
   build: {
     // Raise warning threshold (default 500kB is too aggressive for a full app)
     chunkSizeWarningLimit: 800,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         // Split vendor code into stable, cache-friendly chunks
-        manualChunks: {
+        // (function form — Vite 8/Rolldown dropped the object form of manualChunks)
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
           // React runtime – almost never changes → long cache TTL
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          if (/[\\/](react|react-dom|react-router|react-router-dom)[\\/]/.test(id)) return 'vendor-react';
           // Supabase client – stable
-          'vendor-supabase': ['@supabase/supabase-js'],
+          if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
           // Icon library – large but shared everywhere
-          'vendor-icons': ['lucide-react'],
+          if (id.includes('lucide-react')) return 'vendor-icons';
         },
       },
     },
     // Target modern browsers – smaller output, no legacy polyfills
     target: 'es2020',
-    // Enable minification
-    minify: 'esbuild',
+    // Minification enabled by default (Oxc minifier in Vite 8; 'esbuild' is no
+    // longer bundled and requires installing it separately)
     sourcemap: false,
   },
   // Speed up dev server

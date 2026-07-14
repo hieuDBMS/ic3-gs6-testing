@@ -13,9 +13,12 @@
       "title": "Resume your exam?",
       "unfinishedPre": "You have an unfinished attempt for",
       "progressPre": "You reached question",
+      "answeredCountPre": "Answered",
       "startedAtPre": "Started at",
       "restart": "Start over",
-      "continue": "Resume exam"
+      "continue": "Resume exam",
+      "expiredNotice": "Time's up for this attempt. Your saved answers will be submitted as soon as you press the button below.",
+      "submitExpired": "Submit saved answers"
     },
     "refreshWarning": {
       "title": "Reload the page?",

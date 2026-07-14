@@ -302,7 +302,17 @@
     "studentUpdatedToast": "Đã cập nhật thông tin học sinh!",
     "passwordResetToast": "Đã đặt lại mật khẩu thành công!",
     "studentDeletedToast": "Đã xoá học sinh và toàn bộ lịch sử làm bài!",
-    "deleteErrorToast": "Lỗi khi xoá: {{message}}"
+    "deleteErrorToast": "Lỗi khi xoá: {{message}}",
+    "clearHistoryButton": "Xoá lịch sử làm bài",
+    "clearHistoryConfirmTitle": "Xoá lịch sử làm bài",
+    "clearHistoryConfirmPre": "Bạn sắp xoá vĩnh viễn toàn bộ lịch sử làm bài của",
+    "clearHistoryConfirmPost": "Tài khoản vẫn được giữ nguyên — chỉ lịch sử làm bài bị xoá. Không thể hoàn tác.",
+    "clearHistorySuccessToast": "Đã xoá lịch sử làm bài!",
+    "clearHistoryErrorToast": "Lỗi khi xoá lịch sử: {{message}}",
+    "clearAllHistoryButton": "Xoá TOÀN BỘ lịch sử làm bài",
+    "clearAllHistoryConfirmTitle": "Xoá TOÀN BỘ lịch sử làm bài",
+    "clearAllHistoryConfirmMessage": "Thao tác này xoá vĩnh viễn lịch sử làm bài của TẤT CẢ học sinh và giáo viên trên toàn hệ thống. Tài khoản, lịch sử mua bài và thanh toán vẫn được giữ nguyên. Không thể hoàn tác.",
+    "clearAllHistorySuccessToast": "Đã xoá toàn bộ lịch sử làm bài!"
   },
   "studentProgress": {
     "studentNotFound": "Học sinh không tồn tại",

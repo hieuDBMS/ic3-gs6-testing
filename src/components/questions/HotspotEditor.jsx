@@ -157,7 +157,7 @@ export const HotspotEditor = ({
       <div className="space-y-4">
         {/* Step hint */}
         <div className="flex items-start gap-3 px-4 py-3.5 bg-amber-50 border border-amber-200 rounded-2xl dark:bg-amber-950/40 dark:border-amber-800/60">
-          <span className="text-2xl flex-shrink-0">🎯</span>
+          <span className="text-2xl shrink-0">🎯</span>
           <div>
             <p className="text-sm font-bold text-amber-800 mb-1 dark:text-amber-300">{t('hotspotEditor.title')}</p>
             <ol className="text-xs text-amber-700 space-y-1 list-decimal list-inside dark:text-amber-300">
@@ -183,7 +183,7 @@ export const HotspotEditor = ({
       {/* ── Toolbar ── */}
       <div className="flex items-center flex-wrap gap-2">
         {/* Draw / Preview toggle */}
-        <div className="flex rounded-xl border border-gray-200 overflow-hidden shadow-sm bg-white dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex rounded-xl border border-gray-200 overflow-hidden shadow-xs bg-white dark:border-slate-700 dark:bg-slate-800">
           <button type="button" onClick={() => setMode('draw')}
             className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-all ${mode === 'draw' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50 dark:text-slate-500 dark:hover:bg-slate-700'}`}>
             <Pencil className="w-3.5 h-3.5" /> {t('hotspotEditor.drawMode')}
@@ -196,7 +196,7 @@ export const HotspotEditor = ({
 
         {/* Multi-select toggle */}
         <button type="button" onClick={() => onMultiModeChange(!multiMode)}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all shadow-sm ${multiMode ? 'bg-violet-100 border-violet-300 text-violet-700 dark:bg-violet-950/40 dark:border-violet-800/60 dark:text-violet-300' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500 dark:hover:border-slate-600'}`}>
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all shadow-xs ${multiMode ? 'bg-violet-100 border-violet-300 text-violet-700 dark:bg-violet-950/40 dark:border-violet-800/60 dark:text-violet-300' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500 dark:hover:border-slate-600'}`}>
           {multiMode ? `☑ ${t('hotspotEditor.multiModeOn')}` : `🔘 ${t('hotspotEditor.multiModeOff')}`}
         </button>
 
@@ -273,14 +273,14 @@ export const HotspotEditor = ({
               >
                 {/* Index badge */}
                 <span
-                  className="absolute top-0.5 left-0.5 text-[9px] font-extrabold px-1 py-0.5 rounded leading-none text-white"
+                  className="absolute top-0.5 left-0.5 text-[9px] font-extrabold px-1 py-0.5 rounded-sm leading-none text-white"
                   style={{ background: color }}
                 >
                   {idx + 1}
                 </span>
                 {/* Size hint on selected */}
                 {mode === 'draw' && isSel && (
-                  <span className="absolute bottom-0.5 right-0.5 text-[8px] font-mono bg-black/60 text-white px-1 py-0.5 rounded-sm leading-none">
+                  <span className="absolute bottom-0.5 right-0.5 text-[8px] font-mono bg-black/60 text-white px-1 py-0.5 rounded-xs leading-none">
                     {r.width.toFixed(1)}×{r.height.toFixed(1)}%
                   </span>
                 )}
@@ -304,7 +304,7 @@ export const HotspotEditor = ({
                 pointerEvents: 'none',
               }}
             >
-              <span className="absolute bottom-0.5 right-0.5 text-[8px] font-mono bg-indigo-700 text-white px-1 py-0.5 rounded-sm leading-none">
+              <span className="absolute bottom-0.5 right-0.5 text-[8px] font-mono bg-indigo-700 text-white px-1 py-0.5 rounded-xs leading-none">
                 {drawing.w.toFixed(1)}×{drawing.h.toFixed(1)}%
               </span>
             </div>
@@ -324,7 +324,7 @@ export const HotspotEditor = ({
       {/* ── Draw mode tip ── */}
       {mode === 'draw' && (
         <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 border border-indigo-100 rounded-xl dark:bg-indigo-950/40 dark:border-indigo-800/60">
-          <Info className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+          <Info className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
           <p className="text-xs text-indigo-600 dark:text-indigo-300">
             {regions.length === 0
               ? t('hotspotEditor.drawTipEmpty')
@@ -358,7 +358,7 @@ export const HotspotEditor = ({
                 >
                   {/* Color swatch + index */}
                   <span
-                    className="w-7 h-7 rounded-xl flex items-center justify-center text-xs font-extrabold text-white flex-shrink-0"
+                    className="w-7 h-7 rounded-xl flex items-center justify-center text-xs font-extrabold text-white shrink-0"
                     style={{ background: color }}
                   >
                     {idx + 1}
@@ -370,7 +370,7 @@ export const HotspotEditor = ({
                   </span>
 
                   {/* Correct badge */}
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
                     r.is_correct ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-300'
                   }`}>
                     {r.is_correct ? `✔ ${t('hotspotEditor.correctLabel')}` : `✘ ${t('hotspotEditor.incorrectLabel')}`}
@@ -380,13 +380,13 @@ export const HotspotEditor = ({
                   <button
                     type="button"
                     onClick={e => { e.stopPropagation(); removeRegion(r.id); }}
-                    className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 p-1 dark:text-slate-600"
+                    className="text-gray-300 hover:text-red-400 transition-colors shrink-0 p-1 dark:text-slate-600"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
 
                   {/* Expand indicator */}
-                  {isSel ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0 dark:text-slate-500" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 dark:text-slate-500" />}
+                  {isSel ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0 dark:text-slate-500" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0 dark:text-slate-500" />}
                 </button>
 
                 {/* Expanded detail */}
@@ -400,7 +400,7 @@ export const HotspotEditor = ({
                         value={r.label || ''}
                         onChange={e => updateRegion(r.id, 'label', e.target.value)}
                         placeholder={t('hotspotEditor.regionLabelPlaceholder')}
-                        className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+                        className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-400 placeholder-gray-300 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                       />
                     </div>
 
@@ -413,7 +413,7 @@ export const HotspotEditor = ({
                             key={hex}
                             type="button"
                             onClick={() => updateRegion(r.id, 'color', hex)}
-                            className="w-8 h-8 rounded-xl transition-all hover:scale-110 focus:outline-none"
+                            className="w-8 h-8 rounded-xl transition-all hover:scale-110 focus:outline-hidden"
                             style={{
                               background:  hex,
                               boxShadow:   color === hex ? `0 0 0 3px white, 0 0 0 5px ${hex}` : 'none',

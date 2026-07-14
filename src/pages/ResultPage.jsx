@@ -11,7 +11,6 @@ import {
 import { ZoomableImage } from '../components/shared/ImageLightbox';
 import { formatDurationLabel } from '../utils/format';
 import { isPassed as checkPassed } from '../utils/scoreUtils';
-import { generateCertificatePdf } from '../utils/certificate';
 import { EmptyState } from '../components/shared/EmptyState';
 import { Skeleton } from '../components/shared/Skeleton';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
@@ -71,13 +70,13 @@ const QuestionCard = ({ detail, index }) => {
   const borderCls = isCorrect ? 'border-emerald-200 dark:border-emerald-800/60' : isSkipped ? 'border-gray-200 dark:border-slate-700' : 'border-red-200 dark:border-red-800/60';
 
   return (
-    <div className={`bg-white dark:bg-slate-800 rounded-2xl border-2 ${borderCls} overflow-hidden shadow-sm`}>
+    <div className={`bg-white dark:bg-slate-800 rounded-2xl border-2 ${borderCls} overflow-hidden shadow-xs`}>
       {/* Header — always visible */}
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-start gap-4 px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors"
       >
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0 mt-0.5 ${statusBadge.cls}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shrink-0 mt-0.5 ${statusBadge.cls}`}>
           {statusBadge.icon} {statusBadge.label}
         </span>
         <div className="flex-1 min-w-0">
@@ -89,7 +88,7 @@ const QuestionCard = ({ detail, index }) => {
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(q.content) }}
           />
         </div>
-        <span className="flex-shrink-0 mt-1 text-gray-400 dark:text-slate-500">
+        <span className="shrink-0 mt-1 text-gray-400 dark:text-slate-500">
           {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </span>
       </button>
@@ -116,25 +115,25 @@ const QuestionCard = ({ detail, index }) => {
 
                 return (
                   <div key={ans.id} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 text-sm ${style}`}>
-                    <span className="flex-shrink-0 w-5 flex justify-center">
+                    <span className="shrink-0 w-5 flex justify-center">
                       {wasSelected && isAnsCorrect && <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
                       {wasSelected && !isAnsCorrect && <XCircle className="w-4 h-4 text-red-500 dark:text-red-400" />}
                       {!wasSelected && isAnsCorrect && <CheckCircle className="w-4 h-4 text-emerald-400 dark:text-emerald-500" />}
                       {!wasSelected && !isAnsCorrect && <div className="w-4 h-4 rounded-full border-2 border-gray-200 dark:border-slate-600" />}
                     </span>
                     {ans.image_url && (
-                      <ZoomableImage src={ans.image_url} alt="" className="h-10 w-14 object-contain rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700/60 flex-shrink-0" />
+                      <ZoomableImage src={ans.image_url} alt="" className="h-10 w-14 object-contain rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700/60 shrink-0" />
                     )}
                     <span
                       className="flex-1 leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: sanitizeHtml(ans.content) }}
                     />
-                    <div className="flex gap-1.5 flex-shrink-0">
+                    <div className="flex gap-1.5 shrink-0">
                       {wasSelected && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-white/70 dark:bg-slate-800/70 border font-medium">{t('result.yourAnswer')}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded-sm bg-white/70 dark:bg-slate-800/70 border font-medium">{t('result.yourAnswer')}</span>
                       )}
                       {isAnsCorrect && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800/60 font-medium">{t('result.correctAnswer')}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded-sm bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800/60 font-medium">{t('result.correctAnswer')}</span>
                       )}
                     </div>
                   </div>
@@ -155,12 +154,12 @@ const QuestionCard = ({ detail, index }) => {
                     {/* Drag item - full width header */}
                     <div className={`px-3 py-2 flex items-center gap-2 ${ok ? 'bg-emerald-50 dark:bg-emerald-950/40' : 'bg-red-50 dark:bg-red-950/40'}`}>
                       {pair.drag_image_url && (
-                        <img src={pair.drag_image_url} alt="" className="w-8 h-8 object-contain rounded flex-shrink-0" />
+                        <img src={pair.drag_image_url} alt="" className="w-8 h-8 object-contain rounded-sm shrink-0" />
                       )}
                       <span className="text-sm font-medium text-gray-800 dark:text-slate-100 leading-snug flex-1 min-w-0">
                         {pair.drag_content}
                       </span>
-                      <span className="flex-shrink-0">
+                      <span className="shrink-0">
                         {ok ? <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> : <XCircle className="w-4 h-4 text-red-400 dark:text-red-400" />}
                       </span>
                     </div>
@@ -205,7 +204,7 @@ const QuestionCard = ({ detail, index }) => {
                       : 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/40'
                     }`}>
                       <div className="flex items-start gap-3">
-                        <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                        <span className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                           !answered ? 'bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
                           : ok ? 'bg-emerald-200 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
                           : 'bg-red-200 text-red-800 dark:bg-red-900/40 dark:text-red-300'
@@ -214,9 +213,9 @@ const QuestionCard = ({ detail, index }) => {
                           className="text-sm text-gray-800 dark:text-slate-100 flex-1 leading-relaxed"
                           dangerouslySetInnerHTML={{ __html: sanitizeHtml(stmt.content) }}
                         />
-                        {ok ? <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
-                          : answered ? <XCircle className="w-4 h-4 text-red-400 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                          : <Minus className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0 mt-0.5" />}
+                        {ok ? <CheckCircle className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
+                          : answered ? <XCircle className="w-4 h-4 text-red-400 dark:text-red-400 shrink-0 mt-0.5" />
+                          : <Minus className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0 mt-0.5" />}
                       </div>
                       <div className="mt-2 ml-9 flex flex-wrap gap-2 items-center">
                         <span className="text-[11px] text-gray-400 dark:text-slate-500">{t('result.yourAnswerColon')}</span>
@@ -263,7 +262,7 @@ const QuestionCard = ({ detail, index }) => {
                         <div
                           key={r.id}
                           style={{ left: `${r.x}%`, top: `${r.y}%`, width: `${r.width}%`, height: `${r.height}%` }}
-                          className={`absolute rounded-sm ${cls} transition-all`}
+                          className={`absolute rounded-xs ${cls} transition-all`}
                         >
                           {(userChose || isCorrect) && (
                             <span className={`absolute top-0.5 left-0.5 text-[9px] font-bold px-1 py-0.5 rounded leading-none ${
@@ -281,9 +280,9 @@ const QuestionCard = ({ detail, index }) => {
                 )}
                 {/* Legend */}
                 <div className="flex flex-wrap gap-3 text-xs">
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-500/50 border border-emerald-500 inline-block" />{t('result.legend.correctSelected')}</span>
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm border-2 border-dashed border-emerald-500 inline-block" />{t('result.legend.correctNotSelected')}</span>
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-400/50 border border-red-500 inline-block" />{t('result.legend.wrongSelected')}</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-xs bg-emerald-500/50 border border-emerald-500 inline-block" />{t('result.legend.correctSelected')}</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-xs border-2 border-dashed border-emerald-500 inline-block" />{t('result.legend.correctNotSelected')}</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-xs bg-red-400/50 border border-red-500 inline-block" />{t('result.legend.wrongSelected')}</span>
                 </div>
               </div>
             );
@@ -304,6 +303,7 @@ export const ResultPage = () => {
   const [details, setDetails] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all' | 'correct' | 'wrong' | 'skipped'
+  const [certLoading, setCertLoading] = useState(false);
 
   useEffect(() => { fetchResult(); }, [examId]);
 
@@ -337,6 +337,26 @@ export const ResultPage = () => {
       console.error('Error fetching result:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // jsPDF (~60kB gzipped) is only needed by students who actually click this,
+  // so it's dynamically imported here instead of statically at the top of the
+  // file — ResultPage is the highest-traffic page in the app (every student
+  // lands here after every exam), and most never generate a certificate.
+  const handleDownloadCertificate = async () => {
+    setCertLoading(true);
+    try {
+      const { generateCertificatePdf } = await import('../utils/certificate');
+      generateCertificatePdf({
+        studentName: profile?.full_name,
+        examLabel: examTitle,
+        scorePct: score,
+        submittedAtISO: attempt.submitted_at,
+        attemptId: attempt.id,
+      });
+    } finally {
+      setCertLoading(false);
     }
   };
 
@@ -379,8 +399,8 @@ export const ResultPage = () => {
 
       {/* ─── Hero Score Banner ─── */}
       <div className={`relative overflow-hidden ${isPassed
-        ? 'bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600'
-        : 'bg-gradient-to-br from-red-500 via-rose-500 to-pink-600'
+        ? 'bg-linear-to-br from-emerald-500 via-teal-500 to-cyan-600'
+        : 'bg-linear-to-br from-red-500 via-rose-500 to-pink-600'
         }`}>
         {/* Decorative blobs */}
         <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
@@ -403,7 +423,7 @@ export const ResultPage = () => {
           {/* Score center */}
           <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
             {/* Ring */}
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
               <ScoreRing score={score} />
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-4xl font-black text-white leading-none">{score.toFixed(0)}%</span>
@@ -422,17 +442,17 @@ export const ResultPage = () => {
 
               {/* Quick stats */}
               <div className="flex flex-wrap gap-3">
-                <div className="flex items-center gap-2 bg-white/15 backdrop-blur rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2">
                   <Trophy className="w-4 h-4 text-yellow-300" />
                   <span className="text-sm font-bold text-white">{attempt.correct_count} / {attempt.total_questions}</span>
                   <span className="text-white/60 text-xs">{t('result.correctAnswersCount')}</span>
                 </div>
-                <div className="flex items-center gap-2 bg-white/15 backdrop-blur rounded-xl px-3 py-2">
+                <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2">
                   <Timer className="w-4 h-4 text-white/70" />
                   <span className="text-sm font-bold text-white">{formatDurationLabel(attempt.time_spent_seconds)}</span>
                 </div>
-                <div className="flex items-center gap-2 bg-white/15 backdrop-blur rounded-xl px-3 py-2">
-                  <Calendar className="w-4 h-4 text-white/70 flex-shrink-0" />
+                <div className="flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2">
+                  <Calendar className="w-4 h-4 text-white/70 shrink-0" />
                   <div className="flex flex-col leading-tight">
                     <span className="text-sm font-bold text-white">
                       {attempt.submitted_at
@@ -458,7 +478,7 @@ export const ResultPage = () => {
         </div>
 
         {/* Stats bar */}
-        <div className="relative bg-black/10 backdrop-blur">
+        <div className="relative bg-black/10 backdrop-blur-sm">
           <div className="max-w-3xl mx-auto px-4 grid grid-cols-3 divide-x divide-white/10">
             {[
               { label: t('result.status.correct'), value: correctCount, color: 'text-emerald-200' },
@@ -483,7 +503,7 @@ export const ResultPage = () => {
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${filter === f.key
+              className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${filter === f.key
                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:border-indigo-500'
                 }`}
@@ -515,22 +535,17 @@ export const ResultPage = () => {
           </Link>
           <button
             onClick={() => navigate(`/exam/${attempt.exam_id}`)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-200"
+            className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-200"
           >
             <RotateCcw className="w-4 h-4" /> {t('result.retakeExam')}
           </button>
           {isPassed && (
             <button
-              onClick={() => generateCertificatePdf({
-                studentName: profile?.full_name,
-                examLabel: examTitle,
-                scorePct: score,
-                submittedAtISO: attempt.submitted_at,
-                attemptId: attempt.id,
-              })}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-emerald-200"
+              onClick={handleDownloadCertificate}
+              disabled={certLoading}
+              className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-emerald-200 disabled:opacity-60 disabled:cursor-wait"
             >
-              <Download className="w-4 h-4" /> {t('result.downloadCertificate')}
+              <Download className="w-4 h-4" /> {certLoading ? t('common.loading') : t('result.downloadCertificate')}
             </button>
           )}
         </div>

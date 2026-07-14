@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { PaymentModal } from '../components/shared/PaymentModal';
 import { Toast, useToast } from '../components/shared/Toast';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 /* ─── Formatters ───────────────────────────────────────── */
 const fmtVND  = (n) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n ?? 0);
@@ -26,7 +27,7 @@ const Badge = ({ status }) => {
   const c = S[status] ?? S.PENDING;
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border whitespace-nowrap ${c.bg} ${c.text} ${c.border}`}>
-      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${c.dot}`} />
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${c.dot}`} />
       {t(`paymentHistory.status.${status}`)}
     </span>
   );
@@ -50,7 +51,7 @@ const CancelSheet = ({ purchase, onClose, onDone }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
+    <div className="fixed inset-0 z-60 flex items-end sm:items-center justify-center"
       style={{ background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="bg-white dark:bg-slate-800 w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl overflow-hidden"
@@ -63,7 +64,7 @@ const CancelSheet = ({ purchase, onClose, onDone }) => {
         <div className="px-6 pt-4 pb-6 space-y-4">
           {/* Icon + title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center shrink-0">
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
             <div>
@@ -77,13 +78,13 @@ const CancelSheet = ({ purchase, onClose, onDone }) => {
 
           {/* Info */}
           <div className="p-3.5 bg-gray-50 dark:bg-slate-700/50 rounded-2xl text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-            {t('paymentHistory.cancelSheet.infoPrefix')} <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{purchase?.transaction_code}</code>{' '}
+            {t('paymentHistory.cancelSheet.infoPrefix')} <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-sm">{purchase?.transaction_code}</code>{' '}
             {t('paymentHistory.cancelSheet.infoSuffix')}
           </div>
 
           {err && (
             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 rounded-xl text-xs text-red-700 dark:text-red-300">
-              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" /> {err}
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {err}
             </div>
           )}
 
@@ -138,7 +139,7 @@ const PurchaseRow = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUpd
       {isTeacher && (
         <td className="px-5 py-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-linear-to-br from-violet-400 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
               {p.profiles?.full_name?.charAt(0)?.toUpperCase() || '?'}
             </div>
             <div className="min-w-0">
@@ -168,7 +169,7 @@ const PurchaseRow = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUpd
       <td className="px-5 py-4">
         <div className="flex items-center gap-1.5">
           {isLive && !isTeacher && (
-            <span className="relative flex h-2 w-2 flex-shrink-0">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-ping absolute inset-0 rounded-full bg-amber-400 opacity-60" />
               <span className="relative rounded-full h-2 w-2 bg-amber-400" />
             </span>
@@ -236,7 +237,7 @@ const PurchaseCard = ({ p: initial, isTeacher, liveAmt, onResume, onCancel, onUp
       {/* header */}
       <div className="flex items-start gap-3 p-4">
         {isTeacher && (
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+          <div className="w-9 h-9 rounded-full bg-linear-to-br from-violet-400 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
             {p.profiles?.full_name?.charAt(0)?.toUpperCase() || '?'}
           </div>
         )}
@@ -314,6 +315,11 @@ export const PaymentHistoryPage = () => {
   const [cancelP,     setCancelP]     = useState(null);
   const [resumeExam,  setResumeExam]  = useState(null);
   const { toasts, showToast, dismissToast } = useToast();
+  // Matches Tailwind's `sm` breakpoint — decides which of PurchaseRow/PurchaseCard
+  // to mount. Only rendering one (not both + CSS-hiding the other) matters here
+  // because each row/card opens its own realtime channel for live payment status;
+  // mounting both would double the open channels for every pending purchase.
+  const isDesktop = useMediaQuery('(min-width: 640px)');
 
   const fetchPurchases = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -426,7 +432,7 @@ export const PaymentHistoryPage = () => {
         {/* Teacher banner */}
         {isTeacher && (
           <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl dark:bg-emerald-950/30 dark:border-emerald-800/50">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0 mt-0.5">
               <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
@@ -439,11 +445,11 @@ export const PaymentHistoryPage = () => {
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-2.5">
           {isTeacher && (
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2.5 flex-1 sm:flex-none sm:w-60 shadow-sm">
-              <Search className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" />
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 px-3 py-2.5 flex-1 sm:flex-none sm:w-60 shadow-xs">
+              <Search className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" />
               <input value={search} onChange={e => setSearch(e.target.value)}
                 placeholder={t('paymentHistory.toolbar.searchPlaceholder')}
-                className="flex-1 outline-none text-sm text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 bg-transparent" />
+                className="flex-1 outline-hidden text-sm text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 bg-transparent" />
               {search && (
                 <button onClick={() => setSearch('')}>
                   <X className="w-3.5 h-3.5 text-gray-300 hover:text-gray-500 dark:text-slate-600 dark:hover:text-slate-400" />
@@ -459,7 +465,7 @@ export const PaymentHistoryPage = () => {
                 <button key={f.key} onClick={() => setFilter(f.key)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all active:scale-95
                     ${filter === f.key
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
                       : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:border-indigo-500'
                     }`}>
                   {f.label}
@@ -474,7 +480,7 @@ export const PaymentHistoryPage = () => {
           </div>
 
           <button onClick={() => fetchPurchases()} disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs text-gray-500 hover:border-indigo-300 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:border-indigo-500 dark:hover:text-indigo-400 transition ml-auto shadow-sm disabled:opacity-40 active:scale-95">
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-white text-xs text-gray-500 hover:border-indigo-300 hover:text-indigo-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:border-indigo-500 dark:hover:text-indigo-400 transition ml-auto shadow-xs disabled:opacity-40 active:scale-95">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">{t('paymentHistory.toolbar.refresh')}</span>
           </button>
@@ -487,7 +493,7 @@ export const PaymentHistoryPage = () => {
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-5 animate-pulse" style={{ opacity: 1 - i * 0.25 }}>
                 <div className="flex gap-3 mb-4">
-                  <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-slate-700 flex-shrink-0" />
+                  <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-slate-700 shrink-0" />
                   <div className="flex-1 space-y-2">
                     <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded-full w-1/2" />
                     <div className="h-2.5 bg-gray-100 dark:bg-slate-700/60 rounded-full w-1/3" />
@@ -502,7 +508,7 @@ export const PaymentHistoryPage = () => {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center py-20 text-center">
-            <div className="w-16 h-16 rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 flex items-center justify-center mb-4 shadow-sm">
+            <div className="w-16 h-16 rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 flex items-center justify-center mb-4 shadow-xs">
               <CreditCard className="w-8 h-8 text-gray-300 dark:text-slate-600" />
             </div>
             <p className="font-semibold text-gray-700 dark:text-slate-300">
@@ -515,9 +521,9 @@ export const PaymentHistoryPage = () => {
             </p>
           </div>
         ) : (
-          <>
-            {/* Desktop table */}
-            <div className="hidden sm:block bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden"
+          isDesktop ? (
+            /* Desktop table */
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 overflow-hidden"
               style={{ boxShadow: '0 2px 16px rgba(15,23,42,.05)' }}>
               <table className="min-w-full">
                 <thead>
@@ -547,16 +553,16 @@ export const PaymentHistoryPage = () => {
                 )}
               </div>
             </div>
-
-            {/* Mobile cards */}
-            <div className="flex flex-col gap-3 sm:hidden">
+          ) : (
+            /* Mobile cards */
+            <div className="flex flex-col gap-3">
               {filtered.map(p => (
                 <PurchaseCard key={p.id} p={p} isTeacher={isTeacher} liveAmt={liveAmt}
                   onResume={handleResume} onCancel={setCancelP} onUpdated={handleRowUpdated} />
               ))}
               <p className="text-center text-xs text-gray-400 dark:text-slate-500 pb-2">{t('paymentHistory.resultsCount', { count: filtered.length })}</p>
             </div>
-          </>
+          )
         )}
       </div>
 

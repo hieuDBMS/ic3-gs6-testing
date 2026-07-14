@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -53,14 +53,19 @@ const PageFallback = () => (
   </div>
 );
 
-const Layout = () => (
-  <>
-    <Navbar />
-    <main className="flex-1">
-      <Outlet />
-    </main>
-  </>
-);
+const Layout = () => {
+  const { pathname } = useLocation();
+  return (
+    <>
+      <Navbar />
+      <main className="flex-1">
+        <div key={pathname} className="animate-fade-in">
+          <Outlet />
+        </div>
+      </main>
+    </>
+  );
+};
 
 function App() {
   return (

@@ -55,19 +55,19 @@ const useExamFullscreen = (ref) => {
 const ExamSkeleton = () => (
   <div className="flex flex-col md:flex-row overflow-hidden animate-pulse" style={{ height: 'calc(100vh - 64px)' }}>
     {/* Aside Skeleton (top bar on mobile, left column on desktop) */}
-    <div className="flex-shrink-0 bg-slate-800 flex items-center px-4 h-14 md:h-full md:w-[280px] md:flex-col md:px-0" />
+    <div className="shrink-0 bg-slate-800 flex items-center px-4 h-14 md:h-full md:w-[280px] md:flex-col md:px-0" />
     
     {/* Main Content Skeleton */}
     <div className="flex-1 flex flex-col bg-[#EEF2FF] dark:bg-slate-900">
       <div className="h-[3px] bg-slate-200 dark:bg-slate-700" />
-      <div className="h-16 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 flex-shrink-0" />
+      <div className="h-16 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 shrink-0" />
       <div className="flex-1 p-5 md:p-8 space-y-5">
         <div className="h-6 bg-gray-200 dark:bg-slate-700 rounded-xl w-2/3" />
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="h-14 bg-white dark:bg-slate-800 rounded-2xl border-2 border-gray-100 dark:border-slate-700" />
         ))}
       </div>
-      <div className="h-16 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 flex-shrink-0" />
+      <div className="h-16 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 shrink-0" />
     </div>
   </div>
 );
@@ -86,8 +86,8 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
     >
       {/* Top accent */}
       <div className={`h-1.5 w-full ${unansweredCount > 0
-        ? 'bg-gradient-to-r from-amber-400 to-orange-500'
-        : 'bg-gradient-to-r from-emerald-400 to-teal-500'}`}
+        ? 'bg-linear-to-r from-amber-400 to-orange-500'
+        : 'bg-linear-to-r from-emerald-400 to-teal-500'}`}
       />
 
       <div className="p-7 space-y-5">
@@ -143,11 +143,17 @@ const ConfirmModal = ({ onConfirm, onCancel, unansweredCount }) => {
    already exists for this exam (student closed the tab / navigated
    away without submitting last time).
 ───────────────────────────────────────────────────────── */
-const ResumeModal = ({ examTitle, existingAttempt, onResume, onRestart, loading }) => {
+const ResumeModal = ({ examTitle, existingAttempt, questionsCount, durationSeconds, onResume, onRestart, loading }) => {
   const { t } = useTranslation();
   const startedLabel = new Date(existingAttempt.started_at).toLocaleString('vi-VN', {
     day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
   });
+  const answeredCount = Object.keys(existingAttempt.draft_answers?.answers || {}).length;
+  // Time already elapsed past the exam's duration (e.g. tab closed for hours) —
+  // clicking "Continue" would just make the Timer fire onTimeUp instantly.
+  // Tell the student upfront instead of surprising them with an instant submit.
+  const elapsedSeconds = Math.floor((Date.now() - new Date(existingAttempt.started_at).getTime()) / 1000);
+  const isExpired = durationSeconds != null && elapsedSeconds >= durationSeconds;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-md" />
@@ -155,7 +161,7 @@ const ResumeModal = ({ examTitle, existingAttempt, onResume, onRestart, loading 
         className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
         style={{ animation: 'modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >
-        <div className="h-1.5 w-full bg-gradient-to-r from-indigo-400 to-violet-500" />
+        <div className="h-1.5 w-full bg-linear-to-r from-indigo-400 to-violet-500" />
         <div className="p-7 space-y-5">
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/40">
@@ -174,9 +180,18 @@ const ResumeModal = ({ examTitle, existingAttempt, onResume, onRestart, loading 
               {t('exam.resume.progressPre')} <span className="font-bold text-gray-900 dark:text-slate-100">{(existingAttempt.current_question_index ?? 0) + 1}</span>
             </p>
             <p className="text-gray-600 dark:text-slate-400">
+              {t('exam.resume.answeredCountPre')} <span className="font-bold text-gray-900 dark:text-slate-100">{answeredCount}{questionsCount ? `/${questionsCount}` : ''}</span>
+            </p>
+            <p className="text-gray-600 dark:text-slate-400">
               {t('exam.resume.startedAtPre')} <span className="font-semibold text-gray-900 dark:text-slate-100">{startedLabel}</span>
             </p>
           </div>
+
+          {isExpired && (
+            <p className="text-sm text-center text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-xl px-3 py-2">
+              {t('exam.resume.expiredNotice')}
+            </p>
+          )}
 
           <div className="flex gap-3">
             <button
@@ -191,11 +206,11 @@ const ResumeModal = ({ examTitle, existingAttempt, onResume, onRestart, loading 
               disabled={loading}
               className="flex-1 py-3 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               style={{
-                background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-                boxShadow: '0 4px 16px rgba(99,102,241,0.4)',
+                background: isExpired ? 'linear-gradient(135deg, #F59E0B, #EF4444)' : 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                boxShadow: isExpired ? '0 4px 16px rgba(239,68,68,0.4)' : '0 4px 16px rgba(99,102,241,0.4)',
               }}
             >
-              {t('exam.resume.continue')}
+              {isExpired ? t('exam.resume.submitExpired') : t('exam.resume.continue')}
             </button>
           </div>
         </div>
@@ -211,13 +226,13 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
   const { isDark } = useTheme();
   const { t } = useTranslation();
   return (
-  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+  <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+    <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" />
     <div
       className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
       style={{ animation: 'refreshModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
     >
-      <div className="h-1.5 w-full bg-gradient-to-r from-orange-400 via-red-500 to-rose-500" />
+      <div className="h-1.5 w-full bg-linear-to-r from-orange-400 via-red-500 to-rose-500" />
       <div className="p-7 space-y-5">
         <div className="flex flex-col items-center text-center space-y-3">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: isDark ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#fff7ed,#fee2e2)' }}>
@@ -230,7 +245,7 @@ const RefreshWarningModal = ({ onStay, onLeave }) => {
         </div>
         <div className="rounded-2xl p-4 space-y-2 text-sm" style={{ background: isDark ? 'rgba(239,68,68,0.1)' : 'linear-gradient(135deg,#fff7ed,#fef2f2)' }}>
           <p className="font-semibold text-orange-700 dark:text-orange-400 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {t('exam.refreshWarning.warningTitle')}
+            <AlertTriangle className="w-4 h-4 shrink-0" /> {t('exam.refreshWarning.warningTitle')}
           </p>
           <ul className="text-gray-600 dark:text-slate-400 space-y-1 pl-6 list-disc leading-relaxed">
             <li>{t('exam.refreshWarning.bullet1')}</li>
@@ -268,13 +283,13 @@ const NavigateAwayModal = ({ onStay, onLeave }) => {
   const { isDark } = useTheme();
   const { t } = useTranslation();
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+    <div className="fixed inset-0 z-60 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" />
       <div
         className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
         style={{ animation: 'refreshModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >
-        <div className="h-1.5 w-full bg-gradient-to-r from-orange-400 via-red-500 to-rose-500" />
+        <div className="h-1.5 w-full bg-linear-to-r from-orange-400 via-red-500 to-rose-500" />
         <div className="p-7 space-y-5">
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: isDark ? 'rgba(239,68,68,0.15)' : 'linear-gradient(135deg,#fff7ed,#fee2e2)' }}>
@@ -315,18 +330,18 @@ const MobileNavSheet = ({ questions, currentIndex, answers, flagged, onSelect, o
   const { t } = useTranslation();
   return (
   <div className="fixed inset-0 z-50 flex flex-col justify-end">
-    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+    <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
     <div
       className="relative bg-white dark:bg-slate-800 rounded-t-3xl shadow-2xl max-h-[65vh] flex flex-col"
       style={{ animation: 'slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1) both' }}
     >
       {/* Handle */}
-      <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+      <div className="flex justify-center pt-3 pb-1 shrink-0">
         <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-slate-600" />
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-slate-700 flex-shrink-0">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-slate-700 shrink-0">
         <h3 className="font-bold text-gray-900 dark:text-slate-100 text-sm">{t('exam.mobileNav.title')}</h3>
         <button onClick={onClose} className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
           <X className="w-4 h-4 text-gray-600 dark:text-slate-300" />
@@ -373,6 +388,7 @@ export const ExamPage = () => {
   const [existingAttempt,   setExistingAttempt]   = useState(null);
   const [resumeLoading,     setResumeLoading]     = useState(false);
   const [showNavigateAway,  setShowNavigateAway]  = useState(false);
+  const [startedAt,         setStartedAt]         = useState(null);
 
   const pendingReloadRef  = useRef(false);
   const isSubmittingRef   = useRef(false);
@@ -515,24 +531,48 @@ export const ExamPage = () => {
 
   /* ── Live progress ping (feature: teacher realtime monitor) ──
      Throttled to at most once every 4s so navigating quickly through
-     questions doesn't spam exam_attempts with writes. Aborts the in-flight
-     request on unmount / re-fire so a stale response can't land after the
-     student has already left the page. */
+     questions / answering fast doesn't spam exam_attempts with writes.
+     Also persists answers/flagged into draft_answers so a student who closes
+     the tab and comes back (Resume Session Pattern, see #22 in
+     PATTERNS_AND_CONVENTIONS.md) gets their answers restored, not just the
+     question position. Aborts the in-flight request on unmount / re-fire so
+     a stale response can't land after the student has already left the page.
+
+     Leading+trailing throttle: a plain leading-edge throttle would silently
+     DROP the state change entirely if it lands inside the 4s window (not
+     defer it) — a student answering a question then closing the tab within
+     4s of the previous ping would lose that answer with no error, no retry,
+     nothing to hydrate on resume. Scheduling a trailing timeout for the
+     remainder of the window guarantees a save fires at most 4s after the
+     last one, always capturing the latest answers/flagged/currentIndex. */
   useEffect(() => {
     if (!attemptId) return;
-    const now = Date.now();
-    if (now - lastPingRef.current < 4000) return;
-    lastPingRef.current = now;
     const controller = new AbortController();
-    supabase
-      .from('exam_attempts')
-      .update({ current_question_index: currentIndex, last_activity_at: new Date().toISOString() })
-      .eq('id', attemptId)
-      .abortSignal(controller.signal)
-      .then(() => {})
-      .catch(() => {});
-    return () => controller.abort();
-  }, [currentIndex, attemptId]);
+    const save = () => {
+      lastPingRef.current = Date.now();
+      supabase
+        .from('exam_attempts')
+        .update({
+          current_question_index: currentIndex,
+          last_activity_at: new Date().toISOString(),
+          draft_answers: { answers, flagged },
+        })
+        .eq('id', attemptId)
+        .abortSignal(controller.signal)
+        .then(() => {})
+        .catch((err) => {
+          if (err?.name !== 'AbortError') console.error('[ExamPage] draft_answers save failed', err);
+        });
+    };
+    const elapsed = Date.now() - lastPingRef.current;
+    let timeoutId = null;
+    if (elapsed >= 4000) save();
+    else timeoutId = setTimeout(save, 4000 - elapsed);
+    return () => {
+      controller.abort();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [currentIndex, answers, flagged, attemptId]);
 
   /* ── Light anti-cheat: log + warn on tab-switch / fullscreen-exit ──
      Testing exams only (this file). MockExamPage is untouched. Passive
@@ -607,7 +647,7 @@ export const ExamPage = () => {
       // on LiveMonitorPage.
       const { data: existing, error: existingError } = await supabase
         .from('exam_attempts')
-        .select('id, started_at, current_question_index')
+        .select('id, started_at, current_question_index, draft_answers')
         .eq('user_id', user.id)
         .eq('exam_id', examId)
         .eq('status', 'in_progress')
@@ -628,10 +668,11 @@ export const ExamPage = () => {
             total_questions: qResult.data?.length || 0,
             status:          'in_progress',
           })
-          .select('id')
+          .select('id, started_at')
           .single();
         if (attemptError) throw attemptError;
         setAttemptId(attempt.id);
+        setStartedAt(attempt.started_at);
       }
     } catch (error) {
       console.error('Failed to init exam:', error);
@@ -644,6 +685,9 @@ export const ExamPage = () => {
   const handleResumeAttempt = useCallback(() => {
     setAttemptId(existingAttempt.id);
     setCurrentIndex(existingAttempt.current_question_index || 0);
+    setAnswers(existingAttempt.draft_answers?.answers || {});
+    setFlagged(existingAttempt.draft_answers?.flagged || []);
+    setStartedAt(existingAttempt.started_at);
     setExistingAttempt(null);
   }, [existingAttempt]);
 
@@ -663,11 +707,12 @@ export const ExamPage = () => {
           total_questions: questions.length,
           status:          'in_progress',
         })
-        .select('id')
+        .select('id, started_at')
         .single();
       if (attemptError) throw attemptError;
 
       setAttemptId(attempt.id);
+      setStartedAt(attempt.started_at);
       setExistingAttempt(null);
     } catch (error) {
       console.error('Failed to restart exam:', error);
@@ -773,6 +818,8 @@ export const ExamPage = () => {
       <ResumeModal
         examTitle={exam.title}
         existingAttempt={existingAttempt}
+        questionsCount={questions.length}
+        durationSeconds={exam.duration_seconds}
         onResume={handleResumeAttempt}
         onRestart={handleRestartAttempt}
         loading={resumeLoading}
@@ -816,8 +863,8 @@ export const ExamPage = () => {
 
       {/* ═══ Anti-cheat warning toast ═══ */}
       {cheatToast && (
-        <div className="fixed top-4 right-4 z-[60] flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold bg-amber-500 text-white max-w-sm">
-          <ShieldAlert className="w-5 h-5 flex-shrink-0" />
+        <div className="fixed top-4 right-4 z-60 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold bg-amber-500 text-white max-w-sm">
+          <ShieldAlert className="w-5 h-5 shrink-0" />
           {cheatToast}
         </div>
       )}
@@ -857,14 +904,14 @@ export const ExamPage = () => {
           ASIDE — dark sidebar (desktop) / top bar (mobile)
       ═══════════════════════════════════════════════════════ */}
       <aside className="
-        flex-shrink-0 bg-slate-900 z-20
+        shrink-0 bg-slate-900 z-20
         flex flex-row items-center gap-3 px-4
         md:flex-col md:w-[280px] md:h-full md:overflow-hidden md:px-0 md:gap-0
       ">
 
         {/* ── Branding — DESKTOP ONLY ── */}
-        <div className="hidden md:flex items-center gap-3 px-5 h-[76px] flex-shrink-0 w-full border-b border-white/10">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+        <div className="hidden md:flex items-center gap-3 px-5 h-[76px] shrink-0 w-full border-b border-white/10">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
             <BookOpen className="w-4 h-4 text-white" />
           </div>
           <div className="min-w-0">
@@ -875,19 +922,22 @@ export const ExamPage = () => {
 
         {/* ── Exam title — MOBILE ONLY ── */}
         <div className="flex md:hidden items-center gap-2 flex-1 min-w-0 py-3">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
             <BookOpen className="w-3.5 h-3.5 text-white" />
           </div>
           <p className="text-sm font-bold text-white truncate">{examLabel}</p>
         </div>
 
         {/* ── Timer — ONE INSTANCE, responsive internally ── */}
-        <div className="md:px-5 md:py-5 md:w-full md:border-b md:border-white/10 md:flex-shrink-0 py-2">
-          <Timer
-            ref={timerRef}
-            durationSeconds={exam.duration_seconds}
-            onTimeUp={() => doSubmit(true)}
-          />
+        <div className="md:px-5 md:py-5 md:w-full md:border-b md:border-white/10 md:shrink-0 py-2">
+          {startedAt && (
+            <Timer
+              ref={timerRef}
+              durationSeconds={exam.duration_seconds}
+              startedAt={startedAt}
+              onTimeUp={() => doSubmit(true)}
+            />
+          )}
         </div>
 
         {/* ── Question Navigator — DESKTOP ONLY ── */}
@@ -903,7 +953,7 @@ export const ExamPage = () => {
         </div>
 
         {/* ── Stats + Submit — DESKTOP ONLY ── */}
-        <div className="hidden md:block p-5 border-t border-white/10 w-full flex-shrink-0">
+        <div className="hidden md:block p-5 border-t border-white/10 w-full shrink-0">
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="rounded-xl py-2.5 text-center" style={{ background: 'rgba(16,185,129,0.12)' }}>
               <p className="text-xl font-bold text-emerald-400 leading-none">{answeredCount}</p>
@@ -937,7 +987,7 @@ export const ExamPage = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* ── Animated progress bar ── */}
-        <div className="h-[3px] flex-shrink-0" style={{ background: 'rgba(203,213,225,0.6)' }}>
+        <div className="h-[3px] shrink-0" style={{ background: 'rgba(203,213,225,0.6)' }}>
           <div
             className="h-full transition-all duration-700 ease-out"
             style={{
@@ -948,11 +998,11 @@ export const ExamPage = () => {
         </div>
 
         {/* ── Question header bar ── */}
-        <div className="flex-shrink-0 flex items-center gap-3 px-5 md:px-7 h-[73px] bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 shadow-sm">
+        <div className="shrink-0 flex items-center gap-3 px-5 md:px-7 h-[73px] bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 shadow-xs">
           {/* Number + counter */}
           <div className="flex items-center gap-2.5">
             <span
-              className="w-9 h-9 rounded-xl text-white text-sm font-bold flex items-center justify-center flex-shrink-0"
+              className="w-9 h-9 rounded-xl text-white text-sm font-bold flex items-center justify-center shrink-0"
               style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', boxShadow: '0 4px 12px rgba(99,102,241,0.35)' }}
             >
               {currentIndex + 1}
@@ -970,7 +1020,7 @@ export const ExamPage = () => {
             onClick={toggleFlag}
             className={`ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
               isFlagged
-                ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-sm dark:bg-amber-950/40 dark:border-amber-700 dark:text-amber-300'
+                ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-xs dark:bg-amber-950/40 dark:border-amber-700 dark:text-amber-300'
                 : 'bg-white border-gray-200 text-gray-400 hover:border-amber-300 hover:text-amber-600 hover:bg-amber-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500 dark:hover:border-amber-600 dark:hover:text-amber-400 dark:hover:bg-amber-950/30'
             }`}
           >
@@ -984,7 +1034,7 @@ export const ExamPage = () => {
             title={isFullscreen ? t('exam.exitFullscreenTitle') : t('exam.enterFullscreenTitle')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
               isFullscreen
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-sm dark:bg-indigo-950/40 dark:border-indigo-700 dark:text-indigo-300'
+                ? 'bg-indigo-50 border-indigo-300 text-indigo-700 shadow-xs dark:bg-indigo-950/40 dark:border-indigo-700 dark:text-indigo-300'
                 : 'bg-white border-gray-200 text-gray-400 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500 dark:hover:border-indigo-600 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/30'
             }`}
           >
@@ -1008,7 +1058,7 @@ export const ExamPage = () => {
         </div>
 
         {/* ── Navigation footer ── */}
-        <div className="flex-shrink-0 flex items-center justify-between px-5 md:px-7 py-3.5 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 gap-3">
+        <div className="shrink-0 flex items-center justify-between px-5 md:px-7 py-3.5 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 gap-3">
 
           {/* Prev */}
           <button
@@ -1043,8 +1093,8 @@ export const ExamPage = () => {
 
           {/* Desktop centre: keyboard hints */}
           <div className="hidden md:flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-slate-500 select-none">
-            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 border border-gray-200 dark:bg-slate-700 dark:border-slate-600">←</kbd>
-            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 border border-gray-200 dark:bg-slate-700 dark:border-slate-600">→</kbd>
+            <kbd className="px-1.5 py-0.5 rounded-sm text-[10px] font-mono bg-gray-100 border border-gray-200 dark:bg-slate-700 dark:border-slate-600">←</kbd>
+            <kbd className="px-1.5 py-0.5 rounded-sm text-[10px] font-mono bg-gray-100 border border-gray-200 dark:bg-slate-700 dark:border-slate-600">→</kbd>
             <span className="text-gray-300 dark:text-slate-600">{t('exam.navHint')}</span>
           </div>
 

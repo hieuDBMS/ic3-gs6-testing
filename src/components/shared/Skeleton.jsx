@@ -27,12 +27,12 @@ export const Skeleton = ({ variant = 'text', count = 1, className = '' }) => {
       <div className="divide-y divide-gray-100 dark:divide-slate-700 animate-pulse">
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="flex items-center gap-4 px-5 py-4">
-            <div className="w-11 h-11 rounded-2xl bg-gray-200 dark:bg-slate-700 flex-shrink-0" />
+            <div className="w-11 h-11 rounded-2xl bg-gray-200 dark:bg-slate-700 shrink-0" />
             <div className="flex-1 space-y-2">
-              <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded w-1/3" />
-              <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded w-1/2" />
+              <div className="h-4 bg-gray-200 dark:bg-slate-700 rounded-sm w-1/3" />
+              <div className="h-3 bg-gray-100 dark:bg-slate-700 rounded-sm w-1/2" />
             </div>
-            <div className="w-24 h-3 bg-gray-100 dark:bg-slate-700 rounded" />
+            <div className="w-24 h-3 bg-gray-100 dark:bg-slate-700 rounded-sm" />
           </div>
         ))}
       </div>
@@ -46,7 +46,7 @@ export const Skeleton = ({ variant = 'text', count = 1, className = '' }) => {
   return (
     <div className="animate-pulse space-y-2">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className={`h-3 bg-gray-100 dark:bg-slate-700 rounded ${className || 'w-full'}`} />
+        <div key={i} className={`h-3 bg-gray-100 dark:bg-slate-700 rounded-sm ${className || 'w-full'}`} />
       ))}
     </div>
   );

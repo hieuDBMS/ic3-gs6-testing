@@ -100,7 +100,7 @@ const AnswerBtn = ({ idx, isSelected, ansCorrect, isWrong, revealed, disabled, o
 
       {/* Letter pill */}
       <div
-        className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-extrabold flex-shrink-0 transition-all duration-200 ${letterClass}`}
+        className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-extrabold shrink-0 transition-all duration-200 ${letterClass}`}
         style={letterStyle}>
         {letter}
       </div>
@@ -112,12 +112,12 @@ const AnswerBtn = ({ idx, isSelected, ansCorrect, isWrong, revealed, disabled, o
 
       {/* Status icon */}
       {revealed && ansCorrect && (
-        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center ml-2">
+        <div className="shrink-0 w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center ml-2">
           <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
         </div>
       )}
       {revealed && isWrong && (
-        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center ml-2">
+        <div className="shrink-0 w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center ml-2">
           <XCircle className="w-4 h-4 text-red-500 dark:text-red-400" />
         </div>
       )}
@@ -136,7 +136,7 @@ const ChoicePanel = ({ answers, revealed, selection, onSelect }) => (
         revealed={revealed} disabled={revealed}
         onClick={() => onSelect(ans.id)}>
         <div className="flex items-center gap-3">
-          {ans.image_url && <img src={ans.image_url} alt="" className="h-14 w-20 object-contain rounded-lg border border-gray-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800" />}
+          {ans.image_url && <img src={ans.image_url} alt="" className="h-14 w-20 object-contain rounded-lg border border-gray-100 dark:border-slate-700 shrink-0 bg-white dark:bg-slate-800" />}
           <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(ans.content) }} />
         </div>
       </AnswerBtn>
@@ -155,7 +155,7 @@ const MultiPanel = ({ answers, revealed, selection, onSelect }) => {
       {/* Hint chip */}
       <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-semibold"
         style={{ background: isDark ? 'linear-gradient(135deg,#2e1065,#1e1b4b)' : 'linear-gradient(135deg,#f5f3ff,#ede9fe)', border: `1px solid ${isDark ? '#5b21b6' : '#c4b5fd'}`, color: isDark ? '#c4b5fd' : '#6d28d9' }}>
-        <span className="w-4 h-4 rounded flex items-center justify-center text-xs" style={{ background: '#7c3aed', color: '#fff' }}>✓</span>
+        <span className="w-4 h-4 rounded-sm flex items-center justify-center text-xs" style={{ background: '#7c3aed', color: '#fff' }}>✓</span>
         {t('flashcard.multi.hint')}
       </div>
       {answers.map((ans, i) => {
@@ -168,7 +168,7 @@ const MultiPanel = ({ answers, revealed, selection, onSelect }) => {
             revealed={revealed} disabled={revealed}
             onClick={() => toggle(ans.id)}>
             <div className="flex items-center gap-3">
-              {ans.image_url && <img src={ans.image_url} alt="" className="h-14 w-20 object-contain rounded-lg border border-gray-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800" />}
+              {ans.image_url && <img src={ans.image_url} alt="" className="h-14 w-20 object-contain rounded-lg border border-gray-100 dark:border-slate-700 shrink-0 bg-white dark:bg-slate-800" />}
               <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(ans.content) }} />
             </div>
           </AnswerBtn>
@@ -199,7 +199,7 @@ const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
                 : (revealed ? (correct ? '#f0fdf4' : '#fef2f2') : userVal !== undefined ? '#eff6ff' : '#fff'),
             }}>
             <div className="flex items-start gap-3 px-4 py-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+              <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
                 style={{ background: revealed ? (correct ? '#22c55e' : '#ef4444') : (isDark ? '#334155' : '#e2e8f0'), color: revealed ? '#fff' : (isDark ? '#94a3b8' : '#64748b') }}>
                 {i + 1}
               </span>
@@ -207,8 +207,8 @@ const TrueFalsePanel = ({ statements, revealed, selection, onSelect }) => {
                 className={`text-sm flex-1 leading-relaxed ${!revealed ? 'text-slate-700 dark:text-slate-300' : correct ? 'text-emerald-900 dark:text-emerald-300' : 'text-red-900 dark:text-red-300'}`}
                 dangerouslySetInnerHTML={{ __html: sanitizeHtml(stmt.content) }}
               />
-              {revealed && correct && <CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400 flex-shrink-0 mt-0.5" />}
-              {revealed && !correct && <XCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />}
+              {revealed && correct && <CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400 shrink-0 mt-0.5" />}
+              {revealed && !correct && <XCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />}
             </div>
             <div className="flex border-t" style={{ borderColor: isDark ? '#334155' : '#f1f5f9' }}>
               {[true, false].map(val => {
@@ -306,13 +306,13 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
                 borderColor: isDark ? (isCorrect ? '#15803d' : '#7f1d1d') : (isCorrect ? '#86efac' : '#fca5a5'),
               }}>
               {/* drag card */}
-              <div className="flex-shrink-0 flex flex-col items-center gap-1 px-2.5 py-2 rounded-xl border"
+              <div className="shrink-0 flex flex-col items-center gap-1 px-2.5 py-2 rounded-xl border"
                 style={{ background: isDark ? '#1e293b' : '#fff', borderColor: isDark ? '#334155' : '#e2e8f0', minWidth: 64, maxWidth: 120 }}>
                 {pair.drag_image_url && <img src={pair.drag_image_url} alt="" className="w-10 h-10 object-contain rounded-lg" draggable={false} />}
-                {pair.drag_content   && <span className="text-xs font-semibold text-center text-slate-700 dark:text-slate-300 leading-snug break-words w-full">{pair.drag_content}</span>}
+                {pair.drag_content   && <span className="text-xs font-semibold text-center text-slate-700 dark:text-slate-300 leading-snug wrap-break-word w-full">{pair.drag_content}</span>}
               </div>
               {/* arrow */}
-              <div className="text-slate-300 dark:text-slate-600 text-lg flex-shrink-0">→</div>
+              <div className="text-slate-300 dark:text-slate-600 text-lg shrink-0">→</div>
               {/* answer zone */}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold" style={{ color: isDark ? (isCorrect ? '#86efac' : '#fca5a5') : (isCorrect ? '#166534' : '#991b1b') }}>
@@ -322,7 +322,7 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
                   <p className="text-xs mt-0.5" style={{ color: isDark ? '#86efac' : '#166534' }}>✦ {t('flashcard.dragDrop.correctAnswer', { value: pair.drop_content })}</p>
                 )}
               </div>
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 {isCorrect
                   ? <div className="w-7 h-7 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center"><CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" /></div>
                   : <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center"><XCircle className="w-4 h-4 text-red-500 dark:text-red-400" /></div>}
@@ -340,7 +340,7 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
       {/* Instruction */}
       <div className="flex items-start gap-3 rounded-2xl px-4 py-3"
         style={{ background: isDark ? 'linear-gradient(135deg,#0c2340,#0a1f33)' : 'linear-gradient(135deg,#eff6ff,#f0f9ff)', border: `1px solid ${isDark ? '#1e40af' : '#bfdbfe'}` }}>
-        <span className="text-base flex-shrink-0">🔀</span>
+        <span className="text-base shrink-0">🔀</span>
         <div>
           <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">{t('flashcard.dragDrop.instructionTitle')}</p>
           <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">{t('flashcard.dragDrop.instructionPrefix')} <strong>{t('flashcard.dragDrop.tapCard')}</strong> {t('flashcard.dragDrop.instructionMiddle')} <strong>{t('flashcard.dragDrop.tapZone')}</strong> {t('flashcard.dragDrop.instructionSuffix')}</p>
@@ -422,9 +422,9 @@ const DragDropPanel = ({ question, revealed, selection, onSelect }) => {
               {/* Zone header */}
               <div className="px-4 py-3 border-b flex items-center gap-2"
                 style={{ background: isOver ? (isDark ? zc.darkHeader : zc.header) : (isDark ? '#334155' : '#f8fafc'), borderColor: isOver ? zc.border : (isDark ? '#334155' : '#f1f5f9') }}>
-                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                <div className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ background: isOver ? zc.dot : (isDark ? '#64748b' : '#cbd5e1') }} />
-                {zone.image_url && <img src={zone.image_url} alt="" className="h-8 w-auto object-contain flex-shrink-0" />}
+                {zone.image_url && <img src={zone.image_url} alt="" className="h-8 w-auto object-contain shrink-0" />}
                 <span className="text-sm font-bold leading-snug"
                   style={{ color: isOver ? (isDark ? zc.darkHeaderText : zc.headerText) : (isDark ? '#f1f5f9' : '#1e293b') }}>
                   {zone.label}
@@ -520,7 +520,7 @@ const HotspotPanel = ({ question, revealed, selection, onSelect }) => {
         </p>
       )}
       {question.image_url && (
-        <div className="relative rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 select-none shadow-sm">
+        <div className="relative rounded-2xl overflow-hidden border-2 border-slate-200 dark:border-slate-700 select-none shadow-xs">
           <img src={question.image_url} alt={t('flashcard.hotspot.imageAlt')} className="w-full h-auto block" draggable={false} />
           {regions.map(r => {
             const isS = sel.includes(r.id);
@@ -550,8 +550,8 @@ const HotspotPanel = ({ question, revealed, selection, onSelect }) => {
                   cursor: revealed ? 'default' : 'pointer',
                   transition: 'all 0.15s',
                 }}>
-                {revealed && r.is_correct && <span className="absolute top-0.5 left-0.5 bg-green-500 text-white text-[9px] font-bold px-1 rounded leading-none">✔</span>}
-                {revealed && !r.is_correct && isS && <span className="absolute top-0.5 left-0.5 bg-red-500 text-white text-[9px] font-bold px-1 rounded leading-none">✘</span>}
+                {revealed && r.is_correct && <span className="absolute top-0.5 left-0.5 bg-green-500 text-white text-[9px] font-bold px-1 rounded-sm leading-none">✔</span>}
+                {revealed && !r.is_correct && isS && <span className="absolute top-0.5 left-0.5 bg-red-500 text-white text-[9px] font-bold px-1 rounded-sm leading-none">✘</span>}
               </div>
             );
           })}
@@ -588,7 +588,7 @@ const ResultBanner = ({ correct }) => {
       background: isDark ? (correct ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)') : (correct ? '#f0fdf4' : '#fef2f2'),
       borderColor: isDark ? (correct ? '#15803d' : '#991b1b') : (correct ? '#86efac' : '#fca5a5'),
     }}>
-    <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
+    <div className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-xs"
       style={{ background: correct ? '#22c55e' : '#f87171' }}>
       {correct ? <CheckCircle2 className="w-5 h-5 text-white" /> : <XCircle className="w-5 h-5 text-white" />}
     </div>
@@ -734,7 +734,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, onResult, onSkip, i
           {/* Type badge — colored dot + label */}
           <div className="flex items-center gap-2">
             <span
-              className="w-2 h-2 rounded-full flex-shrink-0"
+              className="w-2 h-2 rounded-full shrink-0"
               style={{ background: typeCfg.bar }}
             />
             <span
@@ -814,7 +814,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, onResult, onSkip, i
             <button
               id="fc-skip"
               onClick={onSkip}
-              className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold border transition-all duration-200 flex-shrink-0 hover:scale-[1.02] active:scale-[0.97]"
+              className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold border transition-all duration-200 shrink-0 hover:scale-[1.02] active:scale-[0.97]"
               style={
                 isReviewPhase
                   ? (isDark ? { background: 'rgba(245,158,11,0.12)', borderColor: '#92400e', color: '#fcd34d' } : { background: '#fffbeb', borderColor: '#fcd34d', color: '#92400e' })
@@ -858,7 +858,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, onResult, onSkip, i
               <Sparkles className="w-4 h-4" />
               {t('flashcard.quizCard.checkAnswer')}
               {canCheck && (
-                <kbd className="hidden sm:inline px-1.5 py-0.5 bg-white/20 rounded text-[10px] font-mono">↵</kbd>
+                <kbd className="hidden sm:inline px-1.5 py-0.5 bg-white/20 rounded-sm text-[10px] font-mono">↵</kbd>
               )}
             </button>
           )}
@@ -883,7 +883,7 @@ const QuizCard = ({ question, index, total, shuffledAnswers, onResult, onSkip, i
             >
               {isCorrect ? <CheckCircle2 className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
               {index < total - 1 ? t('flashcard.quizCard.nextQuestion') : t('flashcard.quizCard.viewResults')}
-              <kbd className="hidden sm:inline px-1.5 py-0.5 bg-white/20 rounded text-[10px] font-mono">→</kbd>
+              <kbd className="hidden sm:inline px-1.5 py-0.5 bg-white/20 rounded-sm text-[10px] font-mono">→</kbd>
             </button>
           )}
         </div>
@@ -1047,16 +1047,16 @@ export const FlashcardPage = () => {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 shadow-sm">
+      <header className="sticky top-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 shadow-xs">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
-          <Link to="/flashcard" className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-all flex-shrink-0">
+          <Link to="/flashcard" className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-700 transition-all shrink-0">
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{exam.title}</p>
             {examLabel && <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{examLabel}</p>}
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {results.length > 0 && (
               <div className="hidden sm:flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-green-600 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full dark:text-green-400 dark:bg-green-950/40 dark:border-green-800/60">✓ {correctCount}</span>
@@ -1080,7 +1080,7 @@ export const FlashcardPage = () => {
             <div className="max-w-2xl mx-auto flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400">
               {[['Enter / →', t('flashcard.keyHints.checkNext')],['S', t('flashcard.keyHints.skip')]].map(([k,d]) => (
                 <div key={k} className="flex items-center gap-2">
-                  <kbd className="px-2 py-0.5 bg-white border border-slate-200 rounded font-mono text-[10px] text-slate-600 shadow-sm dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300">{k}</kbd>
+                  <kbd className="px-2 py-0.5 bg-white border border-slate-200 rounded-sm font-mono text-[10px] text-slate-600 shadow-xs dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300">{k}</kbd>
                   <span>{d}</span>
                 </div>
               ))}
@@ -1123,7 +1123,7 @@ export const FlashcardPage = () => {
             {/* Review banner */}
             {phase === 'review' && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/30">
-                <div className="w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center shrink-0">
                   <RotateCcw className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1">

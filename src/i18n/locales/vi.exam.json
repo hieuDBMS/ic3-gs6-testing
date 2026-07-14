@@ -13,9 +13,12 @@
       "title": "Tiếp tục làm bài?",
       "unfinishedPre": "Bạn có một bài làm dở cho",
       "progressPre": "Đã làm đến câu",
+      "answeredCountPre": "Đã trả lời",
       "startedAtPre": "Bắt đầu lúc",
       "restart": "Bắt đầu lại",
-      "continue": "Tiếp tục làm bài"
+      "continue": "Tiếp tục làm bài",
+      "expiredNotice": "Thời gian làm bài đã hết. Đáp án đã lưu sẽ được nộp ngay khi bạn bấm nút bên dưới.",
+      "submitExpired": "Nộp bài đã lưu"
     },
     "refreshWarning": {
       "title": "Tải lại trang?",

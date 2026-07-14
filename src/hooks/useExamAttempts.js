@@ -33,9 +33,9 @@ export const useExamAttempts = (userId, options = {}) => {
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState(null);
 
-  const fetchAttempts = useCallback(async () => {
+  const fetchAttempts = useCallback(async (silent = false) => {
     if (!enabled) { setLoading(false); return; }
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const needsCount = page !== undefined;

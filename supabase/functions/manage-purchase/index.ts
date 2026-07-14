@@ -297,6 +297,13 @@ Deno.serve(async (req) => {
     if (action === 'history') {
       const { purchaseId } = body;
       if (!purchaseId) return json({ error: 'Thieu purchaseId' });
+
+      const { data: purchase } = await admin
+        .from('purchases').select('user_id').eq('id', purchaseId).single();
+      if (!purchase) return json({ error: 'Khong tim thay giao dich' });
+      if (!isTeacher && purchase.user_id !== user.id)
+        return json({ error: 'Khong co quyen xem lich su giao dich nay' }, 403);
+
       const { data, error } = await admin.from('payment_history').select('*')
         .eq('purchase_id', purchaseId).order('payment_time', { ascending: true });
       if (error) return json({ error: error.message });

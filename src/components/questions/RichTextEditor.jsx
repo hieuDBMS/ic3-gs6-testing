@@ -103,7 +103,7 @@ export const RichTextEditor = ({
         </ToolbarBtn>
 
         {/* Divider */}
-        <div className="w-px h-4 bg-gray-200 dark:bg-slate-600 mx-1 flex-shrink-0" />
+        <div className="w-px h-4 bg-gray-200 dark:bg-slate-600 mx-1 shrink-0" />
 
         {/* Color swatches */}
         <div className="flex items-center gap-0.5 relative group">
@@ -123,7 +123,7 @@ export const RichTextEditor = ({
                 type="button"
                 title={label}
                 onMouseDown={(e) => { e.preventDefault(); applyColor(hex); }}
-                className="w-6 h-6 rounded-lg border-2 border-white shadow-sm hover:scale-110 transition-transform flex-shrink-0"
+                className="w-6 h-6 rounded-lg border-2 border-white shadow-xs hover:scale-110 transition-transform shrink-0"
                 style={{ background: hex }}
               />
             ))}
@@ -131,7 +131,7 @@ export const RichTextEditor = ({
         </div>
 
         {/* Divider */}
-        <div className="w-px h-4 bg-gray-200 dark:bg-slate-600 mx-1 flex-shrink-0" />
+        <div className="w-px h-4 bg-gray-200 dark:bg-slate-600 mx-1 shrink-0" />
 
         <ToolbarBtn title="Xoá định dạng" onClick={() => { execCmd('removeFormat'); execCmd('unlink'); handleInput(); }}>
           <Eraser className="w-3.5 h-3.5" />
@@ -187,7 +187,7 @@ export const RichTextEditor = ({
             }
           }}
           spellCheck={false}
-          className="w-full text-sm text-gray-800 dark:text-slate-100 px-4 py-3 outline-none leading-relaxed"
+          className="w-full text-sm text-gray-800 dark:text-slate-100 px-4 py-3 outline-hidden leading-relaxed"
           style={{ minHeight: `${minHeight}px`, wordBreak: 'break-word' }}
         />
       </div>

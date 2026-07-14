@@ -19,7 +19,11 @@
     "historyPersonalTitle": "Attempt history (Personal)",
     "historyTitle": "Attempt history",
     "newExamLink": "Take new exam",
-    "studentsLink": "Students"
+    "studentsLink": "Students",
+    "clearMyHistoryButton": "Clear my history",
+    "clearMyHistoryConfirmTitle": "Clear my exam history",
+    "clearMyHistoryConfirmMessage": "This permanently deletes your own exam attempt history. This cannot be undone.",
+    "clearMyHistorySuccessToast": "Your exam history has been cleared!"
   },
   "attemptHistory": {
     "filterAll": "All",
@@ -43,7 +47,13 @@
     "correctSuffix": "correct",
     "viewResult": "View result",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "deleteButton": "Delete this attempt",
+    "deleteConfirmTitle": "Delete exam attempt",
+    "deleteConfirmPre": "You are about to permanently delete this attempt:",
+    "deleteConfirmPost": "This cannot be undone.",
+    "deleteSuccessToast": "Attempt deleted!",
+    "deleteErrorToast": "Error deleting: {{message}}"
   },
   "studentOverview": {
     "searchPlaceholder": "Search by name or email...",

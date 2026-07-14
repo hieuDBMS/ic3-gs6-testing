@@ -258,7 +258,9 @@ const handleConfirm = async () => {
 />
 ```
 
-**Đã dùng tại:** `StudentManagementPage`, `QuestionsPage`, `ExamStructurePage`
+**Đã dùng tại:** `StudentManagementPage`, `QuestionsPage`, `ExamStructurePage`, `AttemptHistoryTable`, `StudentProgressPage`, `DashboardPage` (thêm 2026-07-13 — xoá lịch sử làm bài, xem PROJECT_OVERVIEW.md → Edge Functions → `manage-student`)
+
+**Refinement — silent refetch cho action tần suất cao (thêm 2026-07-13):** `refetch()` mặc định set `loading=true` → component nào render skeleton toàn bộ khi `loading` (như `AttemptHistoryTable`) sẽ flash cả danh sách chỉ để xoá 1 dòng. Với action xoá **1 item lẻ** trong 1 danh sách dài (khác với xoá cả danh sách/1 entity lớn — những case đó flash skeleton là chấp nhận được), truyền `refetch(true)` (silent — giữ nguyên data cũ trong lúc fetch ngầm, không flash skeleton). Cần hook hỗ trợ tham số `silent` trong hàm fetch nội bộ (xem `useExamAttempts`, cùng pattern với `PaymentHistoryPage`'s `fetchPurchases(silent)`).
 
 ---
 
@@ -297,6 +299,8 @@ const channel = supabase
 return () => { supabase.removeChannel(channel); };
 // scheduleRefetch: debounce 500ms để tránh refetch liên tiếp
 ```
+
+**maxWait ceiling (2026-07-13)**: `scheduleRefetch` là debounce thuần trailing-edge trước đây — với lớp đông (30+ học sinh ping mỗi 4s độc lập), tổng tần suất event trên channel `exam-monitor` có thể liên tục reset timer, khiến `fetchLive()` không bao giờ chạy đúng lúc hoạt động cao nhất. Đã thêm `maxWaitRef` (1500ms) song song `debounceRef` (500ms) trong `LiveMonitorPage.jsx` — refetch đảm bảo chạy tối đa mỗi 1.5s dù channel liên tục nhận event. Query `fetchLive()` cũng đã thêm `.limit(300)` làm trần an toàn (trước đó không giới hạn, tải tăng tuyến tính theo tổng số attempt `in_progress` toàn hệ thống).
 
 ---
 
@@ -405,10 +409,20 @@ const { data: existing } = await supabase
 if (existing) setExistingAttempt(existing);  // render chặn bằng ResumeModal, chưa insert gì
 else { /* insert attempt mới như cũ */ }
 
-// Resume: dùng lại attempt cũ, chỉ khôi phục vị trí câu hỏi (không khôi phục answers)
+// Resume: dùng lại attempt cũ, khôi phục CẢ vị trí câu hỏi lẫn answers/flagged
+// (từ cột draft_answers jsonb, xem bên dưới) + đồng hồ tính đúng thời gian còn
+// lại (dựa trên started_at, xem Timer startedAt prop)
 // Restart: update attempt cũ status='auto_submitted' rồi insert mới
 ```
-Mục đích: chặn tạo trùng `exam_attempts` (nhiều card trùng học sinh trên LiveMonitorPage) khi học sinh tắt tab/đổi route giữa chừng rồi quay lại đúng bài thi đó. Không áp dụng cho MockExamPage (attemptId cố định từ URL, không có nguy cơ trùng).
+Mục đích: chặn tạo trùng `exam_attempts` (nhiều card trùng học sinh trên LiveMonitorPage) khi học sinh tắt tab/đổi route giữa chừng rồi quay lại đúng bài thi đó.
+
+**Lưu draft answers (thêm 2026-07-13)**: `exam_attempts.draft_answers` (jsonb, xem `supabase/sql/2026-07-13_exam_draft_answers.sql`) lưu `{ answers, flagged }` — ghi kèm trong cùng ping throttle-4s vốn đã update `current_question_index`/`last_activity_at` (`ExamPage.jsx`), không tạo luồng ghi riêng. Khi resume, hydrate `answers`/`flagged` từ cột này thay vì bắt đầu trắng. `doSubmit()` không đổi — vẫn chấm điểm từ `answers` state trong bộ nhớ, `draft_answers` chỉ là lớp phục hồi.
+
+**Đồng hồ đếm giờ đúng khi resume**: `Timer.jsx` nhận thêm prop `startedAt` (ISO string từ `exam_attempts.started_at`), tính `timeLeft` ban đầu = `durationSeconds - elapsed(startedAt)` thay vì luôn full duration — tránh học sinh "làm mới" thời gian bằng cách đóng tab rồi vào lại.
+
+**MockExamPage cũng áp dụng pattern lưu draft_answers + đồng hồ đúng** (khác `ExamPage`: không có ResumeModal chọn Tiếp tục/Làm lại vì `attemptId` cố định từ URL — không có nguy cơ trùng row — nên tự động resume ngay khi `initExam()` load lại đúng attempt đang `in_progress`). Do không có modal, MockExamPage không có bước cảnh báo hết giờ như ExamPage bên dưới — nếu attempt đã hết giờ từ lâu, vào lại sẽ tự nộp ngay lập tức không báo trước.
+
+**ResumeModal cảnh báo khi attempt đã hết giờ**: `isExpired` = `elapsedSeconds >= exam.duration_seconds` (tính từ `existingAttempt.started_at`, so với hiện tại). Nếu true, đổi label nút "Tiếp tục làm bài" → "Nộp bài đã lưu" + hiện notice — vì Timer giờ tính đúng elapsed time (xem trên), bấm "Tiếp tục" trên 1 attempt đã hết giờ sẽ khiến `onTimeUp` fire ngay khi mount, tự nộp bài lập tức; tránh học sinh bị bất ngờ. Tính tại thời điểm 2026-07-13: ~219/220 attempt `in_progress` (thi thường) hiện có trên DB đã vượt quá duration — hầu hết học sinh có bài dở dang sẽ thấy trạng thái này.
 
 ---
 

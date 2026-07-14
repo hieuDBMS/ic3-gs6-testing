@@ -21,13 +21,13 @@ export const ImageLightbox = ({ src, alt = '', onClose }) => {
 
   const lightboxContent = (
     <div
-      className={`fixed inset-0 z-[9999] ${isZoomed ? 'overflow-auto items-start' : 'overflow-hidden items-center'} flex justify-center p-4`}
+      className={`fixed inset-0 z-9999 ${isZoomed ? 'overflow-auto items-start' : 'overflow-hidden items-center'} flex justify-center p-4`}
       onClick={onClose}
       style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(4px)', animation: 'lbFadeIn 0.18s ease' }}
     >
       <button
         onClick={onClose}
-        className="fixed top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/25 text-white transition-colors z-[10000]"
+        className="fixed top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/25 text-white transition-colors z-10000"
         title="Đóng (Esc)"
       >
         <X className="w-6 h-6" />
@@ -43,7 +43,7 @@ export const ImageLightbox = ({ src, alt = '', onClose }) => {
           }}
           className={`object-contain transition-all duration-300 shadow-2xl ${
             isZoomed
-              ? 'cursor-zoom-out rounded-sm w-auto h-auto'
+              ? 'cursor-zoom-out rounded-xs w-auto h-auto'
               : 'cursor-zoom-in w-full h-full max-h-[90vh] rounded-2xl'
           }`}
           style={{
@@ -80,7 +80,7 @@ export const ZoomableImage = ({ src, alt = '', className = '', wrapperClassName 
         <img src={src} alt={alt} className={className} />
         <div className="absolute inset-0 flex items-center justify-center rounded-inherit opacity-0 group-hover:opacity-100 transition-opacity"
           style={{ background: 'rgba(0,0,0,0.25)', borderRadius: 'inherit' }}>
-          <ZoomIn className="w-6 h-6 text-white drop-shadow" />
+          <ZoomIn className="w-6 h-6 text-white drop-shadow-sm" />
         </div>
       </div>
       {open && <ImageLightbox src={src} alt={alt} onClose={() => setOpen(false)} />}

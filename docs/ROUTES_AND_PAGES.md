@@ -49,6 +49,7 @@ Layout: Tất cả protected routes đều wrap trong `<Layout>` (Navbar + main 
 - Nav bar riêng (không phải `Navbar.jsx` — component đó `return null` khi chưa có `profile`), có language + theme toggle
 - Sections: Hero → Trust bar (GS6/GS7/GS8) → Features (6 items) → How it works (4 bước) → For Teachers → CTA band → Footer
 - Không hiển thị giá cụ thể (giá là per-exam do giáo viên tự cấu hình qua `PaymentSettingsPage`, không có mức giá cố định toàn hệ thống) — CTA chỉ dẫn tới `/register`/`/login`
+- **For Teachers section không có CTA "Tôi là Giáo viên" → `/register`** (đã bỏ): Edge Function `register-user` luôn tạo `role: 'student'`, không có cách tự đăng ký tài khoản giáo viên qua landing page — tài khoản giáo viên do admin/giáo viên khác tạo qua `StudentManagementPage`/DB trực tiếp. Section giờ chỉ còn nội dung giới thiệu (badge, title, subtitle, items), không có nút bấm.
 - Tái dùng design token có sẵn: `bg-ic3-gradient`, `.btn-primary`/`.btn-ghost`, `.card`, `.glass-light` (không thêm màu/animation library mới)
 
 ### LoginPage (`/login`)
@@ -68,8 +69,10 @@ Layout: Tất cả protected routes đều wrap trong `<Layout>` (Navbar + main 
 - File: `src/pages/DashboardPage.jsx`
 - **Student**: StatCard (tổng bài, điểm TB, tỉ lệ pass) + `AttemptHistoryTable`
 - **Teacher**: Thêm `StudentOverviewTable` + link /teacher/students
-- Stats fetch từ `exam_attempts` table
+- Student stats: `useExamAttempts(userId, ...)` (scoped theo user, có filter) — fetch trực tiếp `exam_attempts`, ổn vì đã filter theo 1 user.
+- **Teacher stats** (`useTeacherStats`, dòng ~56): gọi RPC `get_teacher_dashboard_stats()` — aggregate `COUNT`/`AVG` server-side, trả về 1 dòng. **Trước 2026-07-13** gọi `useExamAttempts(null, ...)` (userId=null → không filter user) fetch TOÀN BỘ `exam_attempts` platform-wide mỗi lần trang Dashboard (landing page sau login) load — đã sửa vì đây là trang tải thường xuyên nhất trong app.
 - Avatar: initials từ `full_name` với màu gradient ngẫu nhiên (hash-based)
+- **Xoá lịch sử làm bài** (thêm 2026-07-13, teacher-only): nút "Xoá lịch sử của tôi" cạnh tiêu đề "Lịch sử làm bài (Cá nhân)" — teacher tự xoá `exam_attempts` của chính mình (action `clear-attempts`, studentId=chính họ) qua Edge Function `manage-student`, remount `AttemptHistoryTable` (đổi `key`) sau khi xoá. `AttemptHistoryTable` truyền `canDelete={isTeacher}` → student thường không thấy nút xoá từng dòng, chỉ teacher
 
 ### ExamListPage (`/exam`)
 - File: `src/pages/ExamListPage.jsx`
@@ -128,7 +131,7 @@ questions.select(`
 - Fetch: `attempt_answers` join `questions, answers, dragdrop_pairs, truefalse_statements, hotspot_regions`
 - `ScoreRing`: SVG circle animation cho score
 - `QuestionCard`: collapsible, expand sai answers by default
-- Certificate download: `generateCertificatePdf()` từ `utils/certificate.js` (canvas → PDF)
+- Certificate download: `generateCertificatePdf()` từ `utils/certificate.js` (canvas → PDF) — **dynamic `import()`** trong `handleDownloadCertificate` (thêm 2026-07-13), không import tĩnh ở đầu file nữa. `certificate.js` kéo theo `jsPDF` (~130kB gzip riêng 1 chunk) — ResultPage là trang mọi học sinh ghé sau MỌI lần thi, import tĩnh trước đây khiến chunk trang này nặng gấp ~20 lần (412kB → 21kB minified) dù đa số học sinh không bấm tải chứng chỉ
 - Nút "Làm lại": navigate `/exam/${attempt.exam_id}`
 
 ### QuestionsPage (`/questions`) — Teacher only
@@ -151,6 +154,7 @@ questions.select(`
 - Upload CSV hoặc XLSX file
 - Sheets: `choice_multi`, `dragdrop`, `truefalse`
 - Parse bằng `questionImport.js` (`parseCsvText`, `parseWorkbookFile`)
+- `ExcelJS` kéo theo **dynamic `import()`** bên trong `parseWorkbookFile()`/`buildTemplateWorkbook()` (thêm 2026-07-13), không import tĩnh ở đầu `questionImport.js` nữa — thư viện nặng ~940kB minified (~271kB gzip), import tĩnh trước đây khiến chunk trang này nặng nhất toàn app (958kB) dù phần lớn thời gian trên trang chỉ để xem hướng dẫn/chọn loại sheet trước khi thực sự tải file lên. Sau khi tách: chunk trang còn ~20kB, ExcelJS chỉ tải khi bấm "Tải template" hoặc chọn file `.xlsx`
 
 ### StudentManagementPage (`/teacher/students`) — Teacher only
 - File: `src/pages/StudentManagementPage.jsx` (948 lines — file lớn nhất)
@@ -161,6 +165,7 @@ questions.select(`
 - **CRUD trường học** (bảng `schools`) qua Edge Function `manage-school`: action `list`/`create`/`update`/`delete`. `update` có fallback: nếu Edge Function lỗi → gọi trực tiếp `supabase.from('schools').update(...)`
 - Link → `/teacher/students/:studentId` để xem tiến độ
 - Không thể xóa teacher khác
+- **Xoá lịch sử làm bài** (thêm 2026-07-13, không đụng tài khoản): mỗi dòng có nút Eraser riêng (action `clear-attempts`, xoá `exam_attempts` của 1 student) + nút "Xoá TOÀN BỘ lịch sử làm bài" trên header (action `clear-all-attempts`, xoá `exam_attempts` toàn hệ thống — student/teacher đều bị xoá lịch sử, nhưng `profiles`/`purchases`/`payment_history` giữ nguyên). Cả 2 qua Edge Function `manage-student`, có `ConfirmDialog` riêng, tách biệt hoàn toàn với action `delete` (xoá tài khoản)
 
 ### ExamStructurePage (`/teacher/exam-structure`) — Teacher only
 - File: `src/pages/ExamStructurePage.jsx` (573 lines)
@@ -241,6 +246,8 @@ questions.select(`
 ### StudentProgressPage (`/teacher/students/:studentId`) — Teacher only
 - File: `src/pages/StudentProgressPage.jsx`
 - Xem chi tiết tiến độ của một student
+- **Xoá lịch sử làm bài** (thêm 2026-07-13): nút "Xoá lịch sử làm bài" cạnh tên student → `ConfirmDialog` nêu rõ tài khoản được giữ nguyên, chỉ xoá `exam_attempts` (action `clear-attempts`) → remount `AttemptHistoryTable` (đổi `key`) để load lại danh sách rỗng
+- `AttemptHistoryTable` truyền `canDelete` (luôn bật, trang teacher-only) → mỗi dòng lịch sử cũng có nút xoá riêng lẻ (xem COMPONENTS.md)
 
 ## Redirect Logic
 

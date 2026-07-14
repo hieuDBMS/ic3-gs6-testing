@@ -37,7 +37,7 @@ export const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-md shadow-violet-200">
+              <div className="w-9 h-9 rounded-xl bg-linear-to-br from-violet-600 to-indigo-500 flex items-center justify-center shadow-md shadow-violet-200">
                 <Sword className="w-5 h-5 text-white" />
               </div>
               <span className="text-base font-bold text-gray-900 dark:text-slate-100 tracking-tight">IC3-Fighter</span>
@@ -71,8 +71,8 @@ export const LandingPage = () => {
               >
                 {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-              <Link to="/login" className="btn-ghost !py-2 !px-4">{t('landing.nav.login')}</Link>
-              <Link to="/register" className="btn-primary !py-2 !px-4">{t('landing.nav.register')}</Link>
+              <Link to="/login" className="btn-ghost py-2! px-4!">{t('landing.nav.login')}</Link>
+              <Link to="/register" className="btn-primary py-2! px-4!">{t('landing.nav.register')}</Link>
             </div>
 
             <button
@@ -132,7 +132,7 @@ export const LandingPage = () => {
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight text-balance animate-slide-up">
             {t('landing.hero.titleLine1')}{' '}
-            <span className="bg-gradient-to-r from-accent-300 to-primary-300 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-accent-300 to-primary-300 bg-clip-text text-transparent">
               {t('landing.hero.titleLine2')}
             </span>
             <br />
@@ -153,7 +153,7 @@ export const LandingPage = () => {
             </Link>
             <Link
               to="/login"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm text-white bg-white/10 border border-white/20 hover:bg-white/15 backdrop-blur-sm transition-all duration-200 w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm text-white bg-white/10 border border-white/20 hover:bg-white/15 backdrop-blur-xs transition-all duration-200 w-full sm:w-auto"
             >
               {t('landing.hero.ctaSecondary')}
             </Link>
@@ -199,7 +199,7 @@ export const LandingPage = () => {
       </section>
 
       {/* ── How it works ── */}
-      <section id="how-it-works" className="page-bg py-20">
+      <section id="how-it-works" className="section-bg py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="section-title text-3xl text-center mb-14">{t('landing.howItWorks.title')}</h2>
 
@@ -229,14 +229,7 @@ export const LandingPage = () => {
                 <span className="text-accent-300 text-xs font-semibold tracking-wide uppercase">{t('landing.forTeachers.badge')}</span>
               </div>
               <h2 className="text-3xl font-extrabold text-white leading-tight mb-3">{t('landing.forTeachers.title')}</h2>
-              <p className="text-white/60 leading-relaxed mb-6">{t('landing.forTeachers.subtitle')}</p>
-              <Link
-                to="/register"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm text-primary-950 bg-white hover:bg-white/90 shadow-glow-blue active:scale-[0.98] transition-all duration-200"
-              >
-                {t('landing.forTeachers.cta')}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <p className="text-white/60 leading-relaxed">{t('landing.forTeachers.subtitle')}</p>
             </div>
 
             <ul className="space-y-3">
@@ -244,7 +237,7 @@ export const LandingPage = () => {
                 const Icon = TEACHER_ICONS[i] || CheckCircle2;
                 return (
                   <li key={i} className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-accent-300 flex-shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-accent-300 shrink-0">
                       <Icon className="w-4 h-4" />
                     </div>
                     <span className="text-white/80 text-sm font-medium">{item}</span>
@@ -260,7 +253,7 @@ export const LandingPage = () => {
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 text-center">
         <h2 className="section-title text-3xl mb-3">{t('landing.ctaBand.title')}</h2>
         <p className="text-gray-500 dark:text-slate-400 max-w-xl mx-auto mb-8">{t('landing.ctaBand.subtitle')}</p>
-        <Link to="/register" className="btn-primary !px-8 !py-3.5 text-base inline-flex">
+        <Link to="/register" className="btn-primary px-8! py-3.5! text-base inline-flex">
           {t('landing.ctaBand.cta')}
           <ArrowRight className="w-4 h-4" />
         </Link>
@@ -270,7 +263,7 @@ export const LandingPage = () => {
       <footer className="border-t border-gray-200 dark:border-slate-700 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-violet-600 to-indigo-500 flex items-center justify-center">
               <Sword className="w-4 h-4 text-white" />
             </div>
             <div>

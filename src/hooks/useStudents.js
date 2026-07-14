@@ -10,6 +10,11 @@ import { supabase } from '../lib/supabase';
  * Returns canonical field names on each student: totalAttempts, avgScore,
  * lastActiveAt (previously named totalExams/lastActive in one of the two
  * call sites — unified here).
+ *
+ * Attempt stats come from the `get_student_attempt_stats()` RPC (1 row per
+ * student who has attempts) instead of fetching the raw `exam_attempts`
+ * table (1 row per attempt, unbounded growth over time regardless of how
+ * many students are viewing this page) — see supabase/sql/2026-07-13_concurrency_indexes.sql.
  */
 export const useStudents = (options = {}) => {
   const {
@@ -31,28 +36,30 @@ export const useStudents = (options = {}) => {
     setLoading(true);
     setError(null);
     try {
-      const [{ data: profiles, error: profileError }, { data: attempts, error: attemptsError }] = await Promise.all([
+      const [{ data: profiles, error: profileError }, { data: stats, error: statsError }] = await Promise.all([
         supabase
           .from('profiles')
           .select('id, full_name, email, created_at, is_active, school, class_name')
           .eq('role', 'student')
           .order('full_name'),
-        supabase
-          .from('exam_attempts')
-          .select('user_id, score, started_at')
-          .neq('status', 'in_progress'),
+        supabase.rpc('get_student_attempt_stats'),
       ]);
       if (profileError) throw profileError;
-      if (attemptsError) throw attemptsError;
+      if (statsError) throw statsError;
+
+      const statsByUser = (stats || []).reduce((acc, s) => {
+        acc[s.user_id] = s;
+        return acc;
+      }, {});
 
       const enriched = (profiles || []).map(student => {
-        const sa = (attempts || []).filter(a => a.user_id === student.id);
-        const totalAttempts = sa.length;
-        const avgScore = totalAttempts > 0
-          ? sa.reduce((acc, a) => acc + Number(a.score), 0) / totalAttempts
-          : 0;
-        const last = [...sa].sort((a, b) => new Date(b.started_at) - new Date(a.started_at))[0];
-        return { ...student, totalAttempts, avgScore, lastActiveAt: last?.started_at || null };
+        const s = statsByUser[student.id];
+        return {
+          ...student,
+          totalAttempts: s ? Number(s.total_attempts) : 0,
+          avgScore: s ? Number(s.avg_score) || 0 : 0,
+          lastActiveAt: s?.last_active || null,
+        };
       });
 
       setRawStudents(enriched);

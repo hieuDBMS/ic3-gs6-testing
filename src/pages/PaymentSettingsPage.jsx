@@ -38,7 +38,7 @@ const QRPreview = ({ bankId, accountNo, accountName, amount }) => {
   const url = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${amount || 0}&addInfo=IC3Fighter&accountName=${encodeURIComponent(accountName)}`;
   return (
     <div className="flex flex-col items-center">
-      <div className="bg-white p-3 rounded-2xl border-2 border-gray-100 dark:border-slate-700 shadow-sm">
+      <div className="bg-white p-3 rounded-2xl border-2 border-gray-100 dark:border-slate-700 shadow-xs">
         <img src={url} alt={t('paymentSettings.qrPreview.alt')} className="w-48 h-48 object-contain rounded-xl"
           onError={e => { e.currentTarget.style.display = 'none'; }} />
       </div>
@@ -177,7 +177,7 @@ export const PaymentSettingsPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-violet-50/20 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-violet-50/20 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
 
       {/* ── Header ── */}
       <div className="relative overflow-hidden"
@@ -214,9 +214,9 @@ export const PaymentSettingsPage = () => {
         {/* ─────────────────────────────────────────────
             SECTION 1: Global bank info
         ───────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center shrink-0">
               <Building2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
             </div>
             <div>
@@ -232,7 +232,7 @@ export const PaymentSettingsPage = () => {
 
                 {/* Info banner */}
                 <div className="flex items-start gap-2.5 px-4 py-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700 dark:bg-blue-950/40 dark:border-blue-800/60 dark:text-blue-300">
-                  <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <Info className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{t('paymentSettings.section1.infoBannerPrefix')} <strong>{t('paymentSettings.section1.infoBannerStrong')}</strong>{t('paymentSettings.section1.infoBannerSuffix')}</span>
                 </div>
 
@@ -245,7 +245,7 @@ export const PaymentSettingsPage = () => {
                     <select
                       value={bankId}
                       onChange={e => setBankId(e.target.value)}
-                      className="w-full appearance-none px-4 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 transition bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
+                      className="w-full appearance-none px-4 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-violet-400 transition bg-white dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100"
                     >
                       {BANKS.map(b => (
                         <option key={b.id} value={b.id}>{b.name}</option>
@@ -265,7 +265,7 @@ export const PaymentSettingsPage = () => {
                     value={accountNo}
                     onChange={e => setAccountNo(e.target.value.replace(/\D/g, ''))}
                     placeholder={t('paymentSettings.section1.accountNoPlaceholder')}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-violet-400 transition dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-mono tracking-widest focus:outline-hidden focus:ring-2 focus:ring-violet-400 transition dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                   />
                 </div>
 
@@ -279,14 +279,14 @@ export const PaymentSettingsPage = () => {
                     value={accountName}
                     onChange={e => setAccountName(e.target.value.toUpperCase())}
                     placeholder={t('paymentSettings.section1.accountNamePlaceholder')}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm uppercase font-medium tracking-wide focus:outline-none focus:ring-2 focus:ring-violet-400 transition dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm uppercase font-medium tracking-wide focus:outline-hidden focus:ring-2 focus:ring-violet-400 transition dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                   />
                   <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">{t('paymentSettings.section1.accountNameHint')}</p>
                 </div>
 
                 {globalError && (
                   <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 dark:bg-red-950/40 dark:border-red-800/60 dark:text-red-300">
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {globalError}
+                    <AlertTriangle className="w-4 h-4 shrink-0" /> {globalError}
                   </div>
                 )}
 
@@ -295,7 +295,7 @@ export const PaymentSettingsPage = () => {
                     onClick={saveGlobal}
                     disabled={savingGlobal}
                     className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold
-                      hover:bg-violet-700 transition disabled:opacity-50 shadow-sm shadow-violet-200"
+                      hover:bg-violet-700 transition disabled:opacity-50 shadow-xs shadow-violet-200"
                   >
                     {savingGlobal ? (
                       <><Loader2 className="w-4 h-4 animate-spin" /> {t('paymentSettings.section1.saving')}</>
@@ -316,7 +316,7 @@ export const PaymentSettingsPage = () => {
               </div>
 
               {/* QR preview */}
-              <div className="flex items-center justify-center bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-slate-700/50 dark:to-slate-700/30 rounded-2xl p-6 border border-violet-100 dark:border-slate-700 min-h-[220px]">
+              <div className="flex items-center justify-center bg-linear-to-br from-violet-50 to-indigo-50 dark:from-slate-700/50 dark:to-slate-700/30 rounded-2xl p-6 border border-violet-100 dark:border-slate-700 min-h-[220px]">
                 {showQR && accountNo && accountName ? (
                   <QRPreview bankId={bankId} accountNo={accountNo} accountName={accountName} amount={100000} />
                 ) : (
@@ -336,12 +336,12 @@ export const PaymentSettingsPage = () => {
         {/* ─────────────────────────────────────────────
             SECTION 2: Per-exam amounts — grouped by level
         ───────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 overflow-hidden">
 
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center shrink-0">
                 <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
@@ -352,14 +352,14 @@ export const PaymentSettingsPage = () => {
 
             {/* Search */}
             <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 w-56 dark:bg-slate-700/50 dark:border-slate-600">
-              <svg className="w-4 h-4 text-gray-400 dark:text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-gray-400 dark:text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 type="text" value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder={t('paymentSettings.section2.searchPlaceholder')}
-                className="bg-transparent outline-none text-sm text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 flex-1"
+                className="bg-transparent outline-hidden text-sm text-gray-700 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 flex-1"
               />
               {search && (
                 <button onClick={() => setSearch('')} className="text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300">
@@ -400,11 +400,11 @@ export const PaymentSettingsPage = () => {
                     ).length, 0);
 
                   const versionStyle = {
-                    GS6:         { bg: 'bg-blue-600',   light: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/50',   badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300' },
-                    GS7:         { bg: 'bg-violet-600', light: 'bg-violet-50 border-violet-200 dark:bg-violet-950/30 dark:border-violet-800/50', badge: 'bg-violet-100 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300' },
-                    GS8:         { bg: 'bg-teal-600',   light: 'bg-teal-50 border-teal-200 dark:bg-teal-950/30 dark:border-teal-800/50',   badge: 'bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300' },
-                    'IC3 GS6-SPARK': { bg: 'bg-orange-500', light: 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800/50', badge: 'bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300' },
-                  }[version] || { bg: 'bg-gray-600', light: 'bg-gray-50 border-gray-200 dark:bg-slate-700/40 dark:border-slate-600', badge: 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300' };
+                    GS6:         { bg: 'bg-blue-600',   bgSoft: 'bg-blue-600/15',   light: 'bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/50',   badge: 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300' },
+                    GS7:         { bg: 'bg-violet-600', bgSoft: 'bg-violet-600/15', light: 'bg-violet-50 border-violet-200 dark:bg-violet-950/30 dark:border-violet-800/50', badge: 'bg-violet-100 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300' },
+                    GS8:         { bg: 'bg-teal-600',   bgSoft: 'bg-teal-600/15',   light: 'bg-teal-50 border-teal-200 dark:bg-teal-950/30 dark:border-teal-800/50',   badge: 'bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300' },
+                    'IC3 GS6-SPARK': { bg: 'bg-orange-500', bgSoft: 'bg-orange-500/15', light: 'bg-orange-50 border-orange-200 dark:bg-orange-950/30 dark:border-orange-800/50', badge: 'bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300' },
+                  }[version] || { bg: 'bg-gray-600', bgSoft: 'bg-gray-600/15', light: 'bg-gray-50 border-gray-200 dark:bg-slate-700/40 dark:border-slate-600', badge: 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300' };
 
                   const vTotalExams = vLevels.reduce((sum, lv) =>
                     sum + exams.filter(e => e.level_id === lv.id).length, 0);
@@ -425,7 +425,7 @@ export const PaymentSettingsPage = () => {
                       >
                         <div className="flex items-center gap-3">
                           {/* Color pill */}
-                          <div className={`${versionStyle.bg} text-white text-sm font-extrabold px-4 py-1.5 rounded-xl tracking-wide shadow-sm`}>
+                          <div className={`${versionStyle.bg} text-white text-sm font-extrabold px-4 py-1.5 rounded-xl tracking-wide shadow-xs`}>
                             {version}
                           </div>
                           <div>
@@ -479,7 +479,7 @@ export const PaymentSettingsPage = () => {
                                 >
                                   <div className="flex items-center gap-3">
                                     {/* Level number bubble */}
-                                    <div className={`w-6 h-6 rounded-full ${versionStyle.bg} bg-opacity-15 flex items-center justify-center flex-shrink-0`}>
+                                    <div className={`w-6 h-6 rounded-full ${versionStyle.bgSoft} flex items-center justify-center shrink-0`}>
                                       <span className="text-[10px] font-bold text-gray-600 dark:text-slate-300">{lv.level_number || lvIdx + 1}</span>
                                     </div>
                                     <div>
@@ -518,7 +518,7 @@ export const PaymentSettingsPage = () => {
                                           }`}
                                         >
                                           {/* Dot indicator */}
-                                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isTest ? 'bg-blue-400' : 'bg-purple-400'}`} />
+                                          <span className={`w-2 h-2 rounded-full shrink-0 ${isTest ? 'bg-blue-400' : 'bg-purple-400'}`} />
 
                                           {/* Name */}
                                           <div>
@@ -545,7 +545,7 @@ export const PaymentSettingsPage = () => {
                                               step="1000"
                                               value={amounts[exam.id] ?? '100000'}
                                               onChange={e => setAmounts(prev => ({ ...prev, [exam.id]: e.target.value }))}
-                                              className={`w-full px-3 py-2 border rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-400 transition ${
+                                              className={`w-full px-3 py-2 border rounded-xl text-sm font-mono focus:outline-hidden focus:ring-2 focus:ring-emerald-400 transition ${
                                                 dirty
                                                   ? 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200'
                                                   : 'border-gray-200 bg-white text-gray-800 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200'
@@ -571,7 +571,7 @@ export const PaymentSettingsPage = () => {
                                                 disabled={savingExam[exam.id] || !dirty}
                                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
                                                   dirty
-                                                    ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm shadow-emerald-200'
+                                                    ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-xs shadow-emerald-200'
                                                     : 'bg-gray-100 text-gray-300 cursor-not-allowed dark:bg-slate-700 dark:text-slate-600'
                                                 }`}
                                               >

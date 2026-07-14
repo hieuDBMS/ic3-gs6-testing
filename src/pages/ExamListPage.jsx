@@ -9,11 +9,11 @@ import { useExamStructure } from '../hooks/useExamStructure';
 
 /* ── Version pill colors ── */
 const VERSION_STYLES = {
-  GS6: { from: 'from-primary-600', to: 'to-primary-400', ring: 'ring-primary-200', text: 'text-primary-700 dark:text-primary-300', bg: 'bg-primary-50 dark:bg-primary-950/30', border: 'border-primary-200 dark:border-primary-900/50', activeBg: 'bg-gradient-to-r from-primary-600 to-primary-500' },
-  GS7: { from: 'from-violet-600', to: 'to-violet-400', ring: 'ring-violet-200', text: 'text-violet-700 dark:text-violet-300', bg: 'bg-violet-50 dark:bg-violet-950/30', border: 'border-violet-200 dark:border-violet-900/50', activeBg: 'bg-gradient-to-r from-violet-600 to-violet-500' },
-  GS8: { from: 'from-accent-600', to: 'to-accent-400', ring: 'ring-accent-200', text: 'text-accent-700 dark:text-accent-300', bg: 'bg-accent-50 dark:bg-accent-900/30', border: 'border-accent-200 dark:border-accent-800/50', activeBg: 'bg-gradient-to-r from-accent-600 to-accent-500' },
+  GS6: { from: 'from-primary-600', to: 'to-primary-400', ring: 'ring-primary-200', text: 'text-primary-700 dark:text-primary-300', bg: 'bg-primary-50 dark:bg-primary-950/30', border: 'border-primary-200 dark:border-primary-900/50', activeBg: 'bg-linear-to-r from-primary-600 to-primary-500' },
+  GS7: { from: 'from-violet-600', to: 'to-violet-400', ring: 'ring-violet-200', text: 'text-violet-700 dark:text-violet-300', bg: 'bg-violet-50 dark:bg-violet-950/30', border: 'border-violet-200 dark:border-violet-900/50', activeBg: 'bg-linear-to-r from-violet-600 to-violet-500' },
+  GS8: { from: 'from-accent-600', to: 'to-accent-400', ring: 'ring-accent-200', text: 'text-accent-700 dark:text-accent-300', bg: 'bg-accent-50 dark:bg-accent-900/30', border: 'border-accent-200 dark:border-accent-800/50', activeBg: 'bg-linear-to-r from-accent-600 to-accent-500' },
 };
-const DEFAULT_STYLE = { from: 'from-gray-600', to: 'to-gray-400', ring: 'ring-gray-200', text: 'text-gray-700 dark:text-slate-300', bg: 'bg-gray-50 dark:bg-slate-800', border: 'border-gray-200 dark:border-slate-700', activeBg: 'bg-gradient-to-r from-gray-600 to-gray-500' };
+const DEFAULT_STYLE = { from: 'from-gray-600', to: 'to-gray-400', ring: 'ring-gray-200', text: 'text-gray-700 dark:text-slate-300', bg: 'bg-gray-50 dark:bg-slate-800', border: 'border-gray-200 dark:border-slate-700', activeBg: 'bg-linear-to-r from-gray-600 to-gray-500' };
 const getStyle = (v) => VERSION_STYLES[v] || DEFAULT_STYLE;
 
 /* ── Exam Type Badge ── */
@@ -64,7 +64,7 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
         </div>
         <div className="px-6 pt-4 pb-6 space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center shrink-0">
               <Trash2 className="w-5 h-5 text-red-500" />
             </div>
             <div className="flex-1">
@@ -76,12 +76,12 @@ const CancelSheet = ({ txCode, purchaseId, onClose, onDone }) => {
             </button>
           </div>
           <div className="p-3.5 bg-gray-50 dark:bg-slate-700/50 rounded-2xl text-sm text-gray-600 dark:text-slate-300 leading-relaxed">
-            {t('examList.cancelSheet.transactionPrefix')} <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">{txCode}</code> {t('examList.cancelSheet.transactionSuffix')}
+            {t('examList.cancelSheet.transactionPrefix')} <code className="font-mono text-[11px] bg-gray-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-sm">{txCode}</code> {t('examList.cancelSheet.transactionSuffix')}
             {t('examList.cancelSheet.rebuyHint')}
           </div>
           {err && (
             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/40 rounded-xl text-xs text-red-700 dark:text-red-300">
-              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" /> {err}
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {err}
             </div>
           )}
           <div className="flex gap-2.5">
@@ -197,7 +197,7 @@ export const ExamListPage = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
       {/* ── Page hero header ── */}
       <div className="relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #0f172a 0%, #182e89 60%, #0e7490 100%)' }}>
@@ -259,7 +259,7 @@ export const ExamListPage = () => {
                       </div>
                     </div>
                     {active && (
-                      <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-green-400 border-2 border-white shadow-sm" />
+                      <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-green-400 border-2 border-white shadow-xs" />
                     )}
                   </button>
                 );
@@ -309,7 +309,7 @@ export const ExamListPage = () => {
                     className="w-full flex items-center gap-4 px-5 py-4 sm:px-6 sm:py-5 text-left hover:bg-gray-50/70 dark:hover:bg-slate-700/40 transition-colors group"
                   >
                     {/* Level number badge */}
-                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${style.from} ${style.to} flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-md`}>
+                    <div className={`w-11 h-11 rounded-xl bg-linear-to-br ${style.from} ${style.to} flex items-center justify-center text-white font-black text-lg shrink-0 shadow-md`}>
                       {level.level_number}
                     </div>
 
@@ -329,7 +329,7 @@ export const ExamListPage = () => {
                       </div>
                     </div>
 
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shrink-0
                       ${isOpen ? `${style.bg} ${style.text}` : 'bg-gray-100 text-gray-400 group-hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-500 dark:group-hover:bg-slate-600'}`}>
                       <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                     </div>
@@ -355,7 +355,7 @@ export const ExamListPage = () => {
                            >
                             <div className="flex items-start justify-between gap-2">
                               <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100 leading-snug">{exam.title}</h3>
-                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <div className="flex items-center gap-1.5 shrink-0">
                                 <TypeBadge type={exam.exam_type} />
                                 {isSelfRegistered && !showSkeleton && (
                                   isPurchased
@@ -369,7 +369,7 @@ export const ExamListPage = () => {
                             </div>
 
                             <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-slate-500">
-                              <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                              <Clock className="w-3.5 h-3.5 shrink-0" />
                               <span>{t('examList.durationMinutes', { minutes: Math.floor(exam.duration_seconds / 60) })}</span>
                             </div>
 
@@ -380,9 +380,9 @@ export const ExamListPage = () => {
                               <Link
                                 to={`/exam/${exam.id}`}
                                 className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold text-white
-                                  bg-gradient-to-r ${style.from} ${style.to}
+                                  bg-linear-to-r ${style.from} ${style.to}
                                   hover:opacity-90 hover:shadow-md active:scale-[0.97]
-                                  transition-all duration-150 shadow-sm mt-auto`}
+                                  transition-all duration-150 shadow-xs mt-auto`}
                               >
                                 <Zap className="w-3.5 h-3.5" />
                                 {t('examList.startExam')}
@@ -390,7 +390,7 @@ export const ExamListPage = () => {
                             ) : isPending ? (
                               <div className="flex gap-2 mt-auto">
                                 <button onClick={() => setPaymentExam(exam)}
-                                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-400 hover:opacity-90 active:scale-[.97] transition-all shadow-sm">
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white bg-linear-to-r from-amber-500 to-orange-400 hover:opacity-90 active:scale-[.97] transition-all shadow-xs">
                                   <Clock className="w-3.5 h-3.5" /> {t('examList.continuePayment')}
                                 </button>
                                 <button onClick={() => setCancelExam({ purchaseId: purchase.id, txCode: purchase.transaction_code })}
@@ -403,9 +403,9 @@ export const ExamListPage = () => {
                               <button
                                 onClick={() => setPaymentExam(exam)}
                                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold
-                                  bg-gradient-to-r from-indigo-600 to-violet-600 text-white
+                                  bg-linear-to-r from-indigo-600 to-violet-600 text-white
                                   hover:opacity-90 hover:shadow-md active:scale-[0.97]
-                                  transition-all duration-150 shadow-sm mt-auto"
+                                  transition-all duration-150 shadow-xs mt-auto"
                               >
                                 <ShoppingCart className="w-3.5 h-3.5" />
                                 {t('examList.buyNow', { amount: new Intl.NumberFormat('vi-VN').format(exam.required_amount || 100000) })}

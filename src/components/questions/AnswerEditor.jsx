@@ -62,7 +62,7 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
         <button
           type="button"
           onClick={addAnswer}
-          className="flex items-center text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold gap-1 whitespace-nowrap flex-shrink-0 px-3 py-1.5 border border-indigo-200 dark:border-indigo-800/60 hover:border-indigo-400 dark:hover:border-indigo-500 rounded-xl transition-all"
+          className="flex items-center text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-semibold gap-1 whitespace-nowrap shrink-0 px-3 py-1.5 border border-indigo-200 dark:border-indigo-800/60 hover:border-indigo-400 dark:hover:border-indigo-500 rounded-xl transition-all"
         >
           <Plus className="w-4 h-4" /> Thêm đáp án
         </button>
@@ -80,7 +80,7 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
             key={answer.id}
             className={`relative rounded-2xl border-2 overflow-hidden transition-all ${
               answer.is_correct
-                ? 'border-emerald-400 dark:border-emerald-600 shadow-sm shadow-emerald-100'
+                ? 'border-emerald-400 dark:border-emerald-600 shadow-xs shadow-emerald-100'
                 : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600'
             }`}
           >
@@ -88,10 +88,10 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
             <div className={`flex items-center gap-3 px-3 py-2.5 border-b ${
               answer.is_correct ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800/60' : 'bg-gray-50 border-gray-200 dark:bg-slate-700/50 dark:border-slate-600'
             }`}>
-              <GripVertical className="w-4 h-4 text-gray-300 dark:text-slate-600 cursor-grab flex-shrink-0" />
+              <GripVertical className="w-4 h-4 text-gray-300 dark:text-slate-600 cursor-grab shrink-0" />
 
               {/* Letter badge */}
-              <span className={`w-7 h-7 rounded-xl text-sm font-extrabold flex items-center justify-center flex-shrink-0 ${
+              <span className={`w-7 h-7 rounded-xl text-sm font-extrabold flex items-center justify-center shrink-0 ${
                 answer.is_correct
                   ? 'bg-emerald-500 text-white'
                   : 'bg-gray-200 text-gray-500 dark:bg-slate-700 dark:text-slate-400'
@@ -110,7 +110,7 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
                       ? (e) => update(index, 'is_correct', e.target.checked)
                       : () => handleRadioChange(index)
                   }
-                  className="w-4 h-4 accent-emerald-500 flex-shrink-0"
+                  className="w-4 h-4 accent-emerald-500 shrink-0"
                 />
                 <span className={`text-xs font-semibold ${answer.is_correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-400 dark:text-slate-500'}`}>
                   {answer.is_correct ? '✔ Đáp án đúng' : 'Đánh dấu là đúng'}
@@ -121,7 +121,7 @@ export const AnswerEditor = ({ answers, onChange, multiSelect = false }) => {
               <button
                 type="button"
                 onClick={() => removeAnswer(index)}
-                className="text-gray-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 transition-colors flex-shrink-0"
+                className="text-gray-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 transition-colors shrink-0"
                 title="Xóa đáp án"
               >
                 <Trash2 className="w-4 h-4" />

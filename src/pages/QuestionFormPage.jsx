@@ -253,36 +253,36 @@ export const QuestionFormPage = () => {
       <Toast toasts={toasts} onDismiss={dismissToast} />
 
       {/* ══ TOP HEADER ══ */}
-      <div className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-sm">
-        <div className="max-w-screen-xl mx-auto flex items-center gap-3 px-4 sm:px-6 py-3">
+      <div className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 shadow-xs">
+        <div className="max-w-(--breakpoint-xl) mx-auto flex items-center gap-3 px-4 sm:px-6 py-3">
           {/* Back */}
           <button
             onClick={() => navigate('/questions')}
-            className="flex items-center gap-1.5 text-gray-500 dark:text-slate-500 hover:text-gray-800 dark:hover:text-slate-300 transition-colors text-sm font-medium flex-shrink-0"
+            className="flex items-center gap-1.5 text-gray-500 dark:text-slate-500 hover:text-gray-800 dark:hover:text-slate-300 transition-colors text-sm font-medium shrink-0"
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="hidden sm:inline">{t('questionForm.backToQuestions')}</span>
           </button>
 
-          <div className="w-px h-5 bg-gray-200 dark:bg-slate-700 flex-shrink-0" />
+          <div className="w-px h-5 bg-gray-200 dark:bg-slate-700 shrink-0" />
 
           {/* Title */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
               <BookOpen className="w-3.5 h-3.5 text-white" />
             </div>
             <h1 className="text-sm font-bold text-gray-900 dark:text-slate-100 truncate">
               {isEdit ? t('questionForm.editTitle') : t('questionForm.addTitle')}
             </h1>
             {form.exam_id && selectedExam && (
-              <span className="hidden sm:inline text-xs text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+              <span className="hidden sm:inline text-xs text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full font-medium shrink-0">
                 {selectedLevel?.label} · {selectedExam.exam_type === 'testing' ? t('questionForm.examTypeTesting') : t('questionForm.examTypeGmetrix')} {selectedExam.exam_number}
               </span>
             )}
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <span className="hidden lg:inline text-[11px] text-gray-400 dark:text-slate-500">{t('questionForm.ctrlSHint')}</span>
 
             {/* Save & add next (only in add mode) */}
@@ -311,15 +311,15 @@ export const QuestionFormPage = () => {
       </div>
 
       {/* ══ BODY ══ */}
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-(--breakpoint-xl) mx-auto px-4 sm:px-6 py-6">
         <div className={`flex gap-6 ${isHotspot ? 'flex-col xl:flex-row' : 'flex-col lg:flex-row'}`}>
 
           {/* ════ LEFT: Exam + Type config (sticky sidebar on desktop) ════ */}
-          <div className={`flex-shrink-0 space-y-4 ${isHotspot ? 'xl:w-72' : 'lg:w-72'}`}>
+          <div className={`shrink-0 space-y-4 ${isHotspot ? 'xl:w-72' : 'lg:w-72'}`}>
             <div className="sticky top-[61px] space-y-4">
 
               {/* Section 1: Bài thi */}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-xs overflow-hidden">
                 <div className="px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700/60 flex items-center gap-2">
                   <LayoutList className="w-4 h-4 text-gray-400 dark:text-slate-500" />
                   <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">1. {t('questionForm.sectionExamTitle')}</h2>
@@ -331,7 +331,7 @@ export const QuestionFormPage = () => {
                     <select
                       value={form.level_id}
                       onChange={e => { set('level_id', e.target.value); set('exam_id', ''); }}
-                      className={`w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${errors.level_id ? 'border-red-400 dark:border-red-700' : 'border-gray-200 dark:border-slate-600'}`}
+                      className={`w-full text-sm border rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${errors.level_id ? 'border-red-400 dark:border-red-700' : 'border-gray-200 dark:border-slate-600'}`}
                     >
                       <option value="">{t('questionForm.selectLevelPlaceholder')}</option>
                       {versions.map(v => (
@@ -365,7 +365,7 @@ export const QuestionFormPage = () => {
                       value={form.exam_id}
                       onChange={e => set('exam_id', e.target.value)}
                       disabled={!form.level_id}
-                      className={`w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-40 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${errors.exam_id ? 'border-red-400 dark:border-red-700' : 'border-gray-200 dark:border-slate-600'}`}
+                      className={`w-full text-sm border rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 disabled:opacity-40 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 ${errors.exam_id ? 'border-red-400 dark:border-red-700' : 'border-gray-200 dark:border-slate-600'}`}
                     >
                       <option value="">{t('questionForm.selectExamPlaceholder')}</option>
                       {filteredExams.map(e => (
@@ -380,14 +380,14 @@ export const QuestionFormPage = () => {
                     <label className="block text-xs font-semibold text-gray-500 dark:text-slate-500 mb-1">{t('questionForm.orderIndexLabel')}</label>
                     <input type="number" min={0} value={form.order_index}
                       onChange={e => set('order_index', e.target.value)}
-                      className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
+                      className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Section 2: Loại câu hỏi */}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-xs overflow-hidden">
                 <div className="px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700/60 flex items-center gap-2">
                   <CheckSquare className="w-4 h-4 text-gray-400 dark:text-slate-500" />
                   <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">2. {t('questionForm.sectionTypeTitle')}</h2>
@@ -400,13 +400,13 @@ export const QuestionFormPage = () => {
                           ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40'
                           : 'border-gray-100 dark:border-slate-700/60 bg-white dark:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800/60 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20'
                       }`}>
-                      <span className="text-lg flex-shrink-0">{t.icon}</span>
+                      <span className="text-lg shrink-0">{t.icon}</span>
                       <div className="min-w-0">
                         <p className={`text-xs font-bold leading-none ${form.question_type === t.value ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-700 dark:text-slate-300'}`}>{t.label}</p>
                         <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">{t.desc}</p>
                       </div>
                       {form.question_type === t.value && (
-                        <CheckCircle2 className="w-4 h-4 text-indigo-500 ml-auto flex-shrink-0" />
+                        <CheckCircle2 className="w-4 h-4 text-indigo-500 ml-auto shrink-0" />
                       )}
                     </button>
                   ))}
@@ -427,7 +427,7 @@ export const QuestionFormPage = () => {
           <div className="flex-1 min-w-0 space-y-4">
 
             {/* Section 3: Nội dung câu hỏi */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-xs overflow-hidden">
               <div className="px-5 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700/60 flex items-center gap-2">
                 <Type className="w-4 h-4 text-gray-400 dark:text-slate-500" />
                 <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">3. {t('questionForm.sectionContentTitle')}</h2>
@@ -461,7 +461,7 @@ export const QuestionFormPage = () => {
             </div>
 
             {/* Section 4: Đáp án / Hotspot / etc. */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-xs overflow-hidden">
               <div className="px-5 py-3 bg-gray-50 dark:bg-slate-700/50 border-b border-gray-100 dark:border-slate-700/60">
                 <h2 className="text-xs font-bold text-gray-600 dark:text-slate-300 uppercase tracking-wider">
                   4. {form.question_type === 'dragdrop' ? t('questionForm.sectionPairsTitle')
@@ -474,7 +474,7 @@ export const QuestionFormPage = () => {
                 {/* Error banner */}
                 {(errors.answers || errors.pairs || errors.statements || errors.regions) && (
                   <div data-error className="flex items-center gap-2 mb-4 px-4 py-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl text-sm text-red-700 dark:text-red-300">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <AlertCircle className="w-4 h-4 shrink-0" />
                     {errors.answers || errors.pairs || errors.statements || errors.regions}
                   </div>
                 )}
@@ -501,13 +501,13 @@ export const QuestionFormPage = () => {
                     {statements.map((stmt, i) => (
                       <div key={stmt.id} className={`rounded-xl border-2 overflow-hidden ${stmt.is_true ? 'border-emerald-300 dark:border-emerald-800/60' : 'border-red-300 dark:border-red-800/60'}`}>
                         <div className={`flex items-center gap-2 px-3 py-2 border-b ${stmt.is_true ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60' : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/60'}`}>
-                          <span className="w-5 h-5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-xs font-bold flex items-center justify-center flex-shrink-0">{i+1}</span>
+                          <span className="w-5 h-5 rounded-full bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-slate-300 text-xs font-bold flex items-center justify-center shrink-0">{i+1}</span>
                           <span className={`text-xs font-semibold flex-1 ${stmt.is_true ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>{stmt.is_true ? `✔ ${t('questionForm.trueLabel')}` : `✘ ${t('questionForm.falseLabel')}`}</span>
-                          <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-slate-600 flex-shrink-0">
+                          <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-slate-600 shrink-0">
                             <button type="button" onClick={() => updateStmt(i,'is_true',true)} className={`px-3 py-1 text-xs font-bold transition-all ${stmt.is_true ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-slate-800 text-gray-400 dark:text-slate-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'}`}>{t('questionForm.trueLabel')}</button>
                             <button type="button" onClick={() => updateStmt(i,'is_true',false)} className={`px-3 py-1 text-xs font-bold border-l border-gray-200 dark:border-slate-600 transition-all ${!stmt.is_true ? 'bg-red-500 text-white' : 'bg-white dark:bg-slate-800 text-gray-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-950/40'}`}>{t('questionForm.falseLabel')}</button>
                           </div>
-                          <button type="button" onClick={() => removeStmt(i)} disabled={statements.length <= 2} className="text-gray-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 disabled:opacity-30 flex-shrink-0"><Trash2 className="w-4 h-4"/></button>
+                          <button type="button" onClick={() => removeStmt(i)} disabled={statements.length <= 2} className="text-gray-300 dark:text-slate-600 hover:text-red-400 dark:hover:text-red-400 disabled:opacity-30 shrink-0"><Trash2 className="w-4 h-4"/></button>
                         </div>
                         <div className="p-3 bg-white dark:bg-slate-800">
                           <RichTextEditor value={stmt.content} onChange={html => updateStmt(i,'content',html)} placeholder={t('questionForm.statementPlaceholder', { index: i + 1 })} minHeight={44} />
@@ -531,14 +531,14 @@ export const QuestionFormPage = () => {
                         </div>
                         <div className="flex flex-col sm:grid sm:grid-cols-[1fr_32px_1fr] gap-0">
                           <div className="p-4 space-y-2 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-slate-600">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">🔵 {t('questionForm.dragBadge')}</span>
-                            <textarea value={pair.drag_content} onChange={e => updatePair(i,'drag_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={t('questionForm.dragContentPlaceholder', { index: i + 1 })} rows={2} className="w-full text-sm border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">🔵 {t('questionForm.dragBadge')}</span>
+                            <textarea value={pair.drag_content} onChange={e => updatePair(i,'drag_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={t('questionForm.dragContentPlaceholder', { index: i + 1 })} rows={2} className="w-full text-sm border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-blue-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
                             <ImageUploader bucket="question-images" value={pair.drag_image_url} onChange={url => updatePair(i,'drag_image_url',url)} label={t('questionForm.optionalImageLabel')}/>
                           </div>
                           <div className="hidden sm:flex items-center justify-center bg-gray-50 dark:bg-slate-700/50"><ArrowLeftRight className="w-4 h-4 text-gray-300 dark:text-slate-600"/></div>
                           <div className="p-4 space-y-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300">🟣 {t('questionForm.dropBadge')}</span>
-                            <textarea value={pair.drop_content} onChange={e => updatePair(i,'drop_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={t('questionForm.dropContentPlaceholder', { index: i + 1 })} rows={2} className="w-full text-sm border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300">🟣 {t('questionForm.dropBadge')}</span>
+                            <textarea value={pair.drop_content} onChange={e => updatePair(i,'drop_content',e.target.value)} onInput={e=>{e.target.style.height='auto';e.target.style.height=e.target.scrollHeight+'px';}} placeholder={t('questionForm.dropContentPlaceholder', { index: i + 1 })} rows={2} className="w-full text-sm border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 rounded-lg px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-purple-400 resize-none overflow-hidden" style={{minHeight:'64px'}} />
                             <ImageUploader bucket="answer-images" value={pair.drop_image_url} onChange={url => updatePair(i,'drop_image_url',url)} label={t('questionForm.optionalImageLabel')}/>
                           </div>
                         </div>

@@ -47,7 +47,7 @@ export const MockResultPage = () => {
   if (!attempt) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
-        <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 max-w-sm w-full mx-4">
+        <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-xs border border-gray-100 dark:border-slate-700 max-w-sm w-full mx-4">
           <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
           <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-2">{t('mockResult.notFound.title')}</h2>
           <p className="text-gray-500 dark:text-slate-400 mb-6 text-sm">{t('mockResult.notFound.message')}</p>
@@ -69,17 +69,17 @@ export const MockResultPage = () => {
       <div className="max-w-xl w-full">
         {/* Nav */}
         <Link to="/exam" className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 mb-8 transition-colors group">
-          <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center group-hover:border-slate-300 dark:group-hover:border-slate-600 group-hover:shadow-sm transition-all">
+          <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center group-hover:border-slate-300 dark:group-hover:border-slate-600 group-hover:shadow-xs transition-all">
             <ArrowLeft className="w-4 h-4" />
           </div>
           {t('mockResult.backToReview')}
         </Link>
 
         {/* Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700 relative">
+        <div className="bg-white dark:bg-slate-800 rounded-4xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700 relative">
           
           {/* Header Banner */}
-          <div className={`h-32 absolute top-0 left-0 right-0 ${isPassed ? 'bg-gradient-to-br from-emerald-400 to-teal-500' : 'bg-gradient-to-br from-rose-400 to-red-500'}`} />
+          <div className={`h-32 absolute top-0 left-0 right-0 ${isPassed ? 'bg-linear-to-br from-emerald-400 to-teal-500' : 'bg-linear-to-br from-rose-400 to-red-500'}`} />
 
           <div className="relative pt-12 px-8 pb-10 flex flex-col items-center text-center">
             {/* Medal/Icon */}

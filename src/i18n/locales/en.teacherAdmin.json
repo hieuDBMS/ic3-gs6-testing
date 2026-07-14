@@ -302,7 +302,17 @@
     "studentUpdatedToast": "Student information updated!",
     "passwordResetToast": "Password reset successfully!",
     "studentDeletedToast": "Student and their entire attempt history deleted!",
-    "deleteErrorToast": "Error deleting: {{message}}"
+    "deleteErrorToast": "Error deleting: {{message}}",
+    "clearHistoryButton": "Clear exam history",
+    "clearHistoryConfirmTitle": "Clear exam history",
+    "clearHistoryConfirmPre": "You are about to permanently delete all exam attempt history of",
+    "clearHistoryConfirmPost": "The account itself is kept — only their attempt history is deleted. This cannot be undone.",
+    "clearHistorySuccessToast": "Exam history cleared!",
+    "clearHistoryErrorToast": "Error clearing history: {{message}}",
+    "clearAllHistoryButton": "Clear ALL exam history",
+    "clearAllHistoryConfirmTitle": "Clear ALL exam history",
+    "clearAllHistoryConfirmMessage": "This permanently deletes the exam attempt history of EVERY student and teacher platform-wide. Accounts, purchases and payment history are kept. This cannot be undone.",
+    "clearAllHistorySuccessToast": "All exam history has been cleared!"
   },
   "studentProgress": {
     "studentNotFound": "Student not found",

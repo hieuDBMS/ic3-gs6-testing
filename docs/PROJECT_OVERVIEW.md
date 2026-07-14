@@ -6,14 +6,14 @@ Nền tảng thi trực tuyến IC3 (Internet and Computing Core Certification) 
 
 - **Repository**: `c:\TinHoc\Cap2\Testing4`
 - **Dev server**: `npm run dev` → http://localhost:5173
-- **Deploy**: Vercel (xem `vercel.json`)
+- **Deploy**: Vercel (xem `vercel.json`) — SPA rewrite toàn bộ về `/`, security headers (CSP/HSTS/...) trên mọi route, `Cache-Control: immutable` riêng cho `/assets/*` và file tĩnh (svg/png/font — thêm 2026-07-13) vì Vite build ra tên file có hash, an toàn cache vĩnh viễn; `index.html` không match rule này nên vẫn theo default revalidate của Vercel
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Frontend | React 19.x + Vite 5.x |
-| Styling | Tailwind CSS v3.x |
+| Frontend | React 19.x + Vite 8.x (Rolldown/Oxc) |
+| Styling | Tailwind CSS v4.x (`@tailwindcss/postcss`, CSS-first `@theme` config in `src/index.css`, no `tailwind.config.js`) |
 | Backend / DB | Supabase (PostgreSQL) |
 | Auth | Supabase Auth (email/password) |
 | Storage | Supabase Storage (`question-images`, `answer-images`) |
@@ -48,6 +48,8 @@ src/
 docs/                        # Tài liệu source code (thư mục này)
 supabase/
 ├── sql/                      # Migration SQL chạy tay qua Supabase Studio (không có supabase/migrations/ chuẩn CLI)
+│   ├── 2026-07-13_concurrency_indexes.sql  # Indexes + RPC get_student_attempt_stats/get_teacher_dashboard_stats — ĐÃ chạy trên DB live (2026-07-13, qua Management API)
+│   └── 2026-07-13_clear_exam_history.sql   # DELETE FROM exam_attempts toàn hệ thống (one-time wipe) — CHƯA chạy, chỉ tạo sẵn nếu cần dùng
 └── functions/                # Source của tất cả 6 edge functions đang deploy (kéo về 2026-07-10,
                                # trước đó chỉ analyze-exam-stats có source local — 5 function còn lại
                                # deploy trực tiếp qua Dashboard/MCP không version-control)
@@ -92,7 +94,7 @@ File `.env` — KHÔNG commit lên Git.
 
 ## Supabase RPC functions
 
-9 RPC functions (`SECURITY DEFINER` trừ `reorder_questions_in_exam`, `is_teacher`) — chi tiết đầy đủ chữ ký ở [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md#rpc-functions-public-schema):
+11 RPC functions (`SECURITY DEFINER` trừ `reorder_questions_in_exam`, `is_teacher`) — chi tiết đầy đủ chữ ký ở [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md#rpc-functions-public-schema):
 
 | RPC | Mô tả |
 |---|---|
@@ -103,6 +105,8 @@ File `.env` — KHÔNG commit lên Git.
 | `get_question_wrong_stats` | Thống kê câu hay sai (teacher-only) |
 | `get_exam_score_distribution` | Histogram phân bố điểm (teacher-only) |
 | `get_exam_group_breakdown` | Breakdown điểm TB theo lớp/trường/level (teacher-only) |
+| `get_student_attempt_stats` | Aggregate `totalAttempts`/`avgScore`/`lastActive` theo học sinh (teacher-only) — dùng bởi `useStudents.js` thay vì fetch raw `exam_attempts`. Thêm 2026-07-13, xem `supabase/sql/2026-07-13_concurrency_indexes.sql` |
+| `get_teacher_dashboard_stats` | Aggregate `total_attempts`/`avg_score` toàn hệ thống, 1 dòng (teacher-only) — dùng bởi `DashboardPage.jsx`'s `useTeacherStats`. Thêm 2026-07-13, cùng file SQL trên |
 | `reorder_questions_in_exam` | Chuẩn hoá lại `order_index` sau CRUD câu hỏi |
 | `is_teacher` | Helper nội bộ cho RLS policies |
 
@@ -112,7 +116,7 @@ Nguồn cả 6 function nằm ở `supabase/functions/<slug>/index.ts` (kéo v�
 
 | Function | verify_jwt | Action | Mô tả |
 |---|---|---|---|
-| `manage-student` | true | create / update / toggle-active / delete / reset-password | Teacher quản lý student (bảng `profiles`), cascade xoá `exam_attempts`/`purchases`/`payment_history` khi delete |
+| `manage-student` | true | create / update / toggle-active / delete / reset-password / clear-attempts / clear-all-attempts / delete-attempt | Teacher quản lý student (bảng `profiles`), cascade xoá `exam_attempts`/`purchases`/`payment_history` khi delete. `clear-attempts` (1 user, student hoặc teacher) / `clear-all-attempts` (toàn hệ thống) / `delete-attempt` (1 dòng `exam_attempts` theo `attemptId`) chỉ xoá lịch sử làm bài — **không đụng** `profiles`/`purchases`/`payment_history`/`auth.users`. Thêm 2026-07-13 |
 | `manage-school` | true | list / create / update / delete | Teacher quản lý danh sách trường (bảng `schools`). `update`/`delete` cascade rename/clear `profiles.school` (free-text match theo tên, không phải FK) |
 | `manage-purchase` | true | create / cancel / teacher-create / list-mine / list-all / confirm / status / history | Vòng đời mua bài thi (bảng `purchases`) — client KHÔNG ghi trực tiếp, trừ đường tự động `sepay-webhook` |
 | `register-user` | false | — | Self-register tài khoản. Dùng `admin.auth.admin.createUser` (bypass rate-limit signup mặc định của Supabase Auth) — không có CAPTCHA, cân nhắc thêm nếu bị bot spam tài khoản |

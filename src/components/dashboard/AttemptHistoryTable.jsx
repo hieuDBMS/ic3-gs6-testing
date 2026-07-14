@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ExternalLink, Clock, Calendar, BookOpen,
-  ChevronLeft, ChevronRight, Filter, X, AlertTriangle,
+  ChevronLeft, ChevronRight, Filter, X, AlertTriangle, Trash2,
 } from 'lucide-react';
 import { formatDurationLabel } from '../../utils/format';
 import { useExamAttempts } from '../../hooks/useExamAttempts';
 import { Skeleton } from '../shared/Skeleton';
+import { supabase } from '../../lib/supabase';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
+import { Toast, useToast } from '../shared/Toast';
 
 const PAGE_SIZE = 8;
 
@@ -38,7 +41,7 @@ const Chip = ({ label, active, onClick, colorActive = 'bg-indigo-600 text-white 
   </button>
 );
 
-const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false }) => {
+const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false, canDelete = false }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
@@ -47,8 +50,11 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false }) => {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showDate, setShowDate] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const { toasts, showToast, dismissToast } = useToast();
 
-  const { attempts, totalCount, cheatCounts, loading } = useExamAttempts(studentId, {
+  const { attempts, totalCount, cheatCounts, loading, refetch } = useExamAttempts(studentId, {
     excludeStatus: 'in_progress',
     examType: typeFilter !== 'all' ? typeFilter : undefined,
     dateFrom, dateTo, passFilter,
@@ -65,6 +71,33 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false }) => {
   };
 
   const setFilter = (setter, value) => { setter(value); setPage(0); };
+
+  const handleDeleteAttempt = async () => {
+    setDeleting(true);
+    try {
+      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+      if (refreshErr || !refreshed?.session) throw new Error(t('studentManagement.sessionExpiredError'));
+      const { data, error: fnErr } = await supabase.functions.invoke('manage-student', {
+        body: { action: 'delete-attempt', attemptId: deleteTarget.id },
+      });
+      if (fnErr) throw new Error(fnErr.message || t('studentManagement.edgeFunctionError'));
+      if (data?.error) throw new Error(data.error);
+      setDeleteTarget(null);
+      // Deleting the last row on a page beyond the first would otherwise leave
+      // `page` pointing past the new last page — step back instead (this alone
+      // triggers the hook's own refetch for the new page). Any other case can
+      // refresh in place without flashing the skeleton for a single-row change.
+      if (attempts.length === 1 && page > 0) {
+        setPage(p => p - 1);
+      } else {
+        refetch(true);
+      }
+      showToast(t('attemptHistory.deleteSuccessToast'), 'success');
+    } catch (err) {
+      showToast(t('attemptHistory.deleteErrorToast', { message: err.message }), 'error');
+      setDeleteTarget(null);
+    } finally { setDeleting(false); }
+  };
 
   return (
     <div>
@@ -106,11 +139,11 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false }) => {
             <span className="text-xs text-gray-500 dark:text-slate-400 font-medium">{t('attemptHistory.dateFrom')}</span>
             <input type="date" value={dateFrom}
               onChange={e => setFilter(setDateFrom, e.target.value)}
-              className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-gray-50 dark:bg-slate-700/50 dark:text-slate-100" />
+              className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-300 bg-gray-50 dark:bg-slate-700/50 dark:text-slate-100" />
             <span className="text-xs text-gray-500 dark:text-slate-400 font-medium">{t('attemptHistory.dateTo')}</span>
             <input type="date" value={dateTo}
               onChange={e => setFilter(setDateTo, e.target.value)}
-              className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-gray-50 dark:bg-slate-700/50 dark:text-slate-100" />
+              className="text-xs border border-gray-200 dark:border-slate-600 rounded-lg px-2 py-1.5 focus:outline-hidden focus:ring-2 focus:ring-indigo-300 bg-gray-50 dark:bg-slate-700/50 dark:text-slate-100" />
             {(dateFrom || dateTo) && (
               <button onClick={() => { setFilter(setDateFrom, ''); setFilter(setDateTo, ''); }}>
                 <X className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300" />
@@ -156,10 +189,10 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false }) => {
               <div key={attempt.id}
                 className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors group">
                 {/* Score badge */}
-                <div className={`flex-shrink-0 w-14 h-14 rounded-2xl flex flex-col items-center justify-center font-bold shadow-sm ${
+                <div className={`shrink-0 w-14 h-14 rounded-2xl flex flex-col items-center justify-center font-bold shadow-xs ${
                   isPassed
-                    ? 'bg-gradient-to-br from-emerald-400 to-teal-500 text-white'
-                    : 'bg-gradient-to-br from-red-400 to-rose-500 text-white'
+                    ? 'bg-linear-to-br from-emerald-400 to-teal-500 text-white'
+                    : 'bg-linear-to-br from-red-400 to-rose-500 text-white'
                 }`}>
                   <span className="text-lg leading-none">{score.toFixed(0)}</span>
                   <span className="text-[10px] opacity-80 font-semibold">%</span>
@@ -170,7 +203,7 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false }) => {
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-bold text-gray-800 dark:text-slate-100 truncate">{attempt.exams?.title || t('attemptHistory.examFallback')}</p>
                     {showCheatFlags && cheatCounts[attempt.id] > 0 && (
-                      <span className="flex-shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-50 text-red-600 text-[10px] font-bold border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/60">
+                      <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-50 text-red-600 text-[10px] font-bold border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/60">
                         <AlertTriangle className="w-2.5 h-2.5" /> {cheatCounts[attempt.id]}
                       </span>
                     )}
@@ -206,11 +239,21 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false }) => {
                 </div>
 
                 {/* Action */}
-                <button
-                  onClick={() => navigate(`/exam/${attempt.id}/result`)}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-colors opacity-0 group-hover:opacity-100 dark:text-indigo-300 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/40 dark:border-indigo-800/60">
-                  <ExternalLink className="w-3.5 h-3.5" /> {t('attemptHistory.viewResult')}
-                </button>
+                <div className="shrink-0 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => navigate(`/exam/${attempt.id}/result`)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-colors dark:text-indigo-300 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/40 dark:border-indigo-800/60">
+                    <ExternalLink className="w-3.5 h-3.5" /> {t('attemptHistory.viewResult')}
+                  </button>
+                  {canDelete && (
+                    <button
+                      onClick={() => setDeleteTarget(attempt)}
+                      title={t('attemptHistory.deleteButton')}
+                      className="flex items-center justify-center w-8 h-8 rounded-xl text-red-500 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors dark:text-red-400 dark:bg-red-950/40 dark:hover:bg-red-900/40 dark:border-red-800/60">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -235,7 +278,7 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false }) => {
               return (
                 <button key={p} onClick={() => setPage(p)}
                   className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
-                    p === page ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
+                    p === page ? 'bg-indigo-600 text-white shadow-xs' : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
                   }`}>
                   {p + 1}
                 </button>
@@ -249,6 +292,17 @@ const AttemptHistoryTableImpl = ({ studentId, showCheatFlags = false }) => {
           </button>
         </div>
       )}
+
+      {/* ── Confirm Delete 1 Attempt Dialog ── */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t('attemptHistory.deleteConfirmTitle')}
+        message={<>{t('attemptHistory.deleteConfirmPre')} <strong>{deleteTarget?.exams?.title || t('attemptHistory.examFallback')}</strong>. {t('attemptHistory.deleteConfirmPost')}</>}
+        onConfirm={handleDeleteAttempt}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 };
