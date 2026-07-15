@@ -305,8 +305,6 @@ export const ResultPage = () => {
   const [filter, setFilter] = useState('all'); // 'all' | 'correct' | 'wrong' | 'skipped'
   const [certLoading, setCertLoading] = useState(false);
 
-  useEffect(() => { fetchResult(); }, [examId]);
-
   const fetchResult = async () => {
     try {
       const { data: attemptData, error: attemptError } = await supabase
@@ -339,6 +337,8 @@ export const ResultPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => { fetchResult(); }, [examId]);
 
   // jsPDF (~60kB gzipped) is only needed by students who actually click this,
   // so it's dynamically imported here instead of statically at the top of the

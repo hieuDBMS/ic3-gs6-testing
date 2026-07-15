@@ -150,13 +150,6 @@ export const ExamListPage = () => {
     if (savedLevel) setExpandedLevel(isNaN(savedLevel) ? savedLevel : Number(savedLevel));
   }, [allLevels, availableVersions]);
 
-  // Re-fetch purchases when isSelfRegistered becomes true (after profile loads)
-  useEffect(() => {
-    if (isSelfRegistered && user && !purchasesLoaded) fetchPurchases();
-    // Non-selfRegistered users don't need purchases at all
-    if (!isSelfRegistered && user !== null) setPurchasesLoaded(true);
-  }, [isSelfRegistered, user]);
-
   const fetchPurchases = useCallback(async () => {
     try {
       const { data } = await supabase.functions.invoke('manage-purchase', {
@@ -170,6 +163,13 @@ export const ExamListPage = () => {
     } catch { /* non-critical: exam list still renders without purchase status */ }
     finally { setPurchasesLoaded(true); }
   }, []);
+
+  // Re-fetch purchases when isSelfRegistered becomes true (after profile loads)
+  useEffect(() => {
+    if (isSelfRegistered && user && !purchasesLoaded) fetchPurchases();
+    // Non-selfRegistered users don't need purchases at all
+    if (!isSelfRegistered && user !== null) setPurchasesLoaded(true);
+  }, [isSelfRegistered, user, purchasesLoaded, fetchPurchases]);
 
   const handleSelectVersion = useCallback((v) => {
     setSelectedVersion(v);

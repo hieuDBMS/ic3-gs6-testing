@@ -335,6 +335,56 @@ export const MockExamPage = () => {
   const { isFullscreen, toggle: toggleFullscreen } = useExamFullscreen(containerRef);
 
   /* ── Init ── */
+  const initExam = async () => {
+    try {
+      // 1. Fetch attempt
+      const { data: attemptData, error: attemptError } = await supabase
+        .from('exam_attempts')
+        .select('*')
+        .eq('id', attemptId)
+        .eq('user_id', user.id)
+        .eq('is_mock', true)
+        .single();
+
+      if (attemptError || !attemptData) throw new Error('Attempt not found');
+      if (attemptData.status !== 'in_progress') {
+        navigate(`/mock-exam/${attemptId}/result`);
+        return;
+      }
+      setAttempt(attemptData);
+      // Resume Session Pattern (see ExamPage.jsx / docs #22) — restore position,
+      // answers and elapsed time so re-opening the same URL (tab closed mid-exam)
+      // continues exactly where the student left off instead of starting blank.
+      // Merged with the un-throttled localStorage mirror in case the last
+      // server ping never landed (see examDraftStorage.js).
+      const merged = mergeExamDraft(
+        { ...attemptData.draft_answers, currentIndex: attemptData.current_question_index || 0 },
+        readExamDraft(attemptData.id),
+      );
+      setCurrentIndex(merged.currentIndex);
+      setAnswers(merged.answers);
+      setFlagged(merged.flagged);
+      setStartedAt(attemptData.started_at);
+
+      // 2. Fetch questions for this attempt via RPC — server-side excludes
+      // is_correct/is_true entirely (not just at the client-select layer),
+      // verifies the caller owns this attempt, and already returns rows in
+      // the exact mock_question_ids order (no client-side reorder needed).
+      // See supabase/sql/2026-07-14_security_hardening.sql.
+      const { data: qResult, error: qError } = await supabase
+        .rpc('get_mock_exam_questions', { p_attempt_id: attemptId });
+
+      if (qError) throw qError;
+      if (!qResult || qResult.length === 0) throw new Error('No questions generated for mock exam');
+      setQuestions(qResult);
+    } catch (error) {
+      console.error('Failed to init mock exam:', error);
+      navigate('/dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => { initExam(); }, [attemptId]);
 
   /* ── Navigate-away guard (see ExamPage.jsx for why this isn't useBlocker) ──
@@ -474,59 +524,9 @@ export const MockExamPage = () => {
   useEffect(() => {
     if (!attempt?.id) return;
     // Un-throttled local mirror — covers the gap before the throttled server
-    // ping above fires (see mergeExamDraft on resume in initExam below).
+    // ping above fires (see mergeExamDraft on resume in initExam above).
     writeExamDraft(attempt.id, { answers, flagged, currentIndex });
   }, [attempt?.id, currentIndex, answers, flagged]);
-
-  const initExam = async () => {
-    try {
-      // 1. Fetch attempt
-      const { data: attemptData, error: attemptError } = await supabase
-        .from('exam_attempts')
-        .select('*')
-        .eq('id', attemptId)
-        .eq('user_id', user.id)
-        .eq('is_mock', true)
-        .single();
-
-      if (attemptError || !attemptData) throw new Error('Attempt not found');
-      if (attemptData.status !== 'in_progress') {
-        navigate(`/mock-exam/${attemptId}/result`);
-        return;
-      }
-      setAttempt(attemptData);
-      // Resume Session Pattern (see ExamPage.jsx / docs #22) — restore position,
-      // answers and elapsed time so re-opening the same URL (tab closed mid-exam)
-      // continues exactly where the student left off instead of starting blank.
-      // Merged with the un-throttled localStorage mirror in case the last
-      // server ping never landed (see examDraftStorage.js).
-      const merged = mergeExamDraft(
-        { ...attemptData.draft_answers, currentIndex: attemptData.current_question_index || 0 },
-        readExamDraft(attemptData.id),
-      );
-      setCurrentIndex(merged.currentIndex);
-      setAnswers(merged.answers);
-      setFlagged(merged.flagged);
-      setStartedAt(attemptData.started_at);
-
-      // 2. Fetch questions for this attempt via RPC — server-side excludes
-      // is_correct/is_true entirely (not just at the client-select layer),
-      // verifies the caller owns this attempt, and already returns rows in
-      // the exact mock_question_ids order (no client-side reorder needed).
-      // See supabase/sql/2026-07-14_security_hardening.sql.
-      const { data: qResult, error: qError } = await supabase
-        .rpc('get_mock_exam_questions', { p_attempt_id: attemptId });
-
-      if (qError) throw qError;
-      if (!qResult || qResult.length === 0) throw new Error('No questions generated for mock exam');
-      setQuestions(qResult);
-    } catch (error) {
-      console.error('Failed to init mock exam:', error);
-      navigate('/dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAnswerChange = (val) => {
     const currentQ = questions[currentIndex];

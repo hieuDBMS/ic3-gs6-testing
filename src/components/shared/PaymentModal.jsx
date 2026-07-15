@@ -50,8 +50,6 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
   const suffix = useRef(Math.random().toString(36).slice(2, 5).toUpperCase()).current;
 
   /* ── Boot ──────────────────────────────────────────────── */
-  useEffect(() => { init(); }, []);
-
   const init = async () => {
     setPhase('init'); setErrMsg('');
     try {
@@ -94,6 +92,8 @@ export const PaymentModal = ({ exam, onClose, onSuccess }) => {
       setPhase('error');
     }
   };
+
+  useEffect(() => { init(); }, []);
 
   /* ── Realtime – listen to this purchase row ────────────── */
   useEffect(() => {

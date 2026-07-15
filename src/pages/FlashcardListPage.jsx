@@ -104,12 +104,6 @@ export const FlashcardListPage = () => {
   const [paymentExam,     setPaymentExam]     = useState(null);
   const [cancelExam,      setCancelExam]      = useState(null); // { examId, purchaseId, txCode }
 
-  useEffect(() => { fetchData(); }, []);
-  useEffect(() => {
-    if (isSelfRegistered && user && !purchasesLoaded) fetchPurchases();
-    if (!isSelfRegistered && user !== null) setPurchasesLoaded(true);
-  }, [isSelfRegistered, user]);
-
   const fetchData = async () => {
     try {
       const [levelsRes, qRes] = await Promise.all([
@@ -155,6 +149,12 @@ export const FlashcardListPage = () => {
     } catch { /* non-critical: flashcard list still renders without purchase status */ }
     finally { setPurchasesLoaded(true); }
   }, []);
+
+  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    if (isSelfRegistered && user && !purchasesLoaded) fetchPurchases();
+    if (!isSelfRegistered && user !== null) setPurchasesLoaded(true);
+  }, [isSelfRegistered, user, purchasesLoaded, fetchPurchases]);
 
   const cfg            = useMemo(() => getCfg(selectedVersion), [selectedVersion]);
   const filteredLevels = useMemo(

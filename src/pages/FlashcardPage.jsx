@@ -958,6 +958,18 @@ export const FlashcardPage = () => {
   const cardKey = useRef(0);
   const [shuffledPerCard, setShuffledPerCard] = useState([]);
 
+  const computePerCard = qs => qs.map(q => ({
+    answers:     shuffleArr([...(q.answers||[]).sort((a,b) => a.order_index - b.order_index)]),
+    dropOptions: shuffleArr([...new Set((q.dragdrop_pairs||[]).map(p => p.drop_content))]),
+  }));
+
+  const buildDeck = (questions, shuffled) => {
+    const d = shuffled ? shuffleArr(questions) : [...questions];
+    setDeck(d); setShuffledPerCard(computePerCard(d));
+    setCurrentIdx(0); setResults([]); setSkippedQueue([]);
+    setPhase('main'); setShowSummary(false); cardKey.current += 1;
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -999,11 +1011,6 @@ export const FlashcardPage = () => {
     })();
   }, [examId]);
 
-  const computePerCard = qs => qs.map(q => ({
-    answers:     shuffleArr([...(q.answers||[]).sort((a,b) => a.order_index - b.order_index)]),
-    dropOptions: shuffleArr([...new Set((q.dragdrop_pairs||[]).map(p => p.drop_content))]),
-  }));
-
   // Persist progress every time it changes so a refresh mid-session can
   // recover instead of silently losing the student's study progress.
   useEffect(() => {
@@ -1023,13 +1030,6 @@ export const FlashcardPage = () => {
   useEffect(() => {
     if (showSummary && examId) clearFlashcardDraft(examId);
   }, [showSummary, examId]);
-
-  const buildDeck = (questions, shuffled) => {
-    const d = shuffled ? shuffleArr(questions) : [...questions];
-    setDeck(d); setShuffledPerCard(computePerCard(d));
-    setCurrentIdx(0); setResults([]); setSkippedQueue([]);
-    setPhase('main'); setShowSummary(false); cardKey.current += 1;
-  };
 
   const startReviewPhase = skipped => {
     const d = isShuffled ? shuffleArr(skipped) : skipped;

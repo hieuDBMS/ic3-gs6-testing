@@ -454,6 +454,68 @@ export const ExamPage = () => {
   }, [isSelfRegistered, user, examId]);
 
   /* ── Init ── */
+  const initExam = async () => {
+    try {
+      const [examResult, qResult] = await Promise.all([
+        supabase
+          .from('exams')
+          .select('*, exam_levels(label)')
+          .eq('id', examId)
+          .single(),
+        // RPC instead of a direct nested SELECT: server-side excludes
+        // is_correct/is_true entirely (not just at the client-select layer)
+        // and re-checks purchase access for self-registered accounts — see
+        // supabase/sql/2026-07-14_security_hardening.sql for why.
+        supabase.rpc('get_exam_questions_for_attempt', { p_exam_id: examId }),
+      ]);
+
+      if (examResult.error) throw examResult.error;
+      if (qResult.error)    throw qResult.error;
+
+      setExam(examResult.data);
+      setQuestions(qResult.data || []);
+
+      // Check for a session left behind (tab closed / navigated away without
+      // submitting) before creating a new attempt — otherwise every re-entry
+      // piles up another `in_progress` row and duplicates the student's card
+      // on LiveMonitorPage.
+      const { data: existing, error: existingError } = await supabase
+        .from('exam_attempts')
+        .select('id, started_at, current_question_index, draft_answers')
+        .eq('user_id', user.id)
+        .eq('exam_id', examId)
+        .eq('status', 'in_progress')
+        .eq('is_mock', false)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (existingError) throw existingError;
+
+      if (existing) {
+        setExistingAttempt(existing);
+      } else {
+        const { data: attempt, error: attemptError } = await supabase
+          .from('exam_attempts')
+          .insert({
+            user_id:         user.id,
+            exam_id:         examId,
+            total_questions: qResult.data?.length || 0,
+            status:          'in_progress',
+          })
+          .select('id, started_at')
+          .single();
+        if (attemptError) throw attemptError;
+        setAttemptId(attempt.id);
+        setStartedAt(attempt.started_at);
+      }
+    } catch (error) {
+      console.error('Failed to init exam:', error);
+      navigate('/exam');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => { initExam(); }, [examId]);
 
   /* ── Navigate-away guard ──
@@ -659,68 +721,6 @@ export const ExamPage = () => {
     }
     wasFullscreenRef.current = isFullscreen;
   }, [isFullscreen, logCheatEvent]);
-
-  const initExam = async () => {
-    try {
-      const [examResult, qResult] = await Promise.all([
-        supabase
-          .from('exams')
-          .select('*, exam_levels(label)')
-          .eq('id', examId)
-          .single(),
-        // RPC instead of a direct nested SELECT: server-side excludes
-        // is_correct/is_true entirely (not just at the client-select layer)
-        // and re-checks purchase access for self-registered accounts — see
-        // supabase/sql/2026-07-14_security_hardening.sql for why.
-        supabase.rpc('get_exam_questions_for_attempt', { p_exam_id: examId }),
-      ]);
-
-      if (examResult.error) throw examResult.error;
-      if (qResult.error)    throw qResult.error;
-
-      setExam(examResult.data);
-      setQuestions(qResult.data || []);
-
-      // Check for a session left behind (tab closed / navigated away without
-      // submitting) before creating a new attempt — otherwise every re-entry
-      // piles up another `in_progress` row and duplicates the student's card
-      // on LiveMonitorPage.
-      const { data: existing, error: existingError } = await supabase
-        .from('exam_attempts')
-        .select('id, started_at, current_question_index, draft_answers')
-        .eq('user_id', user.id)
-        .eq('exam_id', examId)
-        .eq('status', 'in_progress')
-        .eq('is_mock', false)
-        .order('started_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (existingError) throw existingError;
-
-      if (existing) {
-        setExistingAttempt(existing);
-      } else {
-        const { data: attempt, error: attemptError } = await supabase
-          .from('exam_attempts')
-          .insert({
-            user_id:         user.id,
-            exam_id:         examId,
-            total_questions: qResult.data?.length || 0,
-            status:          'in_progress',
-          })
-          .select('id, started_at')
-          .single();
-        if (attemptError) throw attemptError;
-        setAttemptId(attempt.id);
-        setStartedAt(attempt.started_at);
-      }
-    } catch (error) {
-      console.error('Failed to init exam:', error);
-      navigate('/exam');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleResumeAttempt = useCallback(() => {
     // Merge in a locally-cached draft (if any) on top of the server draft —

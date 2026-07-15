@@ -20,10 +20,6 @@ export const StudentProgressPage = () => {
   const [historyKey, setHistoryKey] = useState(0);
   const { toasts, showToast, dismissToast } = useToast();
 
-  useEffect(() => {
-    fetchStudent();
-  }, [studentId]);
-
   const fetchStudent = async () => {
     try {
       const { data, error } = await supabase
@@ -40,6 +36,10 @@ export const StudentProgressPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchStudent();
+  }, [studentId]);
 
   const handleClearHistory = async () => {
     setClearing(true);

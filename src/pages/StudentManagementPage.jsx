@@ -194,11 +194,6 @@ export const StudentManagementPage = () => {
     pageSize: PAGE_SIZE,
   });
 
-  useEffect(() => { fetchSchools(); }, []);
-  useEffect(() => {
-    if (fetchError) addToast(t('studentManagement.loadDataError', { message: fetchError.message }), 'error');
-  }, [fetchError]);
-
   const fetchSchools = async () => {
     try {
       const { data: refreshed } = await supabase.auth.refreshSession();
@@ -208,6 +203,11 @@ export const StudentManagementPage = () => {
       if (data?.schools) setSchools(data.schools);
     } catch { /* non-critical: school filter list stays empty */ }
   };
+
+  useEffect(() => { fetchSchools(); }, []);
+  useEffect(() => {
+    if (fetchError) addToast(t('studentManagement.loadDataError', { message: fetchError.message }), 'error');
+  }, [fetchError]);
 
   const handleCreateSchool = async (e) => {
     e.preventDefault(); setSchoolSaving(true); setSchoolError('');
