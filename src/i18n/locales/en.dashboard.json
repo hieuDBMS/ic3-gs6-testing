@@ -14,6 +14,10 @@
     "statAvgScoreFull": "Average score",
     "statPassRate": "Pass rate",
     "statPassThreshold": "Pass threshold ≥ 70%",
+    "statStreak": "Streak",
+    "statStreakRecord": "Record: {{count}} days",
+    "streakAtRiskBanner": "Your {{count}}-day streak will reset if you don't practice today!",
+    "leaderboardLink": "Leaderboard",
     "studentOverviewTitle": "Student overview",
     "manageLink": "Manage",
     "historyPersonalTitle": "Attempt history (Personal)",
@@ -153,5 +157,23 @@
       "truefalse": "True / False",
       "hotspot": "Image hotspot"
     }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "description": "Compete on practice effort — not on scores. Fully opt-in.",
+    "optInLabel": "Show me on the leaderboard",
+    "optInHint": "Only your name + streak/attempts are shown to classmates/schoolmates. Your score is never shown.",
+    "optInOnToast": "You're now visible on the leaderboard!",
+    "optInOffToast": "You've been hidden from the leaderboard.",
+    "scopeClass": "My class",
+    "scopeSchool": "My school",
+    "scopeGlobal": "Global",
+    "metricStreak": "Streak",
+    "metricAttempts": "Exams taken",
+    "youLabel": "You",
+    "emptyTitle": "No one on the leaderboard yet",
+    "emptyDescription": "Be the first to opt in and start practicing!",
+    "noClassAssigned": "You haven't been assigned a class/school yet — ask your teacher to update it.",
+    "yourRankBar": "You're ranked #{{rank}} out of {{total}}"
   }
 }

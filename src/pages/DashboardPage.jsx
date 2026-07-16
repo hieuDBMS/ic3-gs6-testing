@@ -7,8 +7,9 @@ import { AttemptHistoryTable } from '../components/dashboard/AttemptHistoryTable
 import { StudentOverviewTable } from '../components/dashboard/StudentOverviewTable';
 import { supabase } from '../lib/supabase';
 import { useExamAttempts } from '../hooks/useExamAttempts';
-import { BookOpen, TrendingUp, CheckCircle, PlayCircle, Users, ChevronRight, Eraser } from 'lucide-react';
+import { BookOpen, TrendingUp, CheckCircle, PlayCircle, Users, ChevronRight, Eraser, Flame, Trophy } from 'lucide-react';
 import { getInitials } from '../utils/avatar';
+import { getEffectiveStreak, isStreakAtRisk } from '../utils/streak';
 import { Skeleton } from '../components/shared/Skeleton';
 import { ConfirmDialog } from '../components/shared/ConfirmDialog';
 import { Toast, useToast } from '../components/shared/Toast';
@@ -205,24 +206,39 @@ export const DashboardPage = () => {
             />
           </div>
         ) : !isTeacher && studentStats ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard
-              icon={<BookOpen className="w-6 h-6 text-white" />}
-              label={t('dashboard.statCompleted')} value={studentStats.total}
-              color="from-indigo-500 to-violet-600"
-            />
-            <StatCard
-              icon={<TrendingUp className="w-6 h-6 text-white" />}
-              label={t('dashboard.statAvgScoreFull')} value={`${studentStats.avgScore}%`}
-              color="from-amber-500 to-orange-600"
-            />
-            <StatCard
-              icon={<CheckCircle className="w-6 h-6 text-white" />}
-              label={t('dashboard.statPassRate')} value={`${studentStats.passRate}%`}
-              sub={t('dashboard.statPassThreshold')}
-              color="from-emerald-500 to-teal-600"
-            />
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <StatCard
+                icon={<BookOpen className="w-6 h-6 text-white" />}
+                label={t('dashboard.statCompleted')} value={studentStats.total}
+                color="from-indigo-500 to-violet-600"
+              />
+              <StatCard
+                icon={<TrendingUp className="w-6 h-6 text-white" />}
+                label={t('dashboard.statAvgScoreFull')} value={`${studentStats.avgScore}%`}
+                color="from-amber-500 to-orange-600"
+              />
+              <StatCard
+                icon={<CheckCircle className="w-6 h-6 text-white" />}
+                label={t('dashboard.statPassRate')} value={`${studentStats.passRate}%`}
+                sub={t('dashboard.statPassThreshold')}
+                color="from-emerald-500 to-teal-600"
+              />
+              <StatCard
+                icon={<Flame className="w-6 h-6 text-white" />}
+                label={t('dashboard.statStreak')}
+                value={getEffectiveStreak(profile.last_streak_date, profile.current_streak)}
+                sub={t('dashboard.statStreakRecord', { count: profile.longest_streak || 0 })}
+                color="from-rose-500 to-orange-500"
+              />
+            </div>
+            {isStreakAtRisk(profile.last_streak_date, profile.current_streak) && (
+              <div className="flex items-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700 dark:border-orange-900/50 dark:bg-orange-950/30 dark:text-orange-400">
+                <Flame className="w-4 h-4 shrink-0" />
+                {t('dashboard.streakAtRiskBanner', { count: profile.current_streak })}
+              </div>
+            )}
+          </>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Skeleton variant="card" count={3} className="h-24 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700" />
@@ -266,6 +282,12 @@ export const DashboardPage = () => {
                   <Eraser className="w-3.5 h-3.5" /> {t('dashboard.clearMyHistoryButton')}
                 </button>
               )}
+              <Link
+                to="/leaderboard"
+                className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
+              >
+                <Trophy className="w-3.5 h-3.5" /> {t('dashboard.leaderboardLink')}
+              </Link>
               <Link
                 to="/exam"
                 className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"

@@ -36,6 +36,7 @@ const QuestionImportPage    = lazy(() => import('./pages/QuestionImportPage').th
 const QuestionStatsPage     = lazy(() => import('./pages/QuestionStatsPage').then(m => ({ default: m.QuestionStatsPage })));
 const LiveMonitorPage       = lazy(() => import('./pages/LiveMonitorPage').then(m => ({ default: m.LiveMonitorPage })));
 const AnalyticsPage         = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
+const LeaderboardPage       = lazy(() => import('./pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })));
 
 /* ─── Page loading skeleton ──────────────────────────────────────────────── */
 const PageFallback = () => (
@@ -94,6 +95,7 @@ function App() {
                     <Route path="/mock-exam/:attemptId/result" element={<MockResultPage />} />
                     <Route path="/flashcard"                 element={<FlashcardListPage />} />
                     <Route path="/flashcard/:examId"         element={<FlashcardPage />} />
+                    <Route path="/leaderboard"               element={<LeaderboardPage />} />
                     <Route path="/payments"                  element={<PaymentHistoryPage />} />
                   </Route>
                 </Route>

@@ -14,6 +14,10 @@
     "statAvgScoreFull": "Điểm trung bình",
     "statPassRate": "Tỉ lệ đạt",
     "statPassThreshold": "Ngưỡng đạt ≥ 70%",
+    "statStreak": "Chuỗi ngày",
+    "statStreakRecord": "Kỷ lục: {{count}} ngày",
+    "streakAtRiskBanner": "Chuỗi {{count}} ngày sẽ mất nếu hôm nay bạn không luyện tập!",
+    "leaderboardLink": "Bảng xếp hạng",
     "studentOverviewTitle": "Tổng quan học sinh",
     "manageLink": "Quản lý",
     "historyPersonalTitle": "Lịch sử làm bài (Cá nhân)",
@@ -153,5 +157,23 @@
       "truefalse": "Đúng / Sai",
       "hotspot": "Chọn vùng ảnh"
     }
+  },
+  "leaderboard": {
+    "title": "Bảng xếp hạng",
+    "description": "Thi đua chăm chỉ luyện tập — không xếp theo điểm số. Tự nguyện tham gia.",
+    "optInLabel": "Hiển thị tôi trên bảng xếp hạng",
+    "optInHint": "Chỉ hiện tên + chuỗi ngày/số bài đã làm cho bạn cùng lớp/trường xem. Không hiện điểm số.",
+    "optInOnToast": "Đã bật hiển thị trên bảng xếp hạng!",
+    "optInOffToast": "Đã ẩn khỏi bảng xếp hạng.",
+    "scopeClass": "Lớp của tôi",
+    "scopeSchool": "Trường của tôi",
+    "scopeGlobal": "Toàn hệ thống",
+    "metricStreak": "Chuỗi ngày",
+    "metricAttempts": "Số bài đã làm",
+    "youLabel": "Bạn",
+    "emptyTitle": "Chưa có ai trong bảng xếp hạng",
+    "emptyDescription": "Hãy là người đầu tiên bật hiển thị và bắt đầu luyện tập!",
+    "noClassAssigned": "Bạn chưa được gán lớp/trường — hãy liên hệ giáo viên để cập nhật thông tin.",
+    "yourRankBar": "Bạn đang xếp hạng #{{rank}} trên tổng số {{total}}"
   }
 }

@@ -9,7 +9,7 @@ import {
   Settings2, Layers, Menu, X, Brain, CreditCard,
   ChevronDown, Sword, ListChecks, GraduationCap,
   Banknote, ChevronRight, PlayCircle,
-  TrendingDown, Activity, BarChart3, Sun, Moon, Globe,
+  TrendingDown, Activity, BarChart3, Sun, Moon, Globe, Trophy,
 } from 'lucide-react';
 
 /* ── Avatar helpers ── */
@@ -224,6 +224,7 @@ export const Navbar = () => {
               <NavLink to="/exam"      icon={<BookOpen className="w-4 h-4" />}>{t('nav.practice')}</NavLink>
               <NavLink to="/mock-exam" icon={<PlayCircle className="w-4 h-4" />}>{t('nav.mockExam')}</NavLink>
               <NavLink to="/flashcard" icon={<Brain className="w-4 h-4" />}>{t('nav.flashcard')}</NavLink>
+              <NavLink to="/leaderboard" icon={<Trophy className="w-4 h-4" />}>{t('nav.leaderboard')}</NavLink>
               {!isAdminCreated && <NavLink to="/payments"  icon={<CreditCard className="w-4 h-4" />}>{t('nav.payments')}</NavLink>}
               {isTeacher && <TeacherDropdown />}
             </div>
@@ -311,6 +312,7 @@ export const Navbar = () => {
                 { to: '/exam',      icon: <BookOpen className="w-4 h-4" />,        label: t('nav.practice') },
                 { to: '/mock-exam', icon: <PlayCircle className="w-4 h-4" />,      label: t('nav.mockExam') },
                 { to: '/flashcard', icon: <Brain className="w-4 h-4" />,           label: t('nav.flashcard') },
+                { to: '/leaderboard', icon: <Trophy className="w-4 h-4" />,        label: t('nav.leaderboard') },
                 !isAdminCreated && { to: '/payments',  icon: <CreditCard className="w-4 h-4" />,      label: t('nav.payments') },
               ].filter(Boolean).map(item => {
                 const active = pathname === item.to || pathname.startsWith(item.to + '/');
