@@ -322,6 +322,7 @@ export const MockExamPage = () => {
   const [showMobileNav,     setShowMobileNav]     = useState(false);
   const [showNavigateAway,  setShowNavigateAway]  = useState(false);
   const [startedAt,         setStartedAt]         = useState(null);
+  const [cheatToast,        setCheatToast]        = useState(null);
 
   const pendingReloadRef  = useRef(false);
   const isSubmittingRef   = useRef(false);
@@ -332,6 +333,9 @@ export const MockExamPage = () => {
   const pendingNavElRef   = useRef(null);
   const bypassNavGuardRef = useRef(false);
   const lastPingRef       = useRef(0);
+  const lastCheatLogRef   = useRef(0);
+  const wasFullscreenRef  = useRef(false);
+  const manualExitRef     = useRef(false);
   const { isFullscreen, toggle: toggleFullscreen } = useExamFullscreen(containerRef);
 
   /* ── Init ── */
@@ -528,6 +532,47 @@ export const MockExamPage = () => {
     writeExamDraft(attempt.id, { answers, flagged, currentIndex });
   }, [attempt?.id, currentIndex, answers, flagged]);
 
+  /* ── Light anti-cheat: log + warn on tab-switch / fullscreen-exit ──
+     Mirrors ExamPage.jsx. Passive logging + an immediate toast, per product
+     decision — never blocks or auto-submits the exam. exam_cheat_events'
+     attempt_id FK covers mock attempts too (same exam_attempts table),
+     so no schema change is needed. */
+  const logCheatEvent = useCallback((eventType) => {
+    if (!attempt?.id || isSubmittingRef.current) return;
+    const now = Date.now();
+    if (now - lastCheatLogRef.current < 2000) return; // de-dupe rapid double-fires
+    lastCheatLogRef.current = now;
+
+    supabase.from('exam_cheat_events').insert({
+      attempt_id: attempt.id,
+      user_id: user.id,
+      event_type: eventType,
+    }).then(() => {});
+
+    setCheatToast(t('mockExam.cheatWarning'));
+    setTimeout(() => setCheatToast(null), 4000);
+  }, [attempt?.id, user, t]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) logCheatEvent('tab_switch');
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [logCheatEvent]);
+
+  useEffect(() => {
+    // Only fires on the *exit* transition — mount starts non-fullscreen,
+    // so this correctly ignores the initial state. Skips logging when the
+    // student used the exam's own Minimize button (manualExitRef) — only
+    // unexpected exits (Esc key, window manager, etc.) count as a flag.
+    if (wasFullscreenRef.current && !isFullscreen) {
+      if (manualExitRef.current) manualExitRef.current = false;
+      else logCheatEvent('fullscreen_exit');
+    }
+    wasFullscreenRef.current = isFullscreen;
+  }, [isFullscreen, logCheatEvent]);
+
   const handleAnswerChange = (val) => {
     const currentQ = questions[currentIndex];
     setAnswers(prev => {
@@ -647,6 +692,14 @@ export const MockExamPage = () => {
         willChange: 'contents',
       }}
     >
+      {/* ═══ Anti-cheat warning toast ═══ */}
+      {cheatToast && (
+        <div className="fixed top-4 right-4 z-60 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold bg-amber-500 text-white max-w-sm">
+          <ShieldAlert className="w-5 h-5 shrink-0" />
+          {cheatToast}
+        </div>
+      )}
+
       {showRefreshWarn && (
         <RefreshWarningModal
           onStay={() => setShowRefreshWarn(false)}
@@ -789,7 +842,7 @@ export const MockExamPage = () => {
 
           {/* Fullscreen toggle */}
           <button
-            onClick={toggleFullscreen}
+            onClick={() => { if (isFullscreen) manualExitRef.current = true; toggleFullscreen(); }}
             title={isFullscreen ? t('mockExam.fullscreen.exit') : t('mockExam.fullscreen.enter')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
               isFullscreen

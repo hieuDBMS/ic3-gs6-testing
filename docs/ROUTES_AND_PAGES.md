@@ -16,6 +16,7 @@
 /mock-exam/:attemptId/result → MockResultPage
 /flashcard           → FlashcardListPage
 /flashcard/:examId   → FlashcardPage
+/leaderboard         → LeaderboardPage
 /payments            → PaymentHistoryPage
 /teacher/payment-settings → PaymentSettingsPage
 --- ProtectedRoute (teacher only) ---
@@ -67,7 +68,8 @@ Layout: Tất cả protected routes đều wrap trong `<Layout>` (Navbar + main 
 
 ### DashboardPage (`/dashboard`)
 - File: `src/pages/DashboardPage.jsx`
-- **Student**: StatCard (tổng bài, điểm TB, tỉ lệ pass) + `AttemptHistoryTable`
+- **Student**: StatCard (tổng bài, điểm TB, tỉ lệ pass, **streak luyện tập** — thêm 2026-07-15) + `AttemptHistoryTable`
+- **Streak card** (student, thêm 2026-07-15): hiển thị `getEffectiveStreak(profile.last_streak_date, profile.current_streak)` (KHÔNG dùng thẳng `profile.current_streak` — cột thô chỉ cập nhật lúc nộp bài, cần tính lại "đã gãy chuỗi chưa" tại thời điểm đọc, xem `utils/streak.js`) + sub-label kỷ lục `longest_streak`. Banner cảnh báo "sắp mất streak" (`isStreakAtRisk`) hiện khi còn streak > 0 nhưng chưa làm bài hôm nay
 - **Teacher**: Thêm `StudentOverviewTable` + link /teacher/students
 - Student stats: `useExamAttempts(userId, ...)` (scoped theo user, có filter) — fetch trực tiếp `exam_attempts`, ổn vì đã filter theo 1 user.
 - **Teacher stats** (`useTeacherStats`, dòng ~56): gọi RPC `get_teacher_dashboard_stats()` — aggregate `COUNT`/`AVG` server-side, trả về 1 dòng. **Trước 2026-07-13** gọi `useExamAttempts(null, ...)` (userId=null → không filter user) fetch TOÀN BỘ `exam_attempts` platform-wide mỗi lần trang Dashboard (landing page sau login) load — đã sửa vì đây là trang tải thường xuyên nhất trong app.
@@ -83,7 +85,7 @@ Layout: Tất cả protected routes đều wrap trong `<Layout>` (Navbar + main 
 - VERSION_STYLES: màu cho mỗi version (GS6=primary, GS7=violet, GS8=accent)
 
 ### ExamPage (`/exam/:examId`)
-- File: `src/pages/ExamPage.jsx` (1089 lines — file lớn nhất trong pages)
+- File: `src/pages/ExamPage.jsx` (~1200 lines)
 - **Luồng**: initExam → fetch exam + questions → **check attempt `in_progress` cũ** (xem "Resume session" bên dưới) → insert attempt (nếu không có) → render
 - **State chính**: exam, questions, currentIndex, answers ({}), flagged ([]), attemptId, existingAttempt
 - **Keyboard shortcuts**: ArrowLeft/Right/W/A/S/D để navigate, F5/Ctrl+R → RefreshWarningModal
@@ -126,7 +128,7 @@ questions.select(`
 - dragdrop: `p_dd_answers[q.id] = { pairId: dropContent }`
 
 ### ResultPage (`/exam/:examId/result`)
-- File: `src/pages/ResultPage.jsx` (539 lines)
+- File: `src/pages/ResultPage.jsx` (~555 lines)
 - **Lưu ý**: URL param là `examId` nhưng thực ra là `attemptId`!
 - Fetch: `attempt_answers` join `questions, answers, dragdrop_pairs, truefalse_statements, hotspot_regions`
 - `ScoreRing`: SVG circle animation cho score
@@ -135,7 +137,7 @@ questions.select(`
 - Nút "Làm lại": navigate `/exam/${attempt.exam_id}`
 
 ### QuestionsPage (`/questions`) — Teacher only
-- File: `src/pages/QuestionsPage.jsx` (751 lines)
+- File: `src/pages/QuestionsPage.jsx` (~705 lines)
 - Pagination: 20/trang
 - Filter: version, level_id, exam_type, exam_id, question_type, search, order_index range
 - Sort options: created_at asc/desc, order_index asc/desc, content asc/desc
@@ -143,7 +145,7 @@ questions.select(`
 - Navigate đến `/questions/new` hoặc `/questions/:id/edit`
 
 ### QuestionFormPage (`/questions/new` và `/questions/:id/edit`) — Teacher only
-- File: `src/pages/QuestionFormPage.jsx` (602 lines)
+- File: `src/pages/QuestionFormPage.jsx` (~660 lines)
 - Form: level → exam_type → exam → question_type → content → answers/pairs/statements/regions
 - Q_TYPES: choice, multi, dragdrop, truefalse, hotspot
 - Components: `ImageUploader`, `AnswerEditor`, `HotspotEditor`, `RichTextEditor`
@@ -157,7 +159,7 @@ questions.select(`
 - `ExcelJS` kéo theo **dynamic `import()`** bên trong `parseWorkbookFile()`/`buildTemplateWorkbook()` (thêm 2026-07-13), không import tĩnh ở đầu `questionImport.js` nữa — thư viện nặng ~940kB minified (~271kB gzip), import tĩnh trước đây khiến chunk trang này nặng nhất toàn app (958kB) dù phần lớn thời gian trên trang chỉ để xem hướng dẫn/chọn loại sheet trước khi thực sự tải file lên. Sau khi tách: chunk trang còn ~20kB, ExcelJS chỉ tải khi bấm "Tải template" hoặc chọn file `.xlsx`
 
 ### StudentManagementPage (`/teacher/students`) — Teacher only
-- File: `src/pages/StudentManagementPage.jsx` (948 lines — file lớn nhất)
+- File: `src/pages/StudentManagementPage.jsx` (~965 lines)
 - Pagination: 20/trang
 - CRUD student: tạo, sửa tên, reset password, xóa
 - Gọi Edge Function `manage-student`
@@ -168,7 +170,7 @@ questions.select(`
 - **Xoá lịch sử làm bài** (thêm 2026-07-13, không đụng tài khoản): mỗi dòng có nút Eraser riêng (action `clear-attempts`, xoá `exam_attempts` của 1 student) + nút "Xoá TOÀN BỘ lịch sử làm bài" trên header (action `clear-all-attempts`, xoá `exam_attempts` toàn hệ thống — student/teacher đều bị xoá lịch sử, nhưng `profiles`/`purchases`/`payment_history` giữ nguyên). Cả 2 qua Edge Function `manage-student`, có `ConfirmDialog` riêng, tách biệt hoàn toàn với action `delete` (xoá tài khoản)
 
 ### ExamStructurePage (`/teacher/exam-structure`) — Teacher only
-- File: `src/pages/ExamStructurePage.jsx` (573 lines)
+- File: `src/pages/ExamStructurePage.jsx` (~540 lines)
 - Quản lý `exam_levels` và `exams` (CRUD)
 - Thêm Version mới → tự tạo Level 1
 - Thêm Level vào Version
@@ -207,8 +209,8 @@ questions.select(`
 - 50 phút, mức đạt 700/1000 (hiển thị tĩnh trong UI — logic pass thật nằm ở `MockResultPage`)
 
 ### MockExamPage (`/mock-exam/:attemptId`)
-- File: `src/pages/MockExamPage.jsx` (801 lines)
-- Tương tự ExamPage nhưng KHÔNG có anti-cheat logging (không log `exam_cheat_events`)
+- File: `src/pages/MockExamPage.jsx` (~945 lines)
+- Tương tự ExamPage, **có anti-cheat logging giống hệt** (`tab_switch`/`fullscreen_exit` → `exam_cheat_events`, toast cảnh báo `mockExam.cheatWarning`) — thêm 2026-07-16, trước đó trang này không log
 - Dùng chung: Timer, QuestionNavigator, QuestionRenderer
 - Load câu hỏi theo `exam_attempts.mock_question_ids` (đã chốt sẵn lúc `create_mock_exam_attempt`), không phải theo 1 exam cụ thể
 - Submit: gọi RPC `submit_mock_exam_attempt` (cùng chữ ký `submit_exam_attempt`) → trả về thêm `score_1000` → navigate `/mock-exam/${attemptId}/result`
@@ -225,11 +227,19 @@ questions.select(`
 - Chọn bài thi để học flashcard
 
 ### FlashcardPage (`/flashcard/:examId`)
-- File: `src/pages/FlashcardPage.jsx` (1127 lines — file lớn nhất)
+- File: `src/pages/FlashcardPage.jsx` (~1225 lines — file lớn nhất trong pages)
 - Chế độ học flashcard: hiển thị câu hỏi → chọn đáp án → reveal
 - Hỗ trợ shuffle (Fisher-Yates)
 - `scoreAnswer()`: chấm điểm client-side cho tất cả question types
 - Keyboard shortcuts: Space=flip, Arrow keys navigate
+
+### LeaderboardPage (`/leaderboard`) — thêm 2026-07-15/16, chưa có trong docs trước đây
+- File: `src/pages/LeaderboardPage.jsx` (189 lines)
+- Bảng xếp hạng **opt-in** theo streak luyện tập hoặc số bài đã hoàn thành, phạm vi lớp / trường / toàn hệ thống (chip chọn scope, disable nếu profile không có `class_name`/`school`)
+- Student thấy toggle "Hiện tôi trên bảng xếp hạng" (RPC `set_leaderboard_opt_in`) — mặc định TẮT (`profiles.leaderboard_opt_in=false`). Teacher không thấy toggle này (không tham gia bảng xếp hạng)
+- Data: RPC `get_leaderboard` (top N, mặc định 50) + `get_my_leaderboard_rank` (hạng của chính user kể cả ngoài top hiển thị, chỉ query khi đã opt-in) — cả 2 qua `useLeaderboard.js` (TanStack Query), xem COMPONENTS.md → Custom Hooks
+- Cố tình **không** hiển thị điểm trung bình — chỉ streak/số bài, tránh áp lực điểm số
+- Xem DATABASE_SCHEMA.md → `profiles` (cột `current_streak`/`longest_streak`/`last_streak_date`/`leaderboard_opt_in`) và RPC section cho chi tiết SQL (`supabase/sql/2026-07-15_leaderboard_streak.sql`)
 
 ### PaymentSettingsPage (`/teacher/payment-settings`) — Teacher only
 - File: `src/pages/PaymentSettingsPage.jsx`

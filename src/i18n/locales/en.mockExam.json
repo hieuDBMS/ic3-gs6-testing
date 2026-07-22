@@ -55,6 +55,7 @@
       "enter": "Fullscreen",
       "exitShort": "Minimize"
     },
+    "cheatWarning": "We detected that you left the mock exam — this has been logged.",
     "nav": {
       "prevTitle": "Previous question (←)",
       "prev": "Previous",

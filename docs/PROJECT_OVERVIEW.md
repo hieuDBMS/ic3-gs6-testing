@@ -39,7 +39,7 @@ src/
 │   └── ThemeContext.jsx     # Dark/light mode toggle
 ├── lib/
 │   └── supabase.js          # Supabase client singleton
-├── pages/                   # 22 page components (lazy-loaded)
+├── pages/                   # 24 page components (lazy-loaded)
 ├── components/
 │   ├── shared/              # Navbar, ProtectedRoute, ImageLightbox, PaymentModal
 │   ├── exam/                # Timer, QuestionNavigator, QuestionRenderer
@@ -100,7 +100,7 @@ File `.env` — KHÔNG commit lên Git. Xem `.env.example` cho danh sách đầy
 
 ## Supabase RPC functions
 
-11 RPC functions (`SECURITY DEFINER` trừ `reorder_questions_in_exam`, `is_teacher`) — chi tiết đầy đủ chữ ký ở [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md#rpc-functions-public-schema):
+14 RPC functions (`SECURITY DEFINER` trừ `reorder_questions_in_exam`, `is_teacher`) — chi tiết đầy đủ chữ ký ở [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md#rpc-functions-public-schema):
 
 | RPC | Mô tả |
 |---|---|
@@ -113,6 +113,9 @@ File `.env` — KHÔNG commit lên Git. Xem `.env.example` cho danh sách đầy
 | `get_exam_group_breakdown` | Breakdown điểm TB theo lớp/trường/level (teacher-only) |
 | `get_student_attempt_stats` | Aggregate `totalAttempts`/`avgScore`/`lastActive` theo học sinh (teacher-only) — dùng bởi `useStudents.js` thay vì fetch raw `exam_attempts`. Thêm 2026-07-13, xem `supabase/sql/2026-07-13_concurrency_indexes.sql` |
 | `get_teacher_dashboard_stats` | Aggregate `total_attempts`/`avg_score` toàn hệ thống, 1 dòng (teacher-only) — dùng bởi `DashboardPage.jsx`'s `useTeacherStats`. Thêm 2026-07-13, cùng file SQL trên |
+| `set_leaderboard_opt_in` | Student tự bật/tắt hiển thị trên bảng xếp hạng (`profiles.leaderboard_opt_in`). Thêm 2026-07-15 |
+| `get_leaderboard` | Top N bảng xếp hạng streak/số bài theo lớp/trường/toàn hệ thống (opt-in only, không teacher-gated). Thêm 2026-07-15 |
+| `get_my_leaderboard_rank` | Hạng của chính người gọi dù ngoài top hiển thị. Thêm 2026-07-15 |
 | `reorder_questions_in_exam` | Chuẩn hoá lại `order_index` sau CRUD câu hỏi |
 | `is_teacher` | Helper nội bộ cho RLS policies |
 

@@ -304,7 +304,7 @@ return () => { supabase.removeChannel(channel); };
 
 ---
 
-## 16. Anti-Cheat Pattern (ExamPage only — không có trong MockExamPage)
+## 16. Anti-Cheat Pattern (ExamPage VÀ MockExamPage — từ 2026-07-16)
 
 ```js
 // De-dupe double-fires với 2s throttle
@@ -321,6 +321,8 @@ const logCheatEvent = useCallback((eventType) => {
 // Fullscreen exit → 'fullscreen_exit' (chỉ unexpected — không log khi dùng Minimize button)
 // manualExitRef.current = true khi click Minimize → ngăn log
 ```
+
+**MockExamPage** (`src/pages/MockExamPage.jsx`, thêm 2026-07-16 — trước đó KHÔNG log): copy y hệt logic trên (cùng throttle 2s, cùng 2 trigger, cùng cơ chế `manualExitRef` cho Minimize), chỉ khác toast dùng key `mockExam.cheatWarning` thay vì `exam.cheatWarning`. `exam_cheat_events.attempt_id` là FK chung của `exam_attempts` (cả 2 loại bài thi), không cần đổi schema.
 
 ---
 

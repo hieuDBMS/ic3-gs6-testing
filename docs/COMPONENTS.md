@@ -84,6 +84,17 @@ const { students, totalCount, loading, error, refetch } = useStudents({
 Dùng tại: `StudentManagementPage`, `StudentOverviewTable`
 - Attempt stats (`totalAttempts`/`avgScore`/`lastActiveAt`) fetch qua RPC `get_student_attempt_stats()` (aggregate server-side, 1 dòng/học sinh có attempt) — **không** fetch raw `exam_attempts` nữa (trước 2026-07-13 fetch toàn bộ bảng, phình vô hạn theo lịch sử làm bài tích luỹ, không liên quan số học sinh đang xem trang).
 
+### `useLeaderboard({ scope, scopeValue, metric, limit, enabled })` / `useMyLeaderboardRank({ scope, metric, enabled })` — `hooks/useLeaderboard.js`
+```js
+const { rows, loading, error, refetch } = useLeaderboard({ scope, scopeValue, metric, limit = 50, enabled = true });
+// scope: 'class' | 'school' | 'global', metric: 'streak' | 'attempts'
+// rows: [{ user_id, full_name, class_name, school, current_streak, longest_streak, total_attempts, rank }]
+
+const { myRank, loading, refetch } = useMyLeaderboardRank({ scope, metric, enabled = true });
+// myRank: { rank, current_streak, total_attempts, total_participants } | null (null nếu chưa opt-in / ngoài scope)
+```
+Thêm 2026-07-15. Wrap RPC `get_leaderboard`/`get_my_leaderboard_rank` bằng TanStack Query. Dùng tại: `LeaderboardPage`. `scopeValue` chỉ mang tính UI — server luôn tự lấy `class_name`/`school` thật của người gọi, xem DATABASE_SCHEMA.md → `get_leaderboard`.
+
 ---
 
 ## Shared Components (`src/components/shared/`)
@@ -99,7 +110,7 @@ const { toasts, showToast, dismissToast } = useToast();
 <Toast toasts={toasts} onDismiss={dismissToast} />
 // Fixed bottom-right, dark mode support
 ```
-Dùng tại: `StudentManagementPage`, `QuestionsPage`, `QuestionFormPage`, `PaymentHistoryPage`, `ExamStructurePage`
+Dùng tại: `StudentManagementPage`, `QuestionsPage`, `QuestionFormPage`, `PaymentHistoryPage`, `ExamStructurePage`, `LeaderboardPage`
 
 ### ConfirmDialog (`ConfirmDialog.jsx`)
 ```jsx
@@ -126,7 +137,7 @@ Dùng tại: `StudentManagementPage`, `QuestionsPage`, `ExamStructurePage`
   action={<Button>Thêm</Button>}  // optional
 />
 ```
-Dùng tại: `StudentManagementPage`, `ResultPage`, `QuestionStatsPage`, `QuestionsPage`, `PaymentSettingsPage`, `LiveMonitorPage`, `ExamStructurePage`
+Dùng tại: `StudentManagementPage`, `ResultPage`, `QuestionStatsPage`, `QuestionsPage`, `PaymentSettingsPage`, `LiveMonitorPage`, `ExamStructurePage`, `LeaderboardPage`
 
 ### PageHeader (`PageHeader.jsx`)
 ```jsx
@@ -137,7 +148,7 @@ Dùng tại: `StudentManagementPage`, `ResultPage`, `QuestionStatsPage`, `Questi
   actions={<button>Export</button>}  // optional
 />
 ```
-Dùng tại: `QuestionStatsPage`, `LiveMonitorPage`, `AnalyticsPage`
+Dùng tại: `QuestionStatsPage`, `LiveMonitorPage`, `AnalyticsPage`, `LeaderboardPage`
 
 ### Skeleton (`Skeleton.jsx`)
 ```jsx
@@ -148,7 +159,7 @@ Dùng tại: `QuestionStatsPage`, `LiveMonitorPage`, `AnalyticsPage`
 // All use animate-pulse, dark mode support
 ```
 
-### Navbar (`Navbar.jsx`) — 358 lines
+### Navbar (`Navbar.jsx`) — ~385 lines
 - Desktop: NavLink (active indicator), TeacherDropdown
 - Mobile: hamburger → slide-in
 - Dark mode toggle button
@@ -183,7 +194,7 @@ Dùng tại: `QuestionStatsPage`, `LiveMonitorPage`, `AnalyticsPage`
 
 ## Exam Components (`src/components/exam/`)
 
-### QuestionRenderer (`QuestionRenderer.jsx`) — 657 lines
+### QuestionRenderer (`QuestionRenderer.jsx`) — ~670 lines
 ```jsx
 <QuestionRenderer
   question={currentQ}
@@ -279,3 +290,4 @@ Dùng tại: `QuestionStatsPage`, `LiveMonitorPage`, `AnalyticsPage`
 | `scoreUtils.js` | `isPassed(score)` (threshold=70), `PASS_THRESHOLD` |
 | `text.js` | `stripHtml(html)` |
 | `questionImport.js` | `parseCsvText(text)`, `parseWorkbookFile(arrayBuffer)`, `validateRows(...)` |
+| `streak.js` | `getEffectiveStreak(lastStreakDate, currentStreak)`, `isStreakAtRisk(lastStreakDate, currentStreak)` — thêm 2026-07-15, dùng ở `DashboardPage` (xem PATTERNS_AND_CONVENTIONS.md, DATABASE_SCHEMA.md → `profiles`) |

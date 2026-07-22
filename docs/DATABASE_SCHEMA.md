@@ -20,7 +20,12 @@ session_expires_at  timestamptz                            -- nullable
 school              text                                   -- ⚠️ TEXT, không phải FK uuid! Free-text tên trường
 class_name          text                                   -- nullable
 account_source      text NOT NULL DEFAULT 'ADMIN' CHECK (account_source IN ('ADMIN', 'SELF'))
+current_streak      int NOT NULL DEFAULT 0                 -- số ngày liên tiếp có nộp bài (thêm 2026-07-15)
+longest_streak      int NOT NULL DEFAULT 0                 -- kỷ lục streak, GREATEST tự cập nhật
+last_streak_date    date                                    -- ngày (giờ VN) lần cuối tính streak, nullable
+leaderboard_opt_in  boolean NOT NULL DEFAULT false          -- student tự bật để hiện trên LeaderboardPage
 ```
+> **Gamification (thêm 2026-07-15, `supabase/sql/2026-07-15_leaderboard_streak.sql`)**: 4 cột trên phục vụ streak luyện tập + bảng xếp hạng opt-in. `current_streak`/`longest_streak`/`last_streak_date` do trigger `trg_update_streak_on_submit` tự tính (xem RPC/Trigger section) — client KHÔNG tự ghi. `AuthContext.jsx`'s `fetchProfile()` dùng `select('*')` nên 4 cột này tự có sẵn trong `profile` object, không cần sửa code fetch. **`current_streak` là số liệu thô** — chỉ cập nhật lúc có bài nộp mới, có thể "ảo" (chưa phản ánh streak đã gãy) cho tới lần nộp kế tiếp; luôn tính lại qua `getEffectiveStreak()` (`src/utils/streak.js`, dùng ở `DashboardPage`) hoặc logic tương đương trong SQL (RPC `get_leaderboard`/`get_my_leaderboard_rank`) trước khi hiển thị/xếp hạng.
 > **⚠️ `school` là `text` tự do, KHÔNG PHẢI `school_id uuid REFERENCES schools(id)`.** Không có FK giữa `profiles` và `schools` — liên kết chỉ qua so khớp chuỗi tên (`profiles.school === schools.name`, xem `AnalyticsPage.jsx`, `StudentManagementPage.jsx`). RPC `get_exam_group_breakdown`/`get_exam_score_distribution` join `schools` bằng `s.id::text = p.school`.
 
 ### `schools`
@@ -278,6 +283,26 @@ RETURNS uuid   -- attempt_id mới tạo
 ```
 Random 45 câu (hoặc 10 nếu chưa thanh toán đủ các exam trong Level — self-registered) từ toàn bộ Level, set `is_mock=true`, `mock_question_ids`. Raise `no_questions_found` nếu Level rỗng.
 
+### `set_leaderboard_opt_in(p_opt_in boolean)`
+```sql
+RETURNS void
+```
+Thêm 2026-07-15. Student tự bật/tắt hiển thị trên `LeaderboardPage` — chỉ sửa đúng cột `profiles.leaderboard_opt_in` của chính `auth.uid()` (đi qua RPC thay vì `.update()` trực tiếp dù RLS "update own" cho phép, để không mở bề mặt ghi tuỳ ý lên các cột khác).
+
+### `get_leaderboard(p_scope, p_scope_value, p_metric, p_limit)`
+```sql
+p_scope text ('class'|'school'|'global'), p_scope_value text DEFAULT NULL, p_metric text DEFAULT 'streak', p_limit int DEFAULT 50
+RETURNS TABLE(user_id, full_name, class_name, school, current_streak, longest_streak, total_attempts, rank)
+```
+Thêm 2026-07-15 (`supabase/sql/2026-07-15_leaderboard_streak.sql`). Dùng ở `LeaderboardPage`. **Không** teacher-gated (dữ liệu học sinh tự nguyện công khai, chỉ trả `leaderboard_opt_in=true`) nhưng cố tình **không có** điểm trung bình — chỉ streak/số bài. ⚠️ `p_scope_value` nhận từ client nhưng **bị bỏ qua** với scope `class`/`school` — server luôn tự lấy `class_name`/`school` thật từ profile của `auth.uid()`, chặn 1 user tự sửa request để xem leaderboard lớp/trường khác. `current_streak` trả về là giá trị **đã tính lại "hiệu lực"** trong SQL (cùng công thức `getEffectiveStreak` phía client), không phải cột thô. `p_limit` bị `LEAST(..., 200)` — trần an toàn.
+
+### `get_my_leaderboard_rank(p_scope, p_metric)`
+```sql
+p_scope text, p_metric text DEFAULT 'streak'
+RETURNS TABLE(rank, current_streak, total_attempts, total_participants)
+```
+Thêm 2026-07-15, cùng file SQL trên. Trả hạng của **chính người gọi** dù ngoài top hiển thị của `get_leaderboard` (client không phải fetch nguyên danh sách chỉ để tìm vị trí 1 user) — 0 dòng nếu chưa opt-in/không thuộc scope đó. Dùng cùng tie-break (`ORDER BY metric DESC, full_name ASC`) với `get_leaderboard` để hạng hiển thị nhất quán giữa 2 RPC.
+
 ### `reorder_questions_in_exam(p_exam_id uuid)`
 ```sql
 RETURNS void   -- NOT security definer
@@ -318,6 +343,18 @@ Teacher-only. Thêm 2026-07-13 (`supabase/sql/2026-07-13_concurrency_indexes.sql
 RETURNS TABLE(total_attempts bigint, avg_score numeric)   -- luôn đúng 1 dòng
 ```
 Teacher-only. Thêm 2026-07-13, cùng file SQL trên. Dùng bởi `DashboardPage.jsx`'s `useTeacherStats` — trước đó gọi `useExamAttempts(null, { select: 'score' })` (userId=null → không filter theo user) fetch TOÀN BỘ `exam_attempts` platform-wide mỗi lần Dashboard (landing page sau login) load, chỉ để COUNT/AVG ở client.
+
+---
+
+## Triggers
+
+### `trg_update_streak_on_submit` (trên `exam_attempts`, thêm 2026-07-15)
+```sql
+AFTER UPDATE OF status, submitted_at ON exam_attempts
+FOR EACH ROW WHEN (NEW.status IN ('submitted', 'auto_submitted') AND NEW.score IS NOT NULL)
+EXECUTE FUNCTION update_streak_on_submit()
+```
+Tự tính `profiles.current_streak`/`longest_streak`/`last_streak_date` mỗi khi 1 `exam_attempts` chuyển sang `submitted`/`auto_submitted` **có điểm** (bài thường lẫn mock exam, không lọc `is_mock`). Gắn trên `UPDATE` chứ không phải `INSERT` vì cả `ExamPage`/`MockExamPage` đều insert attempt với `status='in_progress'` trước rồi mới update khi submit. Điều kiện `NEW.score IS NOT NULL` cố tình loại trừ đúng case "Bắt đầu lại" trên `ResumeModal` (client tự set `status='auto_submitted'` cho attempt cũ, không qua RPC, `score` vẫn NULL — xem `exam_attempts` note ở trên) để không tính nhầm 1 ngày hoạt động ảo. `FOR UPDATE` khoá dòng `profiles` khi tính, tránh race nếu 2 request submit gần như đồng thời cho cùng 1 user.
 
 ---
 

@@ -683,7 +683,7 @@ export const ExamPage = () => {
   }, [currentIndex, answers, flagged, attemptId]);
 
   /* ── Light anti-cheat: log + warn on tab-switch / fullscreen-exit ──
-     Testing exams only (this file). MockExamPage is untouched. Passive
+     Same pattern mirrored in MockExamPage.jsx (added 2026-07-16). Passive
      logging + an immediate toast, per product decision — never blocks
      or auto-submits the exam. */
   const logCheatEvent = useCallback((eventType) => {

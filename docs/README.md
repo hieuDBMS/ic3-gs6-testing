@@ -25,7 +25,6 @@ Các file tài liệu này được viết để Claude AI có thể tra cứu s
 | Thêm route mới | ROUTES_AND_PAGES.md → Route Structure |
 | Dark mode | PATTERNS_AND_CONVENTIONS.md → Dark Mode |
 | Upload ảnh | COMPONENTS.md → ImageUploader |
-| Anti-cheat | PATTERNS_AND_CONVENTIONS.md → Anti-Cheat |
 | Schema bảng `purchases`/`payment_config`/mock exam | DATABASE_SCHEMA.md → Bẫy thường gặp (tên bảng/cột dễ nhầm) |
 | Luồng mua bài / PaymentModal | COMPONENTS.md → PaymentModal, ROUTES_AND_PAGES.md → PaymentHistoryPage |
 | Luồng thi thử (Mock Exam) | ROUTES_AND_PAGES.md → MockExamSetupPage/MockExamPage/MockResultPage |
@@ -34,6 +33,8 @@ Các file tài liệu này được viết để Claude AI có thể tra cứu s
 | LiveMonitorPage không hiện / hiện trùng / không tự ẩn | PATTERNS_AND_CONVENTIONS.md → #24 LiveMonitor Zombie Filter, ROUTES_AND_PAGES.md → LiveMonitorPage |
 | Hiệu năng nhiều user đồng thời (index, RPC aggregate, realtime channel) | DATABASE_SCHEMA.md → Bẫy thường gặp + RPC mới (2026-07-13), `supabase/sql/2026-07-13_concurrency_indexes.sql`, COMPONENTS.md → useMediaQuery/useStudents |
 | Xoá lịch sử làm bài (1 dòng / 1 student·teacher / toàn hệ thống), không đụng tài khoản | PROJECT_OVERVIEW.md → Edge Functions → `manage-student` (`delete-attempt`/`clear-attempts`/`clear-all-attempts`), ROUTES_AND_PAGES.md → StudentManagementPage/StudentProgressPage/DashboardPage, COMPONENTS.md → AttemptHistoryTable, DATABASE_SCHEMA.md → Bẫy thường gặp (không có RLS DELETE trên `exam_attempts`) |
+| Streak luyện tập / bảng xếp hạng (Leaderboard) | ROUTES_AND_PAGES.md → DashboardPage (streak card)/LeaderboardPage, DATABASE_SCHEMA.md → `profiles` (4 cột streak) + Triggers + RPC `get_leaderboard`/`get_my_leaderboard_rank`/`set_leaderboard_opt_in`, COMPONENTS.md → `useLeaderboard`/`streak.js` |
+| Anti-cheat (tab switch / thoát fullscreen) | PATTERNS_AND_CONVENTIONS.md → #16 Anti-Cheat (áp dụng cả ExamPage lẫn MockExamPage từ 2026-07-16) |
 
 ## Shared Infrastructure (đã có, dùng luôn không cần tạo mới)
 
@@ -42,6 +43,7 @@ Các file tài liệu này được viết để Claude AI có thể tra cứu s
 - `useExamStructure()` — fetch levels+exams, cache sessionStorage 5 phút
 - `useQuestions(filters, pagination)` — fetch questions với filter/sort/pagination
 - `useStudents(options)` — fetch students với search/pagination
+- `useLeaderboard(options)` / `useMyLeaderboardRank(options)` — bảng xếp hạng streak/số bài (opt-in), thêm 2026-07-15
 
 ### Shared Components (`src/components/shared/`)
 - `Toast.jsx` + `useToast()` — toast notifications (bottom-right)
@@ -57,24 +59,26 @@ Các file tài liệu này được viết để Claude AI có thể tra cứu s
 - `format.js` — `formatDurationLabel(seconds)`
 - `avatar.js` — `getInitials(name)`
 - `certificate.js` — `generateCertificatePdf(options)` (canvas → jsPDF)
+- `streak.js` — `getEffectiveStreak(lastStreakDate, currentStreak)`, `isStreakAtRisk(...)` (thêm 2026-07-15)
 
-## File Sizes (complexity reference, 2026-07-10)
+## File Sizes (complexity reference, 2026-07-22)
+
+> `QuestionModal.jsx` đã bị xoá 2026-07-14 (dead code, không còn import ở đâu) — không còn trong bảng này.
 
 | File | Lines |
 |---|---|
-| `src/pages/FlashcardPage.jsx` | 1137 |
-| `src/pages/ExamPage.jsx` | 1089 |
-| `src/pages/StudentManagementPage.jsx` | 844 |
-| `src/components/questions/QuestionModal.jsx` | 865 (deprecated) |
-| `src/pages/MockExamPage.jsx` | 801 |
-| `src/pages/QuestionsPage.jsx` | 702 |
-| `src/components/exam/QuestionRenderer.jsx` | 658 |
-| `src/pages/PaymentHistoryPage.jsx` | 570 |
-| `src/pages/QuestionFormPage.jsx` | 583 |
-| `src/pages/ExamStructurePage.jsx` | 516 |
-| `src/pages/ResultPage.jsx` | 538 |
-| `src/components/shared/Navbar.jsx` | 358 |
+| `src/pages/FlashcardPage.jsx` | ~1225 (file lớn nhất) |
+| `src/pages/ExamPage.jsx` | ~1200 |
+| `src/pages/StudentManagementPage.jsx` | ~965 |
+| `src/pages/MockExamPage.jsx` | ~945 |
+| `src/pages/QuestionFormPage.jsx` | ~660 |
+| `src/pages/QuestionsPage.jsx` | ~705 |
+| `src/components/exam/QuestionRenderer.jsx` | ~670 |
+| `src/pages/PaymentHistoryPage.jsx` | ~580 |
+| `src/pages/ResultPage.jsx` | ~555 |
+| `src/pages/ExamStructurePage.jsx` | ~540 |
+| `src/components/shared/Navbar.jsx` | ~385 |
 
 ## Tests (`src/utils/*.test.js`)
 
-Có test cho: `avatar.js`, `format.js`, `questionImport.js`, `scoreUtils.js`. Không có test cho components/pages (chưa setup React Testing Library) — chỉ pure-function utils.
+Có test cho: `avatar.js`, `format.js`, `questionImport.js`, `scoreUtils.js`, `streak.js`, `text.js`. Không có test cho components/pages (chưa setup React Testing Library) — chỉ pure-function utils.
