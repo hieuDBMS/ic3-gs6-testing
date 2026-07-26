@@ -52,8 +52,12 @@ src/
 docs/                        # Tài liệu source code (thư mục này)
 supabase/
 ├── sql/                      # Migration SQL chạy tay qua Supabase Studio (không có supabase/migrations/ chuẩn CLI)
+│   ├── 2026-07-08_six_features.sql         # ĐÃ chạy
 │   ├── 2026-07-13_concurrency_indexes.sql  # Indexes + RPC get_student_attempt_stats/get_teacher_dashboard_stats — ĐÃ chạy trên DB live (2026-07-13, qua Management API)
-│   └── 2026-07-13_clear_exam_history.sql   # DELETE FROM exam_attempts toàn hệ thống (one-time wipe) — CHƯA chạy, chỉ tạo sẵn nếu cần dùng
+│   ├── 2026-07-13_clear_exam_history.sql   # DELETE FROM exam_attempts toàn hệ thống (one-time wipe) — CHƯA chạy, chỉ tạo sẵn nếu cần dùng
+│   ├── 2026-07-13_exam_draft_answers.sql   # ĐÃ chạy — cột draft_answers trên exam_attempts
+│   ├── 2026-07-14_security_hardening.sql   # ĐÃ chạy TOÀN BỘ (xác nhận 2026-07-26, xem DATABASE_SCHEMA.md → RLS + RPC section)
+│   └── 2026-07-15_leaderboard_streak.sql   # ĐÃ chạy toàn bộ 6 block (BLOCK 5/6 bị bỏ sót lúc đầu, deploy bù 2026-07-26 qua Management API — xem DATABASE_SCHEMA.md → get_my_leaderboard_rank)
 └── functions/                # Source của tất cả 6 edge functions đang deploy (kéo về 2026-07-10,
                                # trước đó chỉ analyze-exam-stats có source local — 5 function còn lại
                                # deploy trực tiếp qua Dashboard/MCP không version-control)
@@ -100,7 +104,7 @@ File `.env` — KHÔNG commit lên Git. Xem `.env.example` cho danh sách đầy
 
 ## Supabase RPC functions
 
-14 RPC functions (`SECURITY DEFINER` trừ `reorder_questions_in_exam`, `is_teacher`) — chi tiết đầy đủ chữ ký ở [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md#rpc-functions-public-schema):
+19 RPC functions, tất cả tồn tại trên DB live (xác nhận 2026-07-26). Tất cả `SECURITY DEFINER` trừ `reorder_questions_in_exam`, `is_teacher` — chi tiết đầy đủ chữ ký ở [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md#rpc-functions-public-schema):
 
 | RPC | Mô tả |
 |---|---|
@@ -108,14 +112,19 @@ File `.env` — KHÔNG commit lên Git. Xem `.env.example` cho danh sách đầy
 | `submit_mock_exam_attempt` | Chấm điểm bài thi thử, tính thêm `score_1000` (thang IC3 1000) |
 | `create_mock_exam_attempt` | Random 45 (hoặc 10 dùng thử) câu trong 1 Level, tạo attempt mock |
 | `user_can_access_exam` | Check quyền truy cập exam (self-registered) |
-| `get_question_wrong_stats` | Thống kê câu hay sai (teacher-only) |
+| `get_exam_questions_for_attempt` | Câu hỏi cho bài thi thường, KHÔNG có `is_correct`/`is_true` — dùng bởi `ExamPage`. Thêm 2026-07-14, thay `.select()` trực tiếp (lỗ hổng cũ: bất kỳ ai gọi REST API cũng đọc được đáp án đúng) |
+| `get_mock_exam_questions` | Câu hỏi cho mock exam theo đúng `mock_question_ids` đã chốt — dùng bởi `MockExamPage`. Thêm 2026-07-14, cùng lý do trên |
+| `get_flashcard_questions` | Câu hỏi cho flashcard — CÓ `is_correct`/`is_true` (cố ý, tính năng học bài) — dùng bởi `FlashcardPage`. Thêm 2026-07-14 |
+| `get_question_wrong_stats` | Thống kê câu hay sai, filter đầy đủ trường/lớp/ngày (teacher-only) |
 | `get_exam_score_distribution` | Histogram phân bố điểm (teacher-only) |
-| `get_exam_group_breakdown` | Breakdown điểm TB theo lớp/trường/level (teacher-only) |
+| `get_exam_group_breakdown` | Breakdown điểm TB theo lớp/trường/level, filter đầy đủ trường/lớp (teacher-only) |
 | `get_student_attempt_stats` | Aggregate `totalAttempts`/`avgScore`/`lastActive` theo học sinh (teacher-only) — dùng bởi `useStudents.js` thay vì fetch raw `exam_attempts`. Thêm 2026-07-13, xem `supabase/sql/2026-07-13_concurrency_indexes.sql` |
 | `get_teacher_dashboard_stats` | Aggregate `total_attempts`/`avg_score` toàn hệ thống, 1 dòng (teacher-only) — dùng bởi `DashboardPage.jsx`'s `useTeacherStats`. Thêm 2026-07-13, cùng file SQL trên |
+| `record_purchase_payment` | Cộng dồn `paid_amount` nguyên tử (`SELECT...FOR UPDATE`, chống race webhook/teacher-confirm). Chỉ gọi được từ edge function (service role) — revoke khỏi `anon`/`authenticated`. Thêm 2026-07-14 |
+| `check_and_record_registration_attempt` | Rate-limit đăng ký theo IP (bảng `registration_attempts`), chỉ service role gọi được. Thêm 2026-07-14 |
 | `set_leaderboard_opt_in` | Student tự bật/tắt hiển thị trên bảng xếp hạng (`profiles.leaderboard_opt_in`). Thêm 2026-07-15 |
 | `get_leaderboard` | Top N bảng xếp hạng streak/số bài theo lớp/trường/toàn hệ thống (opt-in only, không teacher-gated). Thêm 2026-07-15 |
-| `get_my_leaderboard_rank` | Hạng của chính người gọi dù ngoài top hiển thị. Thêm 2026-07-15 |
+| `get_my_leaderboard_rank` | Hạng của chính người gọi dù ngoài top hiển thị. Thêm 2026-07-15 (viết cùng lúc với `get_leaderboard` nhưng deploy trễ tới 2026-07-26 — xem DATABASE_SCHEMA.md → RPC section) |
 | `reorder_questions_in_exam` | Chuẩn hoá lại `order_index` sau CRUD câu hỏi |
 | `is_teacher` | Helper nội bộ cho RLS policies |
 
@@ -128,7 +137,7 @@ Nguồn cả 6 function nằm ở `supabase/functions/<slug>/index.ts` (kéo v�
 | `manage-student` | true | create / update / toggle-active / delete / reset-password / clear-attempts / clear-all-attempts / delete-attempt | Teacher quản lý student (bảng `profiles`), cascade xoá `exam_attempts`/`purchases`/`payment_history` khi delete. `clear-attempts` (1 user, student hoặc teacher) / `clear-all-attempts` (toàn hệ thống) / `delete-attempt` (1 dòng `exam_attempts` theo `attemptId`) chỉ xoá lịch sử làm bài — **không đụng** `profiles`/`purchases`/`payment_history`/`auth.users`. Thêm 2026-07-13 |
 | `manage-school` | true | list / create / update / delete | Teacher quản lý danh sách trường (bảng `schools`). `update`/`delete` cascade rename/clear `profiles.school` (free-text match theo tên, không phải FK) |
 | `manage-purchase` | true | create / cancel / teacher-create / list-mine / list-all / confirm / status / history | Vòng đời mua bài thi (bảng `purchases`) — client KHÔNG ghi trực tiếp, trừ đường tự động `sepay-webhook` |
-| `register-user` | false | — | Self-register tài khoản. Dùng `admin.auth.admin.createUser` (bypass rate-limit signup mặc định của Supabase Auth) — không có CAPTCHA, cân nhắc thêm nếu bị bot spam tài khoản |
+| `register-user` | false | — | Self-register tài khoản. Dùng `admin.auth.admin.createUser` (bypass rate-limit signup mặc định của Supabase Auth). **Có CAPTCHA + rate-limit** (thêm 2026-07-14, trước đó thực sự không có — xem `2026-07-14_security_hardening.sql` BLOCK 3): verify Cloudflare Turnstile server-side qua `siteverify` (no-op nếu thiếu secret `TURNSTILE_SECRET_KEY`) **và** rate-limit độc lập theo IP (5 lần/giờ mặc định, RPC `check_and_record_registration_attempt`, luôn bật bất kể có CAPTCHA hay không) |
 | `analyze-exam-stats` | true | — | Teacher-only, gọi Gemini API (`gemini-2.5-flash`) sinh nhận xét tiếng Việt cho AnalyticsPage. Cần secret `GEMINI_API_KEY` |
 | `sepay-webhook` | false | — | Nhận webhook từ SePay khi phát hiện chuyển khoản ngân hàng, tự động khớp `transaction_code` trong nội dung chuyển khoản → cập nhật `purchases.status`/`paid_amount`. **Bắt buộc** secret `SEPAY_WEBHOOK_SECRET` (fail-closed — từ chối mọi request nếu thiếu secret, xem header `Authorization`/`x-sepay-signature`). Không có route gọi từ `src/` — chỉ SePay gọi vào |
 

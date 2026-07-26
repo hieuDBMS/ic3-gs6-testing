@@ -1,6 +1,6 @@
 # IC3 Exam Platform — Database Schema
 
-> Xác minh trực tiếp từ Supabase (`information_schema` + `pg_policies` + `pg_proc`) ngày 2026-07-10.
+> Xác minh trực tiếp từ Supabase (`information_schema` + `pg_policies` + `pg_proc`) ngày 2026-07-26 (lần trước 2026-07-10 — đã lệch khá nhiều, xem các mục có ghi chú "cập nhật 2026-07-26" bên dưới).
 > **Lưu ý**: bảng/cột thực tế lệch khá nhiều so với tên gọi trực quan trong code — xem phần "Bẫy thường gặp" cuối file.
 
 ## Supabase PostgreSQL Tables
@@ -199,14 +199,15 @@ updated_at    timestamptz DEFAULT now()
 ```
 > Giá bài thi nằm ở `exams.required_amount` (per-exam), KHÔNG phải `jsonb` trong bảng này. `PaymentModal.jsx` cache row này ở module-level (fetch 1 lần/session).
 
-### `todos` — ⚠️ bảng KHÔNG liên quan đến app (không được reference ở bất kỳ đâu trong `src/`)
+### `registration_attempts` — nội bộ, không có policy nào (cập nhật 2026-07-26)
 ```sql
 id         uuid PRIMARY KEY DEFAULT gen_random_uuid()
-title      text
-is_done    boolean DEFAULT false
-created_at timestamp DEFAULT now()
+ip         text NOT NULL
+created_at timestamptz NOT NULL DEFAULT now()
 ```
-> **Cảnh báo bảo mật**: `RLS đang TẮT` trên bảng này — bất kỳ ai có anon key đều đọc/ghi được. Có vẻ là bảng mẫu còn sót lại từ template dự án, không phải dữ liệu thật. Cân nhắc bật RLS hoặc xoá bảng nếu không dùng; KHÔNG tự động sửa mà chưa hỏi ý người phụ trách DB (xem quy tắc phê duyệt hành động trên prod DB).
+> Thêm bởi `supabase/sql/2026-07-14_security_hardening.sql` BLOCK 3. Đếm số lần đăng ký theo IP (5 lần/giờ mặc định) cho Edge Function `register-user`, độc lập với Turnstile CAPTCHA — chặn 1 script mass-create account vì `register-user` cố tình bypass rate-limit mặc định của Supabase Auth (`admin.auth.admin.createUser`). RLS **bật, không có policy nào** — đây là chủ ý (fail-closed): chỉ RPC `check_and_record_registration_attempt` (`SECURITY DEFINER`, revoke khỏi `anon`/`authenticated`, chỉ `postgres`/`service_role` gọi được) chạm vào bảng này. Tự dọn dòng cũ hơn 1 giờ ngay trong RPC, không cần cron riêng.
+
+> **Bảng `todos` không còn tồn tại trên DB live** (đã xác nhận qua `information_schema.tables` 2026-07-26). Version trước của tài liệu này (2026-07-10) cảnh báo bảng này có RLS tắt hoàn toàn — `2026-07-14_security_hardening.sql` BLOCK 5 định bật RLS cho nó nếu còn tồn tại; tại thời điểm review 2026-07-26 bảng đã biến mất khỏi `public` schema hoàn toàn (bị xoá hẳn, không rõ chính xác khi nào/bởi ai — không có migration nào trong `supabase/sql/` ghi lại việc `DROP TABLE todos`). Không cần hành động gì thêm.
 
 ---
 
@@ -227,10 +228,13 @@ Helper function: `is_teacher()` — `SECURITY DEFINER`, trả `true` nếu `auth
 | `exam_levels` | select_auth / insert·update·delete_teacher | * | `auth.role()='authenticated'` (SELECT) / `is_teacher()` (write) |
 | `exams` | select_auth / insert·update·delete_teacher | * | như trên |
 | `questions` | select_auth / insert·update·delete_teacher | * | như trên |
-| `answers` | select_auth / insert·update·delete_teacher | * | như trên |
-| `dragdrop_pairs` | select_auth / insert·update·delete_teacher | * | như trên |
-| `truefalse_statements` | read all / write teacher | * | `true` (SELECT) / EXISTS teacher (write) |
-| `hotspot_regions` | read all / write teacher | * | `true` (SELECT) / EXISTS teacher (write) |
+| `dragdrop_pairs` | select_auth / insert·update·delete_teacher | * | như trên — **không** siết như answers/truefalse/hotspot bên dưới, vì `drop_content` là tên cột/zone cần hiển thị để học sinh thao tác kéo-thả, không phải "đáp án đúng" ẩn (xem `dragdrop_pairs` ở trên) |
+| `answers` | select_teacher_or_own_submitted | SELECT | `is_teacher() OR` (user có `exam_attempts` **đã submit** — không `in_progress` — cho đúng exam chứa câu hỏi đó). **Siết lại 2026-07-14** (trước đó: `select_auth`, bất kỳ authenticated user nào đọc được `is_correct` của MỌI câu hỏi qua REST API trực tiếp) |
+| `answers` | insert/update/delete_teacher | * | `is_teacher()` |
+| `truefalse_statements` | select_teacher_or_own_submitted | SELECT | như `answers` ở trên (thay `is_correct` bằng `is_true`). Siết lại 2026-07-14 |
+| `truefalse_statements` | Teachers can insert/update/delete | * | EXISTS teacher (chưa refactor sang `is_teacher()`) |
+| `hotspot_regions` | select_teacher_or_own_submitted | SELECT | như `answers` ở trên. Siết lại 2026-07-14 |
+| `hotspot_regions` | Teachers can insert/update/delete | * | EXISTS teacher (chưa refactor sang `is_teacher()`) |
 | `exam_attempts` | insert own | INSERT | `auth.uid()=user_id AND user_can_access_exam(auth.uid(), exam_id)` |
 | `exam_attempts` | select own / select teacher | SELECT | `auth.uid()=user_id` / `is_teacher()` |
 | `exam_attempts` | update own | UPDATE | `auth.uid()=user_id` |
@@ -244,7 +248,9 @@ Helper function: `is_teacher()` — `SECURITY DEFINER`, trả `true` nếu `auth
 | `payment_history` | insert/select teacher | * | role=teacher (EXISTS) |
 | `payment_config` | read all | SELECT | `true` |
 | `payment_config` | write teacher | ALL | role=teacher (EXISTS) |
-| `todos` | — | — | **RLS TẮT — không có policy nào** |
+| `registration_attempts` | — | — | **RLS BẬT, không có policy nào** (chủ ý — chỉ RPC `SECURITY DEFINER` chạm được, xem bảng ở trên) |
+
+**Vì sao `answers`/`truefalse_statements`/`hotspot_regions` giờ chặn SELECT khi đang thi**: trước 2026-07-14, `ExamPage`/`MockExamPage`/`FlashcardPage` tự `.select()` các bảng này trực tiếp qua Supabase client, và RLS SELECT khi đó là `auth.role()='authenticated'` — bất kỳ ai đăng nhập gọi thẳng REST API (DevTools/Postman) đều đọc được `is_correct`/`is_true` của **mọi câu hỏi trong mọi đề**, không phụ thuộc đã mua/đã thi hay chưa. `supabase/sql/2026-07-14_security_hardening.sql` BLOCK 1 vá lỗ hổng này bằng 2 lớp: (1) RLS SELECT giờ chỉ cho teacher hoặc chính học sinh sở hữu 1 attempt **đã submit** (đúng luồng "xem lại sau khi nộp" của `ResultPage`), (2) 3 trang trên chuyển sang gọi RPC `SECURITY DEFINER` mới (`get_exam_questions_for_attempt`/`get_mock_exam_questions`/`get_flashcard_questions`, xem RPC section) thay vì `.select()` trực tiếp — RPC tự kiểm tra quyền mua bài và **không** trả `is_correct`/`is_true` (trừ `get_flashcard_questions`, cố tình có vì đó là tính năng học bài).
 
 ---
 
@@ -262,6 +268,36 @@ RETURNS boolean  -- SECURITY DEFINER, helper cho RLS policies, không gọi tr�
 RETURNS boolean
 ```
 Dùng khi `isSelfRegistered=true` để chặn truy cập bài thi chưa mua (`ExamPage`, `FlashcardPage`).
+
+### `get_exam_questions_for_attempt(p_exam_id uuid)` — thêm 2026-07-14
+```sql
+RETURNS jsonb  -- mảng question objects: answers/dragdrop_pairs/truefalse_statements/hotspot_regions lồng bên trong
+```
+`SECURITY DEFINER`. Dùng bởi `ExamPage.jsx` thay cho `.select()` trực tiếp trên `questions`/`answers`/... (xem RLS section ở trên — lý do đổi). Tự kiểm tra `user_can_access_exam` nếu `account_source='SELF'`. **Không** trả `is_correct`/`is_true`/hotspot `is_correct` — an toàn để gọi khi bài thi đang `in_progress`.
+
+### `get_mock_exam_questions(p_attempt_id uuid)` — thêm 2026-07-14
+```sql
+RETURNS jsonb  -- cùng cấu trúc RPC trên, thứ tự theo exam_attempts.mock_question_ids
+```
+`SECURITY DEFINER`. Dùng bởi `MockExamPage.jsx`. Nhận `p_attempt_id` (không nhận mảng question id tuỳ ý từ client) — tự tra `mock_question_ids` + kiểm tra `auth.uid()` là chủ sở hữu attempt (hoặc `is_teacher()`) trước khi trả câu hỏi. Cũng không trả `is_correct`/`is_true`.
+
+### `get_flashcard_questions(p_exam_id uuid)` — thêm 2026-07-14
+```sql
+RETURNS jsonb  -- cùng cấu trúc 2 RPC trên, NHƯNG CÓ answers[].is_correct / truefalse_statements[].is_true / hotspot_regions[].is_correct
+```
+`SECURITY DEFINER`. Dùng bởi `FlashcardPage.jsx` — cố ý trả đáp án đúng vì đây là tính năng học bài (xem đáp án ngay sau khi chọn), khác 2 RPC thi ở trên. Vẫn kiểm tra `user_can_access_exam` nếu self-registered.
+
+### `record_purchase_payment(p_purchase_id uuid, p_amount int, p_note text DEFAULT NULL, p_recorded_by uuid DEFAULT NULL)` — thêm 2026-07-14
+```sql
+RETURNS jsonb  -- { success, newStatus, newPaid, remaining, unlocked, alreadySuccess? }
+```
+`SECURITY DEFINER`, **REVOKE khỏi `anon`/`authenticated`** — chỉ gọi được từ edge function bằng service role (`manage-purchase`'s `confirm`/`teacher-create`, `sepay-webhook`). Không tự kiểm tra quyền người gọi bên trong (tin tưởng hoàn toàn edge function đã check trước) nên **không được** grant cho client. `SELECT ... FOR UPDATE` khoá dòng `purchases` khi cộng dồn `paid_amount` — chống race condition khi webhook SePay và giáo viên bấm "Xác nhận" gần như đồng thời (trước đó 2 request đọc-rồi-ghi riêng lẻ có thể mất 1 khoản thanh toán).
+
+### `check_and_record_registration_attempt(p_ip text, p_max_per_hour int DEFAULT 5)` — thêm 2026-07-14
+```sql
+RETURNS boolean  -- false nếu IP đã vượt quá p_max_per_hour lần trong 1 giờ qua
+```
+`SECURITY DEFINER`, **REVOKE khỏi `anon`/`authenticated`** — chỉ gọi từ Edge Function `register-user` (service role). Ghi/dọn bảng `registration_attempts` (xem bảng ở trên).
 
 ### `submit_exam_attempt(...)`
 ```sql
@@ -301,7 +337,9 @@ Thêm 2026-07-15 (`supabase/sql/2026-07-15_leaderboard_streak.sql`). Dùng ở `
 p_scope text, p_metric text DEFAULT 'streak'
 RETURNS TABLE(rank, current_streak, total_attempts, total_participants)
 ```
-Thêm 2026-07-15, cùng file SQL trên. Trả hạng của **chính người gọi** dù ngoài top hiển thị của `get_leaderboard` (client không phải fetch nguyên danh sách chỉ để tìm vị trí 1 user) — 0 dòng nếu chưa opt-in/không thuộc scope đó. Dùng cùng tie-break (`ORDER BY metric DESC, full_name ASC`) với `get_leaderboard` để hạng hiển thị nhất quán giữa 2 RPC.
+Định nghĩa đầy đủ ở `supabase/sql/2026-07-15_leaderboard_streak.sql` BLOCK 5, cùng file với `get_leaderboard` (BLOCK 4). Trả hạng của **chính người gọi** dù ngoài top hiển thị của `get_leaderboard` — 0 dòng nếu chưa opt-in/không thuộc scope đó. Dùng cùng tie-break (`ORDER BY metric DESC, full_name ASC`) với `get_leaderboard` để hạng hiển thị nhất quán giữa 2 RPC. Index hỗ trợ: `idx_profiles_leaderboard` (partial, `WHERE leaderboard_opt_in AND is_active`, BLOCK 6).
+
+> **Đã fix 2026-07-26**: RPC này (BLOCK 5) và index đi kèm (BLOCK 6) được viết cùng lúc với `get_leaderboard` (BLOCK 4) ngày 2026-07-15 nhưng **chưa từng được deploy** — chỉ BLOCK 1-4 chạy khi đó. `src/hooks/useLeaderboard.js`'s `useMyLeaderboardRank()` đã gọi RPC này vô điều kiện trên `LeaderboardPage` từ 2026-07-15, lỗi `42883 function does not exist` âm thầm (hook không đọc field `error` ra UI, người dùng chỉ thấy "hạng của bạn" không bao giờ hiện, không crash trang). Deploy qua Management API 2026-07-26, xác nhận bằng `pg_proc`/`pg_indexes`/`role_routine_grants` — cả RPC và index đã tồn tại đúng định nghĩa trên DB live.
 
 ### `reorder_questions_in_exam(p_exam_id uuid)`
 ```sql
@@ -311,10 +349,11 @@ Chuẩn hoá lại `order_index` liên tục (0,1,2...) sau khi thêm/xoá/sửa
 
 ### `get_question_wrong_stats(...)`
 ```sql
-p_min_attempts int DEFAULT 5, p_level_id uuid DEFAULT NULL, p_exam_type text DEFAULT NULL, p_question_type text DEFAULT NULL
+p_min_attempts int DEFAULT 5, p_level_id uuid DEFAULT NULL, p_exam_type text DEFAULT NULL, p_question_type text DEFAULT NULL,
+p_date_from timestamptz DEFAULT NULL, p_date_to timestamptz DEFAULT NULL, p_school_id text DEFAULT NULL, p_class_name text DEFAULT NULL
 RETURNS TABLE(question_id, exam_id, exam_title, level_label, exam_type, exam_number, question_type, content, total_attempts, wrong_count, wrong_pct)
 ```
-Teacher-only (raise exception nếu không phải teacher). Dùng ở `QuestionStatsPage` và `AnalyticsPage`.
+Teacher-only (raise exception nếu không phải teacher). Dùng ở `QuestionStatsPage` và `AnalyticsPage`. **4 param cuối (`p_date_from`/`p_date_to`/`p_school_id`/`p_class_name`) thêm 2026-07-14** (`2026-07-14_security_hardening.sql` BLOCK 4) — trước đó filter trường/lớp/ngày trên `AnalyticsPage` âm thầm không áp dụng cho khối "câu hay sai nhất", vẫn hiện số liệu toàn hệ thống dù UI trông như đã lọc.
 
 ### `get_exam_score_distribution(...)`
 ```sql
@@ -327,10 +366,11 @@ RETURNS TABLE(bucket_label text, bucket_min int, attempt_count bigint)   -- hist
 ### `get_exam_group_breakdown(...)`
 ```sql
 p_group_by text ('class'|'school'|'level'), p_level_id uuid DEFAULT NULL, p_exam_type text DEFAULT NULL,
-p_date_from timestamptz DEFAULT NULL, p_date_to timestamptz DEFAULT NULL, p_pass_filter text DEFAULT NULL
+p_date_from timestamptz DEFAULT NULL, p_date_to timestamptz DEFAULT NULL, p_pass_filter text DEFAULT NULL,
+p_school_id text DEFAULT NULL, p_class_name text DEFAULT NULL
 RETURNS TABLE(group_label text, total_attempts bigint, avg_score numeric, pass_pct numeric)
 ```
-Teacher-only. Dùng ở `AnalyticsPage` → `GroupBreakdownChart`.
+Teacher-only. Dùng ở `AnalyticsPage` → `GroupBreakdownChart`. **2 param cuối thêm 2026-07-14**, cùng lý do/cùng file với `get_question_wrong_stats` ở trên.
 
 ### `get_student_attempt_stats()`
 ```sql
@@ -366,4 +406,5 @@ Tự tính `profiles.current_streak`/`longest_streak`/`last_streak_date` mỗi k
 - **`exam_attempts` phục vụ cả bài thi thường lẫn mock exam** — phân biệt bằng `is_mock`. Đọc/ghi điểm phải chọn đúng cột: `score` (0-100, bài thường) vs `score_1000` (0-1000, mock) — nhầm cột sẽ cho ra ngưỡng pass sai (70 vs 700).
 - Trước khi viết SQL/RPC mới dựa trên schema tài liệu hoá ở đây: **luôn `SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '...'` để xác nhận lại**, vì schema có thể đã đổi sau lần cập nhật doc này (2026-07-10).
 - **`exam_attempts` KHÔNG có RLS policy DELETE nào** (chỉ insert own / select own+teacher / update own — xem bảng RLS ở trên). Đây là chủ ý: xoá lịch sử làm bài (1 dòng, 1 student/teacher, hoặc toàn hệ thống) chỉ thực hiện qua Edge Function `manage-student` (`delete-attempt`/`clear-attempts`/`clear-all-attempts`, thêm 2026-07-13) — dùng service role, tự kiểm tra `role='teacher'` ở đầu function, KHÔNG dựa vào RLS. Client không thể tự `DELETE FROM exam_attempts` trực tiếp dù có JWT hợp lệ.
+- **Các file trong `supabase/sql/` chạy tay từng block qua Supabase Studio — không có gì đảm bảo TOÀN BỘ file đã được chạy hết.** Xác nhận thật: `2026-07-15_leaderboard_streak.sql` có 6 block, nhưng chỉ BLOCK 1-4 chạy ngay lúc đó — BLOCK 5 (`get_my_leaderboard_rank`) và BLOCK 6 (`idx_profiles_leaderboard`) bị bỏ sót suốt từ 2026-07-15 đến 2026-07-26 dù code (`useLeaderboard.js`) đã gọi RPC đó vô điều kiện (đã fix, xem mục `get_my_leaderboard_rank` ở trên). Trước khi tin "file X đã chạy xong" vì đã thấy 1 RPC/bảng nó tạo ra tồn tại, kiểm tra **từng** RPC/index/bảng mà file đó định tạo, không chỉ cái đầu tiên.
 - **Không tìm thấy `CREATE INDEX` nào trong `supabase/sql/` trước 2026-07-13** — các cột filter hot-path (`exam_attempts.user_id/exam_id/status/is_mock/last_activity_at`, `exam_cheat_events.attempt_id`, `questions.exam_id`, `attempt_answers.attempt_id/question_id`, `purchases.user_id`) không chắc có index trên DB thật (schema doc này reverse-engineer từ `information_schema`, không phải nguồn đầy đủ). Đã thêm `supabase/sql/2026-07-13_concurrency_indexes.sql` (dùng `CREATE INDEX CONCURRENTLY IF NOT EXISTS`, chưa chạy — cần tự chạy tay qua Supabase Studio) để bù các cột này, phục vụ tải đồng thời nhiều học sinh/giáo viên. Xác nhận bằng `SELECT indexname, indexdef FROM pg_indexes WHERE schemaname='public'` trước khi giả định đã có/chưa có.

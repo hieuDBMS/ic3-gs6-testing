@@ -111,16 +111,17 @@ Layout: Tất cả protected routes đều wrap trong `<Layout>` (Navbar + main 
   - Modal: `NavigateAwayModal` (style giống `RefreshWarningModal`).
 - Không auto-submit / không đổi `status` khi unmount hay khi rời trang — attempt cũ vẫn `in_progress`, được xử lý bởi Resume session (ở trên) + LiveMonitorPage zombie filter (xem LiveMonitorPage bên dưới).
 
-**Data fetched khi init exam:**
+**Data fetched khi init exam (đổi 2026-07-14 — xem docs/DATABASE_SCHEMA.md → RLS + RPC section):**
 ```js
-questions.select(`
-  id, content, image_url, question_type, order_index, hotspot_multi,
-  answers ( id, content, image_url, is_correct, order_index ),
-  dragdrop_pairs ( id, drag_content, drag_image_url, drop_content, drop_image_url, order_index ),
-  truefalse_statements ( id, content, is_true, order_index ),
-  hotspot_regions ( id, x, y, width, height, is_correct, label, order_index )
-`)
+// KHÔNG còn .select() trực tiếp trên questions/answers/... — RPC dưới đây
+// tự strip is_correct/is_true và tự kiểm tra user_can_access_exam(), an toàn
+// gọi khi bài thi đang in_progress (RLS SELECT trên answers/truefalse_statements/
+// hotspot_regions giờ chặn user thường đọc trực tiếp trừ khi attempt đã submit).
+supabase.rpc('get_exam_questions_for_attempt', { p_exam_id: examId })
+// RETURNS jsonb — mảng question objects, mỗi câu có answers[]/dragdrop_pairs[]/
+// truefalse_statements[]/hotspot_regions[] lồng sẵn, KHÔNG có is_correct/is_true.
 ```
+**MockExamPage** dùng RPC tương đương `get_mock_exam_questions({ p_attempt_id })` (câu hỏi theo đúng `mock_question_ids` đã chốt, tự kiểm tra chủ sở hữu attempt). **FlashcardPage** dùng `get_flashcard_questions({ p_exam_id })` — cùng cấu trúc nhưng CÓ `is_correct`/`is_true` (cố ý, tính năng học bài).
 
 **Answers format gửi lên RPC:**
 - choice/multi/hotspot: `p_answers[q.id] = [answerId, ...]`
@@ -237,7 +238,7 @@ questions.select(`
 - File: `src/pages/LeaderboardPage.jsx` (189 lines)
 - Bảng xếp hạng **opt-in** theo streak luyện tập hoặc số bài đã hoàn thành, phạm vi lớp / trường / toàn hệ thống (chip chọn scope, disable nếu profile không có `class_name`/`school`)
 - Student thấy toggle "Hiện tôi trên bảng xếp hạng" (RPC `set_leaderboard_opt_in`) — mặc định TẮT (`profiles.leaderboard_opt_in=false`). Teacher không thấy toggle này (không tham gia bảng xếp hạng)
-- Data: RPC `get_leaderboard` (top N, mặc định 50) + `get_my_leaderboard_rank` (hạng của chính user kể cả ngoài top hiển thị, chỉ query khi đã opt-in) — cả 2 qua `useLeaderboard.js` (TanStack Query), xem COMPONENTS.md → Custom Hooks
+- Data: RPC `get_leaderboard` (top N, mặc định 50) + `get_my_leaderboard_rank` (hạng của chính user kể cả ngoài top hiển thị, chỉ query khi đã opt-in) — cả 2 qua `useLeaderboard.js` (TanStack Query), xem COMPONENTS.md → Custom Hooks. `get_my_leaderboard_rank` bị bỏ sót lúc deploy ban đầu (2026-07-15, chỉ chạy BLOCK 1-4 của file SQL, thiếu BLOCK 5/6) — "hạng của bạn" từng trống/lỗi âm thầm trên production cho tới khi deploy bù 2026-07-26 (xem DATABASE_SCHEMA.md → RPC section).
 - Cố tình **không** hiển thị điểm trung bình — chỉ streak/số bài, tránh áp lực điểm số
 - Xem DATABASE_SCHEMA.md → `profiles` (cột `current_streak`/`longest_streak`/`last_streak_date`/`leaderboard_opt_in`) và RPC section cho chi tiết SQL (`supabase/sql/2026-07-15_leaderboard_streak.sql`)
 
